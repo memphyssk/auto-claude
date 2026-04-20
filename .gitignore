@@ -1,0 +1,13 @@
+# Session-scoped orchestrator state (see command-center/rules/autonomous-mode.md §2)
+Planning/.autonomous-session
+
+# Standard noise
+.DS_Store
+node_modules/
+*.log
+.env
+.env.local
+.env.*.local
+
+# Test account credentials — NEVER commit
+Planning/test-accounts*.md
