@@ -46,6 +46,7 @@ _(local dev + prod canonical test accounts — never commit passwords)_
 
 | Trigger | READ BEFORE acting |
 |---|---|
+| **Starting a NEW project** (no prior waves; seeding from founder docs) | `command-center/rules/onboarding/onboarding-loop.md` (13-stage pre-launch sequence v0→v11; hands off to wave-loop Stage 0 at the end) |
 | Starting a new wave | `command-center/rules/build-iterations/wave-loop.md` (then read each stage file before entering that stage) |
 | Picking next task / checking backlog | `npx task-master next` or `npx task-master list` — TaskMaster is the canonical task source |
 | Spawning ANY sub-agent | `command-center/rules/sub-agent-workflow.md` + `command-center/Sub-agent Instructions/<agent-name>-instructions.md` |
