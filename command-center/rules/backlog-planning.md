@@ -32,7 +32,7 @@ These rules are NOT optional. They apply at every step of this ritual.
 
 - **Step 1 spawns `competitive-analyst`**: READ `command-center/rules/sub-agent-workflow.md` + `command-center/Sub-agent Instructions/competitive-analyst-instructions.md` BEFORE spawning. Inject the instructions file as the FIRST directive in the prompt.
 - **Step 2 invokes `/plan-ceo-review`**: READ `command-center/rules/skill-use.md` BEFORE invoking.
-- **Competitive intelligence methodology**: cross-reference `command-center/rules/autonomous-mode.md` (competitive intelligence section) for competitor priority list, quick-vs-deep benchmark modes, and ethical guidelines.
+- **Competitive intelligence methodology**: cross-reference `command-center/management/semi-assisted-mode.md` (competitive intelligence section) for competitor priority list, quick-vs-deep benchmark modes, and ethical guidelines.
 - **Benchmark artifacts**: store in `command-center/artifacts/competitive-benchmarks/<feature-kebab-case>.md`. Files persist across conversations so the same question is never re-researched.
 
 ---
@@ -73,13 +73,22 @@ Produce the next 3-5 waves, ordered and scoped. Each entry must include:
 | Field | Notes |
 |---|---|
 | Feature name | — |
-| Effort estimate | S / M / L (wave-size; ~4-8 hours agent work) |
+| `estimatedSize` | `S` / `M` / `L` / `XL` — apply the Stage 1 size rubric (files / primitives / LOC / Stage 4 context). XL = any of the four thresholds would trip. |
 | Differentiation level | `us-only` / `matches-competitors` / `table-stakes-parity` |
 | Sub-agents needed | Which specialists will do the work |
 | Primary risk | What could derail this wave (technical / product / scope) |
 | Success criteria outline | What "done" looks like (details in the wave plan) |
 
-**Write to** `Planning/morning-backlog.md` (or current convention — a single file representing the live queue).
+**Write to** `Planning/morning-backlog.md` (or current convention — a single file representing the live queue). Persist `estimatedSize` on the corresponding TaskMaster task metadata.
+
+### Step 3.5 — Pre-size split for XL items
+
+Any entry sized `XL` is split BEFORE presentation to founder — don't push monoliths through the backlog. For each XL item:
+1. Apply the Stage 1 size rubric split protocol: name the slices (e.g., `m7a / m7b / m7c`), write a concrete first-slice scope that fits under all four thresholds, execution order, and sibling seed data per deferred slice.
+2. Create sibling TaskMaster rows with `metadata.source: "backlog-presize-split"`, `metadata.urgency: "next-wave"` or `"backlog"`, `metadata.estimatedSize` per slice.
+3. The first slice becomes the backlog entry; siblings land in TaskMaster deferred.
+
+No XL entries reach the founder approval step (§Step 4). This kills monoliths at authorship rather than at Stage 1.
 
 ### Step 4 — User approval
 

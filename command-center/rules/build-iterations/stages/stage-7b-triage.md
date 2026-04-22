@@ -50,7 +50,9 @@ For each item classified as (a) blocks-this-wave or (b) fast-follow:
 If the first routed expert fails to fix the issue:
 - Spawn `/investigate` with the expert's findings as context
 - `/investigate` runs its 4-phase protocol (investigate → analyze → hypothesize → implement)
-- If `/investigate` also fails: escalate to user with root-cause analysis and options
+- If `/investigate` also fails: **mode-aware final escalation**:
+  - **founder-review / semi-assisted:** escalate to user with root-cause analysis and options
+  - **full-autonomy:** spawn BOARD (decision-slug `stage7b-investigate-exhausted-<finding-slug>`, default 4+/7 threshold per `command-center/management/conflict-resolution.md`). BOARD picks among: (i) accept the residual as an opportunistic finding for next wave (c/d classification), (ii) pause wave for founder review, (iii) route to a different specialist (architect-reviewer or ultrathink-debugger) with BOARD-provided context. Append to `Planning/board-digest-<YYYY-MM-DD>.md`.
 
 ## Phase 3 — Log (c) and (d) items
 
@@ -62,6 +64,7 @@ For each item classified as (c) next-wave or (d) backlog:
    - `metadata.roadmapMilestone: "unassigned"` — default; Stage 0b will walk the queue and assign where possible
    - `metadata.source: "stage-7b-triage"` — preserves origin for audit
    - `metadata.urgency: "next-wave"` or `"backlog"` per classification above
+   - `metadata.estimatedSize: "S" | "M" | "L" | "XL"` — apply the Stage 1 size rubric (files / primitives / LOC / Stage 4 context). If uncertain or scope is ambiguous, default to `XL` so pre-size split fires at the next backlog walk.
    - `metadata.createdAt: "<ISO-timestamp>"`
 
    CLI sequence: `npx task-master add-task --prompt="..." --tag=bugs` then apply metadata via `npx task-master update-task --id=<N> --prompt="<metadata JSON>"`.

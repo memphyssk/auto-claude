@@ -9,7 +9,8 @@ Lightweight by design — typical duration under 5 minutes if buckets are small.
 ## 🔗 MANDATORY cross-references
 
 - **Roadmap schema (for any assignment changes):** `command-center/rules/roadmap-lifecycle.md`
-- **3-tier autonomy rubric:** `command-center/rules/autonomous-mode.md`
+- **3-tier autonomy rubric:** `command-center/management/semi-assisted-mode.md`
+- **Full-autonomy BOARD routing:** `command-center/management/full-autonomy-mode.md` (under full-autonomy, BOARD resolves all three buckets; see Step 3 below)
 - **Stage 0b (source of assignments + Tier 3 flags):** `command-center/rules/build-iterations/stages/stage-0b-product-decisions.md`
 - **Canonical data files:** `command-center/product/ROADMAP.md`, `command-center/product/product-decisions.md`, `.taskmaster/tasks/tasks.json`, `Planning/pending.md`
 
@@ -92,13 +93,27 @@ Concise, scannable, one-line-per-item where possible. Template:
 
 ---
 
-### Step 3 — AskUserQuestion batch
+### Step 3 — Resolution (mode-aware)
+
+Read active mode from `Planning/.autonomous-session` per `command-center/management/mode-switching.md`. Branch on mode:
+
+**Under `founder-review` or `semi-assisted`** — AskUserQuestion batch.
 
 One interactive session. For each Tier 3 item the recommendation is pre-filled; founder confirms, overrides, or defers. For assignments and unassigned, founder can override any item by task ID (e.g., "Move #57 to M2" / "Kill #94" / "Confirm all assignments").
 
 **Batch-accept:** if the founder answers "approve all" with no overrides, every Tier 3 item adopts its recommendation, every assignment stands, every unassigned stays unassigned. Single answer closes the session.
 
 **Skip:** founder can skip any bucket. Skipped items stay in their bucket for the next checkpoint.
+
+**Under `full-autonomy`** — BOARD resolves all three buckets.
+
+Per Tier 3 item (bucket 1a): spawn BOARD with decision-slug `checkpoint-tier3-<task-id>`, strict 6+/7 threshold. If 6+/7 met → apply and flip `needsProductDecision: false`. If threshold not met → leave in bucket (next cycle re-evaluates under possibly different mode).
+
+Per assignment (bucket 1b): BOARD "confirm assignment" vote with default 4+/7 threshold. Most confirmations are low-stakes — ceo-reviewer + architect-reviewer + product-manager usually align. 4+ APPROVE → assignment stands. 4+ REJECT → revert `metadata.roadmapMilestone` to `"unassigned"` + record reasoning.
+
+Per stayed-unassigned (bucket 1c): BOARD "map or leave" vote with default 4+/7 threshold. 4+ APPROVE with a named target milestone → apply assignment. Otherwise stays unassigned.
+
+All BOARD decisions append to `Planning/board-digest-<YYYY-MM-DD>.md` grouped by bucket. Close splits and vetoes flagged at top of digest for founder review.
 
 ---
 

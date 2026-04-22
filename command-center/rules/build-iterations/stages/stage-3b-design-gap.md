@@ -22,7 +22,7 @@ Fire when ANY of the following:
 - Stage 3 gate passed (Karen + Jenny APPROVE — plan is locked, scope is stable)
 - READ `design/brief-template.md` (Dx brief contract)
 - READ `design/review-gate.md` (dual-reviewer rubric)
-- READ `command-center/rules/autonomous-mode.md` §2 (for human-checkpoint skip logic)
+- READ `command-center/management/mode-switching.md` (mode flag semantics) + `command-center/management/semi-assisted-mode.md` §2 (human-checkpoint skip logic) + `command-center/management/full-autonomy-mode.md` (BOARD routing for 3-cap escalation)
 
 ## Design source of truth
 
@@ -71,7 +71,7 @@ Output lands in staging: `design/staging/<feature>.html`. Committed so reviewers
 
 ### Step 4 — Human checkpoint (pre-Dx.2)
 
-**Skip condition:** if `Planning/.autonomous-session` flag exists (per `command-center/rules/autonomous-mode.md` §2), skip this checkpoint. Log the skip in the wave closeout.
+**Skip condition:** if `Planning/.autonomous-session` flag exists with `mode: semi-assisted` or `mode: full-autonomy` (per `command-center/management/mode-switching.md`), skip this checkpoint. Log the skip in the wave closeout.
 
 **When to invoke:** autonomous mode OFF AND the generated design meaningfully extends the visual language (new interaction pattern, never-before-seen component class). Skip for trivial additions (missing icon, color-variant of existing pattern).
 
@@ -112,7 +112,9 @@ _Note: if `/ckm:design` becomes available, swap in per `review-gate.md` — the 
 **On 3-cap escalation:**
 1. Move all 3 staging attempts to `design/staging/_archive/wave-<N>-<feature>/`
 2. Write consolidated concerns to `Planning/wave-<N>-design-gap/<feature>-escalation.md`
-3. Escalate to user — defer the gap via `bug-design` tag OR pause wave per user's call
+3. Mode-aware resolution:
+   - **founder-review / semi-assisted:** escalate to user — defer the gap via `bug-design` tag OR pause wave per user's call
+   - **full-autonomy:** spawn BOARD (decision-slug `stage3b-3cap-<feature>`, default 4+/7 threshold per `command-center/management/conflict-resolution.md`). BOARD picks among: (i) accept one of the 3 staged attempts despite reviewer concerns, (ii) defer to `bug-design` tag, (iii) pause wave (escalate back to founder). Append to `Planning/board-digest-<YYYY-MM-DD>.md`.
 
 ---
 

@@ -8,6 +8,7 @@ Produce the reusability-first architecture spec across 8 domain branches, each a
 - v3 complete (feature-list + tools-modules-map drive branch scope)
 - v4 complete (page-map tells us what surfaces need architectural support)
 - READ `command-center/rules/sub-agent-workflow.md`
+- READ `command-center/product/founder-stage.md` — `stage:` value governs the Security branch scope modulator in step 4
 
 ## Actions
 
@@ -72,7 +73,10 @@ Each `command-center/dev/architecture/<branch>.md` contains:
 - **Databases** — schema boundaries + migration policy + data retention + backup strategy.
 - **SDKs** — each third-party SDK: auth mechanism, rate limits, error handling pattern, cost model, migration path if deprecated.
 - **Tools** — language version, linting (Biome config), build system (Turborepo), package manager (pnpm), typecheck strictness, CI gates.
-- **Security** — threat model (STRIDE), auth flow end-to-end, session management, secrets handling, rate limiting, input validation, CSRF, M2M credentials, audit logging.
+- **Security** — scope depends on `founder-stage.md`:
+  - **MVP mode** (`self-use-mvp`, `pilot-customer`): auth flow end-to-end + session management + secrets handling + input validation + basic RBAC. Defer threat model (STRIDE), residency matrix, consent architecture, M2M least-privilege analysis, and audit-log schema to H2 milestone work.
+  - **Full mode** (`paying-customers`, `regulated-day-1`): everything in MVP mode PLUS threat model (STRIDE), rate limiting, CSRF, M2M credentials, audit logging, cross-border data handling, consent architecture.
+  - Branch file's Risk section must note which items were deferred and why (cite founder-stage value).
 - **DevOps** — environment strategy (dev/staging/prod), CI workflow (GitHub Actions jobs with `timeout-minutes` + least-privilege `permissions` per `planning-principles.md`), deploy platforms, secret management, observability stack.
 - **Test** — framework stack (per v5), test-writing conventions (co-location, AAA, mock policies), coverage targets per package, live E2E policy (per `test-writing-principles.md` §15-16).
 

@@ -6,6 +6,7 @@ Produce the canonical page map of the product (every web page / route / screen) 
 ## Prerequisites
 - Stage v3 complete (user flows + features + tools-modules-map exist)
 - READ `command-center/rules/sub-agent-workflow.md` (for parallel spawns in step 3)
+- READ `command-center/product/founder-stage.md` — `stage:` value governs the compliance-surface quota in step 1.5
 
 ## Actions
 
@@ -20,6 +21,21 @@ From v3 flows + features, identify every page/screen the product needs. Categori
 - **Support / policy pages**: help center, FAQ, contact support, dispute resolution
 
 Each page gets: page name + route + primary persona(s) + related flow(s) from v3.
+
+### 1.5. Compliance-surface quota (founder-stage gate)
+
+Before writing the page map, count pages classified as **privacy / consent UI / audit log / compliance admin / data-rights-export / cross-border-data / admin-policy**. Compare against MVP page count.
+
+| Founder stage | Quota | Excess handling |
+|---|---|---|
+| `self-use-mvp` | ≤ ~10% of MVP pages | excess pages → stub PD (one screen, 1-2KB), not full fan-out |
+| `pilot-customer` | ≤ ~10% of MVP pages | excess pages → stub PD |
+| `paying-customers` | no cap | full fan-out |
+| `regulated-day-1` | no cap | full fan-out |
+
+For excess pages in the first two stages: generate a **short stub PD** (Purpose 1 paragraph + Audience + minimum interactions + "H2 expansion deferred — see founder-stage.md"). Do NOT spawn a `product-manager` to expand them. Mark the entry in the page map with `[stub — H2 expansion deferred]`.
+
+Log the quota decision in the working memory so step 3 knows which pages to skip full expansion on.
 
 ### 2. Write page map
 
@@ -50,7 +66,9 @@ Consolidates v3 flows + page inventory into one navigable doc. This is the file 
 
 ### 3. Parallel per-page PD generation
 
-For each page in the inventory, spawn an agent IN PARALLEL to generate the extensive product description. Agent = `product-manager` (existing Sub-agent Instruction). Batch size: up to 5 agents in parallel to avoid context saturation.
+For each page in the inventory that is NOT marked `[stub — H2 expansion deferred]` (from step 1.5), spawn an agent IN PARALLEL to generate the extensive product description. Agent = `product-manager` (existing Sub-agent Instruction). Batch size: up to 5 agents in parallel to avoid context saturation.
+
+Stub-marked pages skip the full PD expansion — the short stub written in step 1.5 is the deliverable until the page is promoted to H1 in a future refresh.
 
 Each per-page agent receives:
 - The page name + route + personas + related flows (from step 2)

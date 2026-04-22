@@ -7,7 +7,7 @@ Produce the baseline competitive intelligence the rest of onboarding (v3 feature
 - Stage v1 complete (Vision + target user known — scoping the competitor set)
 - READ `command-center/rules/sub-agent-workflow.md`
 - READ `command-center/Sub-agent Instructions/competitive-analyst-instructions.md` (inject as FIRST directive when spawning)
-- READ `command-center/rules/autonomous-mode.md` § Competitive intelligence pre-decision benchmark (Playwright live-browsing mandate applies; WebSearch-only research is insufficient — help articles describe intended behavior, not actual UX)
+- READ `command-center/management/semi-assisted-mode.md` § Competitive intelligence pre-decision benchmark (Playwright live-browsing mandate applies; WebSearch-only research is insufficient — help articles describe intended behavior, not actual UX)
 
 ## Actions
 

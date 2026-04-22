@@ -51,14 +51,15 @@ _(local dev + prod canonical test accounts — never commit passwords)_
 | Picking next task / checking backlog | `npx task-master next` or `npx task-master list` — TaskMaster is the canonical task source |
 | Spawning ANY sub-agent | `command-center/rules/sub-agent-workflow.md` + `command-center/Sub-agent Instructions/<agent-name>-instructions.md` |
 | Any test work (Playwright, Vitest, UI verification, prod audit) | `command-center/rules/testing-principles.md` + `command-center/test-writing-principles.md` §15-16 + `command-center/artifacts/user-journey-map.md` |
-| Making a product/UX decision | `command-center/rules/autonomous-mode.md` |
+| Making a product/UX decision | `command-center/management/semi-assisted-mode.md` (3-tier autonomy) + `command-center/management/full-autonomy-mode.md` (BOARD routing under full-autonomy) |
 | Authoring / editing a milestone, changing `roadmapMilestone` metadata on a task, walking the unassigned queue | `command-center/rules/roadmap-lifecycle.md` (schema, states, edit permissions, reference format) |
 | Founder says "refresh the roadmap" / "re-plan" / "strategic review" — OR triggered by Stage 11 when `planned` milestones drop below 3 — OR triggered by Stage 0b when unassigned-queue count > 30 | `command-center/rules/roadmap-refresh-ritual.md` (heavyweight milestone-level refresh; propose, do not auto-fire) |
 | Founder says "daily checkpoint" / "checkpoint" / "what's pending?" — OR triggered by Stage 11 when `task-master next` returns nothing actionable AND any checkpoint bucket is non-empty | `command-center/rules/daily-checkpoint.md` (3-bucket batch: Tier 3 / assigned this cycle / stayed unassigned) |
 | Wave touches auth / payments / user creation / cookies / CSRF / rate limits / sessions | `command-center/rules/security-waves.md` |
 | Task touches any external SDK or third-party tool | `command-center/rules/external-sdks.md` (pre-build checklist + SDK registry) |
 | Stage 3b — design-gap resolution (UI/icon/page/flow not in `design/`) | `command-center/rules/build-iterations/stages/stage-3b-design-gap.md` (formal Dx gate between 3 and 4; skip for non-UI waves; non-blocking bugs routed to `bug-design` TaskMaster tag) |
-| User says "run overnight" / "autonomously" / "I'm going to sleep" (or reverse: "I'm back" / "pause") | `command-center/rules/autonomous-mode.md` §2 (set/clear `Planning/.autonomous-session` session flag; skips human checkpoints across ALL waves in the session until cleared) |
+| User says "run overnight" / "autonomously" / "I'm going to sleep" (or reverse: "I'm back" / "pause") | `command-center/management/mode-switching.md` (flag spec + transitions) → sets `mode: semi-assisted` by default. See `command-center/management/semi-assisted-mode.md` for behavior. |
+| User says "full autonomy" / "go completely autonomous" / "board mode" / "unconditional loop" | `command-center/management/mode-switching.md` (sets `mode: full-autonomy`) + `command-center/management/full-autonomy-mode.md` (BOARD routing) + `command-center/management/board.md` + `command-center/management/board-members.md` + `command-center/management/conflict-resolution.md` |
 | Invoking any slash command / skill | `command-center/rules/skill-use.md` |
 | Authoring the wave plan at Stage 2 | `command-center/rules/planning-principles.md` (cross-wave plan-authoring lessons from `/retro`) |
 | Executing the plan at Stage 4 | `command-center/rules/dev-principles.md` (cross-wave execution lessons + code conventions) |
@@ -94,6 +95,8 @@ These apply in every turn regardless of which trigger fires.
 7. **Invoke `/careful` at wave start for destructive-command safety.** The skill hooks Bash PreToolUse and warns before `rm -rf`, `DROP TABLE`, force-push, `git reset --hard`, `kubectl delete`. Zero-friction catch for shared-environment mistakes.
 8. **Product specs live inside their TaskMaster task.** Embed the full spec in the task's `details` field — do not leave it as a loose `Planning/*.md` file. TaskMaster is the single source of truth for scope.
 9. **Never ask the user to shortcut wave-loop stages because of time constraints.** Always follow every stage in `command-center/rules/build-iterations/wave-loop.md` to completion. Wall-clock cost is not a valid reason to skip Stage 5b/6/7/7b/8/9/10/11. Only `wave-loop.md`'s explicit skip conditions table justifies skipping a stage.
+
+10. **Respect the mode flag.** Before routing any would-be user-ask, check `Planning/.autonomous-session` per `command-center/management/mode-switching.md`. Under `mode: full-autonomy`, route all non-hard-stop escalations to BOARD per `command-center/management/full-autonomy-mode.md` — the 7-member board decides with 4+/7 default / 6+/7 strict for Tier 3. Under `mode: semi-assisted`, skip nice-to-have checkpoints but escalate strategic + hard-stops to founder per `command-center/management/semi-assisted-mode.md`. Under `founder-review` (no flag), every would-be user-ask goes to founder. **Hard-stops (destructive actions, money commitments, BOARD member veto) always route to founder regardless of mode** — never bypass.
 
 ---
 

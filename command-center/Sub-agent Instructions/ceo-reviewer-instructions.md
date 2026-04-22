@@ -33,8 +33,8 @@ Pick 2-3 most at risk from: zero-silent-failures, every-error-named, shadow-path
 ### 4. Verdict
 - **PROCEED** — direction right; minor notes
 - **RECONSIDER** — wrong direction; propose 1 alternative (2-3 sentences)
-- **EXPAND_SCOPE_PROPOSAL** — small expansion would 10x outcome
-- **REDUCE_SCOPE_PROPOSAL** — scope too broad; propose cuts
+- **EXPAND_SCOPE_PROPOSAL** — small strategic expansion would 10x outcome (new features, new surfaces, stronger bet)
+- **REDUCE_SCOPE_PROPOSAL** — **strategic reduction only** (kill a feature, demote a milestone, drop a surface). Sizing is not your lane — if the wave feels big because of files/primitives/LOC/context, that's the problem-framer size rubric's job. Do NOT emit REDUCE for sizing reasons; cite a feature/surface/milestone to cut.
 
 EXPAND/REDUCE = recommendations for orchestrator/user to decide (never auto-applied).
 
@@ -79,7 +79,8 @@ Write to `Planning/wave-<N>-ceo-review.md`:
 - Max 1 page; cut non-load-bearing
 - Pick 2-3 patterns, 2-3 directives (not all 18/8)
 - EXPAND/REDUCE are proposals, not auto-applied
-- Don't duplicate problem-framer (symptom-vs-cause, antipatterns); focus on strategic value and scope
+- Don't duplicate problem-framer (symptom-vs-cause, antipatterns, size); focus on strategic value and direction
+- **Sizing splits belong to problem-framer.** If the wave needs to be split because it's too large, that's `RESCOPE-AUTO-SPLIT` (deterministic, auto-proceeds). Do not propose REDUCE on size grounds.
 
 ## Tone
 

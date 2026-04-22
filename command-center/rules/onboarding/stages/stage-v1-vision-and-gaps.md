@@ -7,7 +7,7 @@ Turn the raw documents from v0 into seeded `FOUNDER-BETS.md` + `ROADMAP.md` nort
 - Stage v0 complete (`command-center/docs-input/*.md` exists with ≥200 chars of founder content)
 - `command-center/product/FOUNDER-BETS.md` scaffold exists (shipped with auto-claude)
 - `command-center/product/ROADMAP.md` scaffold exists (shipped with auto-claude)
-- READ `command-center/rules/autonomous-mode.md` §1 — Tier 3 items should be raised via AskUserQuestion (no wave cycle exists yet, so nothing can defer to daily checkpoint)
+- READ `command-center/management/semi-assisted-mode.md` §1 — Tier 3 items should be raised via AskUserQuestion (no wave cycle exists yet, so nothing can defer to daily checkpoint; BOARD is OFF during onboarding per `command-center/management/full-autonomy-mode.md` § Onboarding carve-out)
 
 ## Actions
 
@@ -44,6 +44,29 @@ If **any ❌** in the essentials: batch the gaps into ONE `AskUserQuestion` sess
 
 Keep the poll under 5 questions. If the doc gap is larger (>5 essentials missing), something is wrong with v0 input — escalate to founder with "Your docs are very sparse — can you provide a fuller brief? Here's a prompt template: …"
 
+### 2b. Founder-stage poll (ALWAYS fires)
+
+Independent of the gap-polling decision above. Always ask — even if all essentials are ✅. One `AskUserQuestion`, 4 options:
+
+> "What's this product's stage at launch?
+>
+> 1. **self-use-mvp** — I'm the first user (internal tool, own team, personal project)
+> 2. **pilot-customer** — one friendly design partner before GA
+> 3. **paying-customers** — public beta or paid GA at launch
+> 4. **regulated-day-1** — health / finance / minors / EU-regulated AI (compliance non-negotiable at launch)"
+
+Write the selected value to `command-center/product/founder-stage.md` frontmatter:
+
+```yaml
+---
+stage: <self-use-mvp | pilot-customer | paying-customers | regulated-day-1>
+set_at: <ISO-timestamp>
+set_by: v1
+---
+```
+
+This flag modulates v3 / v4 / v6 / v10. Early-stage (`self-use-mvp`, `pilot-customer`) defers compliance / admin-policy / cross-border-data work to H2 by default; `paying-customers` / `regulated-day-1` get full treatment.
+
 ### 3. Seed `FOUNDER-BETS.md`
 
 Populate the scaffold with extracted + polled content:
@@ -71,12 +94,14 @@ If during gap-polling the founder raises a question that's a Tier 3 autonomous-m
 
 - `command-center/product/FOUNDER-BETS.md` — populated with Vision + ≥1 live bet
 - `command-center/product/ROADMAP.md` — populated North Star + Horizons intent (if extractable) + empty milestones
+- `command-center/product/founder-stage.md` — `stage:` value set (one of `self-use-mvp` / `pilot-customer` / `paying-customers` / `regulated-day-1`)
 - `command-center/product/product-decisions.md` — any Tier 3 deferrals logged
 
 ## Exit criteria
 
 - Vision + target user + product one-liner are unambiguously captured in FOUNDER-BETS + ROADMAP
 - ≥1 founder bet fully populated (all 7 fields including Falsifier)
+- `founder-stage.md` frontmatter `stage:` value is set (step 2b)
 - No outstanding ❌ essentials from step 1's extraction table
 - (If any polling happened) founder has confirmed the extracted content reflects their intent
 

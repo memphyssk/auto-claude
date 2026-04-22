@@ -62,7 +62,7 @@
 - **Auth/payments/sessions waves**: READ `command-center/rules/security-waves.md` — MANDATORY Gemini check at Stage 3
 - **Any tester swarm**: READ `command-center/rules/testing-principles.md` + `command-center/test-writing-principles.md` §15-16
 - **Any skill invocation**: READ `command-center/rules/skill-use.md`
-- **Product/UX decisions**: READ `command-center/rules/autonomous-mode.md`
+- **Product/UX decisions**: READ `command-center/management/semi-assisted-mode.md` (3-tier autonomy) + `command-center/management/full-autonomy-mode.md` (BOARD routing under full-autonomy)
 
 ## Task management
 

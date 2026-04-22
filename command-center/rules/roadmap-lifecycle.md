@@ -11,7 +11,8 @@ This file is the **spec**; `command-center/product/ROADMAP.md` is the **data**. 
 - **Backlog replenishment:** `command-center/rules/backlog-planning.md`
 - **Per-wave Stage 0b:** `command-center/rules/build-iterations/stages/stage-0b-product-decisions.md`
 - **Per-wave Stage 7b:** `command-center/rules/build-iterations/stages/stage-7b-triage.md`
-- **3-tier autonomy:** `command-center/rules/autonomous-mode.md`
+- **3-tier autonomy:** `command-center/management/semi-assisted-mode.md`
+- **Full-autonomy / BOARD routing:** `command-center/management/full-autonomy-mode.md`
 - **Canonical data files:** `command-center/product/ROADMAP.md`, `command-center/product/FOUNDER-BETS.md`, `command-center/product/product-decisions.md`, `command-center/artifacts/competitive-benchmarks/`
 
 ---
@@ -76,8 +77,9 @@ Every TaskMaster task MUST carry the fields below. Orchestrator enforces this at
 | `roadmapMilestone` | `m<N>-<slug>` or `unassigned` | Stage 0b (default `unassigned` at creation) |
 | `roadmapAnchor` | Path + kebab anchor | Stage 0b (must be kept in sync with heading) |
 | `successMetric` | Free text; mirrors milestone metric | Stage 0b (copied from milestone) |
-| `source` | `competitive` / `trend-analyst` / `founder-bet` / `user` / `stage-7b-triage` | Task author |
+| `source` | `competitive` / `trend-analyst` / `founder-bet` / `user` / `stage-7b-triage` / `auto-split` / `backlog-presize-split` | Task author |
 | `urgency` | `blocks` / `fast-follow` / `next-wave` / `backlog` | Stage 7b (triage) |
+| `estimatedSize` | `S` / `M` / `L` / `XL` — applies the Stage 1 size rubric (files / primitives / LOC / Stage 4 context). `XL` is a flag, not a queue state — XL rows are split via pre-size protocol before entering the actionable queue. | Task author; re-validated at Stage 0b |
 | `needsProductDecision` | boolean | Task author or Stage 0b |
 | `productDecision`, `productTier`, `competitiveEvidence` | Set at Stage 0b product-decision resolution | Stage 0b |
 
@@ -243,4 +245,5 @@ Flow intent:
 | Backlog < 3 items | `command-center/rules/backlog-planning.md` |
 | Stage 0b per-wave assignment | `command-center/rules/build-iterations/stages/stage-0b-product-decisions.md` |
 | Stage 7b per-wave triage | `command-center/rules/build-iterations/stages/stage-7b-triage.md` |
-| Tier 1 / 2 / 3 autonomy | `command-center/rules/autonomous-mode.md` |
+| Tier 1 / 2 / 3 autonomy | `command-center/management/semi-assisted-mode.md` |
+| Full-autonomy / BOARD | `command-center/management/full-autonomy-mode.md` |

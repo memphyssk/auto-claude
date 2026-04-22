@@ -10,7 +10,7 @@ This is the **heavyweight** roadmap ritual. Typical duration: 60–90 minutes of
 
 - **Roadmap schema, states, edit permissions:** `command-center/rules/roadmap-lifecycle.md`
 - **Sub-agent spawn discipline:** `command-center/rules/sub-agent-workflow.md` + per-agent instructions under `command-center/Sub-agent Instructions/`
-- **Competitive intelligence methodology:** `command-center/rules/autonomous-mode.md` (§ Competitive intelligence) — reuse the same Playwright-live-browsing mandate as Stage 0b; do NOT regress to WebSearch-only research
+- **Competitive intelligence methodology:** `command-center/management/semi-assisted-mode.md` (§ Competitive intelligence) — reuse the same Playwright-live-browsing mandate as Stage 0b; do NOT regress to WebSearch-only research
 - **Skill use (for `/plan-ceo-review`):** `command-center/rules/skill-use.md`
 - **Canonical data:** `command-center/product/ROADMAP.md`, `command-center/product/FOUNDER-BETS.md`, `command-center/product/product-decisions.md`, `command-center/artifacts/competitive-benchmarks/`
 

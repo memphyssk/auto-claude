@@ -54,6 +54,7 @@ Query TaskMaster for all tasks with `metadata.roadmapMilestone === "unassigned"`
 On every walked task, regardless of outcome:
 - `metadata.stage0bReviewed: true`
 - `metadata.stage0bReviewedAt: "<ISO-timestamp>"`
+- `metadata.estimatedSize` — if missing or `XL`, apply the Stage 1 size rubric (files / primitives / LOC / Stage 4 context) and either set a concrete size (`S/M/L`) or run the backlog-planning pre-size split to replace the XL row with first slice + siblings. Do not leave `XL` rows in the actionable queue.
 
 On assignment (in addition to the above):
 - `metadata.roadmapMilestone: "m<N>-<slug>"`
@@ -167,12 +168,20 @@ After user resolves Tier 3 items, update the task:
 
 **Commit all task updates** to git after Stage 0b completes. The commit message should list which bugs got which tier decisions.
 
-### Step 5 — Queue Tier 3 for daily checkpoint
-Tier 3 items are **not resolved at the stage** — they are queued for the daily checkpoint (`command-center/rules/daily-checkpoint.md`), which batches across all waves.
+### Step 5 — Resolve / queue Tier 3 (mode-aware)
 
-For each Tier 3 task:
+Read the active mode from `Planning/.autonomous-session` per `command-center/management/mode-switching.md`. Branch on mode:
+
+**Under `founder-review` or `semi-assisted`:** Tier 3 items are **not resolved at the stage** — they are queued for the daily checkpoint (`command-center/rules/daily-checkpoint.md`), which batches across all waves. For each Tier 3 task:
 - Ensure `metadata.needsProductDecision: true`, `metadata.productTier: 3`, `metadata.productRecommendation: "<recommendation>"`, `metadata.competitiveEvidence: "<evidence>"` are set
 - Append a lightweight entry to `Planning/pending.md` with task ID + question (founder-visible staging)
+
+**Under `full-autonomy`:** Tier 3 items route to BOARD immediately, with the strict 6+/7 threshold per `command-center/management/conflict-resolution.md`. For each Tier 3 task:
+- Set the same metadata as above (audit trail)
+- Spawn BOARD per `command-center/management/board-members.md` § Spawn protocol — decision-slug = `tier3-<task-kebab-title>`, decision packet includes the productQuestion, productRecommendation, competitiveEvidence, and relevant task details
+- Collect 7 votes. If 6+/7 APPROVE a specific option: apply it — update `metadata.productDecision`, flip `needsProductDecision: false`, set `productTier: 3` (preserved for audit)
+- If 6+/7 threshold NOT met (e.g., 5+2, 4+3, three-way split, or hard-stop veto): fall back to `founder-review` path for this item — queue in `Planning/pending.md` + record the BOARD vote reference. Next founder-available moment (digest review or session resume) resolves
+- Append all BOARD decisions to `Planning/board-digest-<YYYY-MM-DD>.md`
 
 The wave proceeds without waiting — implementation under a Tier 3 task blocks only if the implementer hits the un-decided branch. Most tasks can advance despite open Tier 3 questions elsewhere in the backlog.
 

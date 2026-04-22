@@ -205,6 +205,19 @@ Onboarding seeds the PM system. These three rituals maintain it thereafter:
 
 You can run 4-5 full waves back-to-back before needing compaction.
 
+## Wave-size auto-split (deterministic, no user-ask)
+
+Stage 1 problem-framer applies a size rubric to every incoming task. If **any** of the four thresholds trips, the verdict is `RESCOPE-AUTO-SPLIT` — orchestrator creates sibling TaskMaster rows for deferred slices and proceeds with the first slice automatically. No user-ask. Subjective "feels big" language is insufficient grounds; quantitative thresholds are:
+
+| Measure | Threshold |
+|---|---|
+| Files touched | > 30 |
+| New primitives (models + routes + services + migrations + SDKs + major components) | > 30 |
+| Estimated net LOC | > 5,000 |
+| Anticipated Stage 4 working set | > 250K tokens |
+
+`backlog-planning.md` applies the same rubric at task authorship — any `estimatedSize: XL` backlog entry is pre-sized and split before reaching the founder. Monoliths don't enter the actionable queue. User-ask is reserved for strategic scope changes (killing features, changing direction) and unbreakable monoliths where even the first slice trips.
+
 ---
 
 ## Design principles

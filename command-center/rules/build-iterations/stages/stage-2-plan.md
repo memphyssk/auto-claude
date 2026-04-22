@@ -27,7 +27,7 @@ missing_surfaces:
 
 If no gaps: `design_gap_flag: false`. The plan can still reference `design/*.html` mockups that already exist — only *missing* surfaces count as gaps.
 
-Autonomous-mode handling is **session-level** (file at `Planning/.autonomous-session`), not per-wave. Do NOT declare `autonomous_mode` in the wave plan front-matter — the session flag governs all waves in the session. See `command-center/rules/autonomous-mode.md` §2.
+Autonomous-mode handling is **session-level** (file at `Planning/.autonomous-session`), not per-wave. Do NOT declare `autonomous_mode` in the wave plan front-matter — the session flag governs all waves in the session. See `command-center/management/mode-switching.md` for flag semantics + `command-center/management/full-autonomy-mode.md` for BOARD routing under full-autonomy.
 
 ## Actions
 

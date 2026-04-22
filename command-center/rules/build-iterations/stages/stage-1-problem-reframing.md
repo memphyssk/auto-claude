@@ -12,6 +12,32 @@ Research basis: research-solution-problem.md (verification-generation gap, MetaG
 - Stage 0b complete if applicable (product decisions resolved)
 - Task/issue text available from TaskMaster or user
 
+## Size rubric (deterministic; consulted by problem-framer before verdict)
+
+Problem-framer applies this rubric to the task scope BEFORE emitting any verdict. If **any** of the four thresholds trips, the verdict is `RESCOPE-AUTO-SPLIT` — deterministic, not subjective. Process-based "feels like 2-3 waves" / "too big" language is insufficient grounds for a scope split; the framer must cite specific threshold(s) with estimated numbers.
+
+| Measure | Threshold | How to estimate |
+|---|---|---|
+| Files touched | > 30 | Count target files from task description + Explore pass if greenfield |
+| New primitives (models + routes + services + migrations + SDKs + major components) | > 30 | Enumerate from task body + architecture branches |
+| Estimated net LOC | > 5,000 | Per-primitive rough estimate; err on the high side |
+| Anticipated Stage 4 working set | > 250K tokens | Plan draft + SDK docs + per-agent briefs + working files |
+
+**OR logic:** any single threshold trip → auto-split. If no threshold trips, the task proceeds as a single wave regardless of subjective weighting.
+
+### RESCOPE-AUTO-SPLIT protocol
+
+When emitting `RESCOPE-AUTO-SPLIT`, problem-framer MUST produce:
+1. **Which threshold(s) tripped** with estimated numbers
+2. **Concrete split proposal** — e.g., M2a / M2b / M2c — with per-slice scope boundary
+3. **First-slice scope** that fits under ALL four thresholds
+4. **Execution order** (why this slice first)
+5. **Sibling task seed data** — title, description, `metadata.urgency`, `metadata.estimatedSize` for each deferred slice
+
+Orchestrator creates the sibling TaskMaster rows automatically with `metadata.source: "auto-split"` and `metadata.urgency: "next-wave"`, updates the current task to the first slice, and continues to Stage 2. **No user ask.** Log in wave closeout §Scope auto-split.
+
+If even the first slice trips a threshold (unbreakable monolith), escalate to user — manual planning required.
+
 ## Design-gap flag
 
 If `problem-framer` identifies scope needing UI/icons/pages NOT in `design/*.html`, set `design_gap_flag: true` in the reframing output with a list of the missing surfaces. Do NOT enter a design loop here — the consolidated resolution happens at **Stage 3b** after the plan is approved.
@@ -47,11 +73,15 @@ The two agents do NOT see each other's output — they form independent perspect
 ### 2. Outputs
 
 **problem-framer answers:**
-1. Restate the problem in the user's terms. Is the stated problem a *cause* or a *symptom*?
-2. If symptom, hypothesize 1-2 underlying causes
-3. Name 3 fundamentally different solution classes (with what each solves, what it doesn't, cost)
-4. Red-team check against the antipatterns catalog (below)
-- Verdict: PROCEED / RESCOPE / ESCALATE
+1. Apply the Size rubric above. Report per-measure estimates + any trips.
+2. Restate the problem in the user's terms. Is the stated problem a *cause* or a *symptom*?
+3. If symptom, hypothesize 1-2 underlying causes
+4. Name 3 fundamentally different solution classes (with what each solves, what it doesn't, cost)
+5. Red-team check against the antipatterns catalog (below)
+- Verdict: PROCEED / RESCOPE-AUTO-SPLIT / RESCOPE / ESCALATE
+  - `RESCOPE-AUTO-SPLIT` is reserved for size-rubric trips (see protocol above)
+  - `RESCOPE` is for non-size reframing only (wrong problem, misdirected scope)
+  - `ESCALATE` is for ambiguity the framer cannot resolve from code + docs
 
 **ceo-reviewer answers:**
 1. Worth doing right now? (user value, business value, cost of NOT doing, higher-leverage alternative?)
@@ -64,12 +94,17 @@ The two agents do NOT see each other's output — they form independent perspect
 Read both outputs. Consolidate:
 
 - **Both say PROCEED** → continue to Stage 2 with a 1-line note citing both verdicts
-- **problem-framer says RESCOPE** → update task description in TaskMaster, re-run Stage 1 if scope changed materially
+- **problem-framer says RESCOPE-AUTO-SPLIT** → **auto-proceed, no user ask.** Orchestrator creates sibling TaskMaster rows per the split proposal (`metadata.source: "auto-split"`, `metadata.urgency: "next-wave"`, `metadata.estimatedSize` per slice), updates current task to the first slice, continues to Stage 2. Log in closeout §Scope auto-split. Exception: if even the first slice trips a threshold, escalate to user (unbreakable monolith).
+- **problem-framer says RESCOPE** (non-size) → update task description in TaskMaster, re-run Stage 1 if scope changed materially. No user ask unless re-run also escalates.
+- **problem-framer says ESCALATE** → escalate to user with concern + evidence
 - **ceo-reviewer says RECONSIDER** → escalate to user with the proposed alternative
-- **ceo-reviewer says EXPAND/REDUCE_SCOPE_PROPOSAL** → present to user as `AskUserQuestion`. Never auto-apply scope changes.
-- **Either escalates** → ESCALATE to user before Stage 2
+- **ceo-reviewer says EXPAND_SCOPE_PROPOSAL** → present to user as `AskUserQuestion`. Strategic expansion (new features / new surfaces) is founder territory.
+- **ceo-reviewer says REDUCE_SCOPE_PROPOSAL** → **strategic reduction only** (killing features, demoting milestones, dropping surfaces). If the reduction is size-driven, reassign to problem-framer's size rubric — do not user-ask. Present strategic reductions to user as `AskUserQuestion`.
+- **Conflicting verdicts** (e.g., problem-framer PROCEED, ceo-reviewer RECONSIDER) → escalate to user.
 
-Conflicting verdicts (e.g., problem-framer PROCEED, ceo-reviewer RECONSIDER) → escalate to user. Both lenses caught different things, both deserve consideration.
+**Narrow user-ask triggers.** User is polled ONLY for: (a) strategic scope changes (EXPAND or feature-level REDUCE, direction RECONSIDER), (b) genuinely conflicting verdicts between the two lenses, (c) unbreakable monoliths where even the first slice of an auto-split trips the size rubric, (d) problem-framer ESCALATE with unresolvable ambiguity. **Sizing splits within the rubric are deterministic and auto-proceed — never user-gated.**
+
+**Under `mode: full-autonomy`:** escalations (a), (b), (c), (d) route to BOARD instead of user, using the default 4+/7 threshold (see `command-center/management/full-autonomy-mode.md` § Routing table + `command-center/management/conflict-resolution.md`). Hard-stops (destructive / money / member veto) still route to founder. Decision-slug = `stage1-<verdict-class>-<wave-N>`. BOARD result applies directly to Stage 2 if 4+/7 consensus; falls back to founder-ask if threshold not met.
 
 ## Skip conditions
 - Pure typo/copy fixes (<5 LOC, no logic change)

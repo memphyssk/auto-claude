@@ -10,7 +10,7 @@ Close the current wave and pick the next task. This is the loop point — after 
 
 ## Actions
 
-1. **Mark current task as DONE** in TaskMaster: `npx task-master set-status --id=<task-id> --status=done`
+1. **Verify Stage 8 TaskMaster sweep completed.** Read the `§TaskMaster sweep` ledger in `Planning/wave-<N>-closeout.md`. The primary task must already be `done` (Stage 8 step 1a), subtasks/fast-fixes/siblings/triage rows accounted for (Stage 8 steps 1b–1e). If the ledger is missing or primary task is not `done`, Stage 8 failed its sweep — complete the missing writes now, log a Stage 8 defect in the closeout, and flag for the next retro. Do NOT proceed to step 2 until TaskMaster reflects reality.
 2. **Query TaskMaster for the next task**: `npx task-master next`
    - TaskMaster considers priority, dependencies, and readiness
    - If a specific task is recommended, that becomes the next wave scope

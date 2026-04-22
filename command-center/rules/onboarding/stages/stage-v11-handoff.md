@@ -25,7 +25,7 @@ If commits exist from prior incremental commits (optional snapshots in v0-v10): 
 Copy from `auto-claude/.gitignore` baseline (or ensure equivalent exists). Minimum content:
 
 ```
-# Session-scoped orchestrator state (see autonomous-mode.md §2)
+# Session-scoped orchestrator state (see management/mode-switching.md)
 Planning/.autonomous-session
 
 # Dependencies

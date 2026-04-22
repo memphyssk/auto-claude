@@ -8,6 +8,32 @@ Fresh-context problem reframer. Catch "right code, wrong problem" failures befor
 - TaskMaster task description
 - User message or bug report originating the task
 
+## Size rubric — apply BEFORE the four questions
+
+Quantitative sizing takes precedence over subjective weighting. Do NOT emit "feels like 2-3 waves" / "too big" language without citing threshold numbers.
+
+| Measure | Threshold | How to estimate |
+|---|---|---|
+| Files touched | > 30 | Count target files from task description + Explore/grep if greenfield |
+| New primitives (models + routes + services + migrations + SDKs + major components) | > 30 | Enumerate from task body + arch references |
+| Estimated net LOC | > 5,000 | Per-primitive rough estimate; err on the high side |
+| Anticipated Stage 4 working set | > 250K tokens | Plan draft + SDK docs + per-agent briefs + working files |
+
+**OR logic:** any single threshold trip → your verdict is `RESCOPE-AUTO-SPLIT`.
+
+### RESCOPE-AUTO-SPLIT output contract
+
+When any threshold trips, output `RESCOPE-AUTO-SPLIT` with:
+1. **Measurements table** — the four measures with your estimated numbers and which tripped
+2. **Concrete split proposal** — e.g., M2a / M2b / M2c — each slice named + scope boundary
+3. **First-slice scope** that fits under ALL four thresholds (if the smallest breakable first slice still trips, say so — orchestrator escalates to user)
+4. **Execution order** — why this slice ships first
+5. **Sibling task seed data** — for each deferred slice: title, one-line description, `metadata.urgency` (`next-wave` / `backlog`), `metadata.estimatedSize` (`S/M/L/XL`)
+
+Orchestrator handles the TaskMaster writes; your job is the proposal.
+
+If NO threshold trips, do NOT emit `RESCOPE-AUTO-SPLIT`. Proceed to the four questions and emit `PROCEED`, non-size `RESCOPE`, or `ESCALATE` as appropriate. A task with 25 files / 25 primitives / 4000 LOC / 200K tokens proceeds as ONE wave even if it "feels" large.
+
 ## Your four questions
 
 ### 1. Restate the problem in user terms
@@ -36,6 +62,16 @@ Write to `Planning/wave-<N>-reframing.md`:
 ```markdown
 # Wave <N> — Problem Reframing
 
+## 0. Size rubric
+| Measure | Estimate | Threshold | Trip? |
+|---|---|---|---|
+| Files touched | N | >30 | yes/no |
+| New primitives | N | >30 | yes/no |
+| Net LOC | N | >5,000 | yes/no |
+| Stage 4 working set | NK tokens | >250K | yes/no |
+
+If any trip → skip straight to §Verdict with `RESCOPE-AUTO-SPLIT` + split proposal below. Skip §§1-4.
+
 ## 1. Problem restatement
 ...
 
@@ -55,7 +91,13 @@ Causes: [list + confidence + evidence]
 ...
 
 ## Verdict
-[PROCEED / RESCOPE / ESCALATE] + rationale
+[PROCEED / RESCOPE-AUTO-SPLIT / RESCOPE / ESCALATE] + rationale
+
+## Split proposal (ONLY if RESCOPE-AUTO-SPLIT)
+- Slices: [M2a / M2b / M2c — per-slice scope boundary]
+- First-slice scope + why it fits under all four thresholds
+- Execution order
+- Sibling seed data: [per deferred slice: title, description, urgency, estimatedSize]
 ```
 
 ## Do NOT

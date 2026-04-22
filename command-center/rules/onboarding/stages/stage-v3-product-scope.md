@@ -4,9 +4,10 @@
 Decompose the product into its scope artifacts — the authoritative inventory of user flows, feature list, and tools/modules the product needs. These three artifacts converge in v4 (page map) and feed the architecture (v6) and design (v7-v9) phases.
 
 ## Prerequisites
-- Stage v1 complete (Vision + initial bets known)
+- Stage v1 complete (Vision + initial bets known; `founder-stage.md` frontmatter populated)
 - Stage v2 complete (competitor tier-ranked; known patterns)
 - v0 docs + v2 screenshots available for reference
+- READ `command-center/product/founder-stage.md` — `stage:` value governs horizon tagging in step 2
 
 ## Actions
 
@@ -33,6 +34,19 @@ Enumerate every feature the product must have at MVP + planned features for H2. 
 - Dependencies (auth, payments, storage, realtime, etc.)
 - MVP / H2 / H3 classification
 - Complexity estimate (S/M/L/XL)
+
+### Horizon defaulting by founder stage
+
+Read `command-center/product/founder-stage.md`. Features whose theme is **GDPR / consent UI / privacy-rights / audit log / admin-policy / cross-border-data / AI Act transparency / regulated-compliance** default as follows:
+
+| Founder stage | Default horizon for compliance-themed features |
+|---|---|
+| `self-use-mvp` | H2 |
+| `pilot-customer` | H2 |
+| `paying-customers` | H1 |
+| `regulated-day-1` | H1 |
+
+Exception: a named regulatory deadline or named first-customer requirement overrides the default — tag H1 regardless of stage and cite the deadline inline. Non-compliance features use the normal MVP / H2 / H3 judgment.
 
 Write to: `command-center/product/feature-list.md`
 

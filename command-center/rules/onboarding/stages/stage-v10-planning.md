@@ -8,7 +8,8 @@ Turn all onboarding artifacts into an executable plan. Produce milestones (theme
 - v9 complete (all pages designed + approved) — skip this prerequisite for backend-only / API-only / CLI projects that skipped v7-v9
 - TaskMaster is installed and initialized (`.taskmaster/` exists)
 - READ `command-center/rules/roadmap-lifecycle.md` (schema + states + edit rules)
-- READ `command-center/rules/autonomous-mode.md` §1 (Tier 3 surfacing pattern for any decisions the agent can't make)
+- READ `command-center/management/semi-assisted-mode.md` §1 (Tier 3 surfacing pattern for any decisions the agent can't make; BOARD is OFF during onboarding)
+- READ `command-center/product/founder-stage.md` — `stage:` value governs horizon defaulting for compliance-themed milestones in step 1
 
 ## Actions
 
@@ -29,6 +30,17 @@ Produce milestone list. Each milestone:
 - TaskMaster tag slug (kebab-case)
 - Scope surfaces (pages + modules + services + SDKs + features covered)
 - References (to feature-list, pages, arch branches)
+
+**Horizon defaulting for compliance-themed milestones.** Milestones whose theme is GDPR / consent UI / privacy-rights / audit-compliance admin / cross-border-data / AI Act transparency / admin-policy / regulated-compliance default as follows:
+
+| Founder stage | Default horizon for compliance-themed milestones |
+|---|---|
+| `self-use-mvp` | H2 |
+| `pilot-customer` | H2 |
+| `paying-customers` | H1 |
+| `regulated-day-1` | H1 |
+
+Exception: a named regulatory deadline or named first-customer requirement lands the milestone in H1 regardless of stage — cite the deadline / requirement verbatim in the milestone's `Why now:` line. Non-compliance milestones use normal horizon judgment driven by MVP scope + founder bets.
 
 ### 2. Seed ROADMAP.md
 

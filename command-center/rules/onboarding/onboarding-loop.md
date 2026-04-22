@@ -51,8 +51,8 @@ v0 → v1 → v2 → v3 → v4 → v5 → v6 → v6b → v7 → v8 → v9 → v1
 ## Cross-references (apply at every stage)
 
 - **Before spawning ANY sub-agent**: READ `command-center/rules/sub-agent-workflow.md` + `command-center/Sub-agent Instructions/<agent>-instructions.md`
-- **Any product/UX decision during onboarding**: READ `command-center/rules/autonomous-mode.md` (§1 3-tier classification; Tier 3 items poll user via AskUserQuestion rather than deferring to daily checkpoint since no wave cycle exists yet)
-- **Competitive methodology**: `command-center/rules/autonomous-mode.md` § Competitive intelligence pre-decision benchmark (reused from wave-loop; Playwright-live-browsing mandate applies)
+- **Any product/UX decision during onboarding**: READ `command-center/management/semi-assisted-mode.md` (§1 3-tier classification; Tier 3 items poll user via AskUserQuestion regardless of mode — BOARD is OFF during onboarding per `command-center/management/full-autonomy-mode.md` § Onboarding carve-out)
+- **Competitive methodology**: `command-center/management/semi-assisted-mode.md` § Competitive intelligence pre-decision benchmark (reused from wave-loop; Playwright-live-browsing mandate applies)
 - **Design gaps during v7/v8/v9**: `design/brief-template.md` + `design/review-gate.md` (Stage 3b templates; reused)
 - **Test / DevOps / Security defaults**: `command-center/rules/dev-principles.md` § Code conventions (baseline stack assumptions)
 
@@ -63,6 +63,7 @@ By the time v11 commits, the following artifacts must exist and be committed:
 | Path | Source stage | Content |
 |---|---|---|
 | `command-center/product/FOUNDER-BETS.md` | v1 | Vision + 1-3 initial founder bets |
+| `command-center/product/founder-stage.md` | v1 | Founder-stage flag (`self-use-mvp` / `pilot-customer` / `paying-customers` / `regulated-day-1`) — consumed by v3 / v4 / v6 / v10 |
 | `command-center/product/ROADMAP.md` | v1 seed + v10 populate | North star + H1/H2/H3 intents (v1); initial milestones (v10) |
 | `command-center/product/product-decisions.md` | v10 | 10-20 initial decisions from v5 stack + v6 arch branches |
 | `command-center/artifacts/competitive-benchmarks/` | v2 | Per-competitor files + tier-ranked INDEX.md |
