@@ -4,22 +4,80 @@ Unconditional wave-loop execution. BOARD decides every former user-ask except ha
 
 ## Activation
 
-User triggers:
+When the user says any of:
 - "full autonomy" / "go completely autonomous" / "board mode"
 - "unconditional loop" / "don't stop for anything"
 
-Orchestrator writes flag file:
+You MUST perform the following sequence in a single mode-entry turn, in order. You MUST NOT begin wave execution in this turn — first real work happens on tick 1.
 
-```bash
-cat > Planning/.autonomous-session <<EOF
-started_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)
-mode: full-autonomy
-reason: <quote user's phrasing>
-expires_on: user-says-stop | orchestrator-finishes-all-work
-EOF
-```
+1. **Write the flag file:**
+   ```bash
+   cat > Planning/.autonomous-session <<EOF
+   started_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+   mode: full-autonomy
+   reason: <quote user's phrasing>
+   expires_on: user-says-stop | orchestrator-finishes-all-work
+   EOF
+   ```
 
-Confirm in one line: "Full-autonomy ON. BOARD handles non-hard-stop escalations. Morning digest at `Planning/board-digest-<YYYY-MM-DD>.md`."
+2. **Initialize STATUS.** If `command-center/management/STATUS` is missing, write `IDLE` as the initial value. If it already exists, read and preserve it — do not overwrite (it reflects persistent wave state across mode toggles).
+
+3. **Launch the loop.** Invoke the `/loop` skill via the Skill tool with the autonomous-dynamic sentinel. The founder does not run /loop manually; you bootstrap it on their behalf as part of mode entry. The loop self-paces via `ScheduleWakeup` based on STATUS.
+
+4. **Confirm in one line:** `Full-autonomy ON. STATUS=<value>. /loop started. BOARD handles non-hard-stop escalations. Morning digest at Planning/board-digest-<YYYY-MM-DD>.md.`
+
+5. **End the turn.**
+
+## Tick behavior — what you MUST do on every /loop tick
+
+On every /loop tick under full-autonomy:
+
+1. **Read `command-center/management/STATUS`.** Never skip this read. Route by its value per the table below.
+2. **Execute the routed action** until you hit a natural pause or the context-budget rule fires.
+3. **Update STATUS before ending the turn** — never leave it stale.
+4. **Call `ScheduleWakeup`** with the delay from the table, unless STATUS=DONE.
+
+### STATUS routing table
+
+| STATUS value | What you MUST do | Next tick delay |
+|---|---|---|
+| `RUNNING` | Prior session died mid-turn. Recover from last commit SHA + `command-center/management/handoff.md`. If no handoff exists, triage from git state and the active wave plan. | 60s |
+| `HANDOFF` | Read `command-center/management/handoff.md`. It points at either (a) a stopping point inside an in-flight wave's Stage 4, or (b) the start of a newly-scoped wave whose Stage 0 hasn't run yet (cross-wave handoff from Stage 11). Resume accordingly. Set STATUS=RUNNING as your first write-side action. | 60s |
+| `IDLE` | Re-read roadmap + run `npx task-master next`. If executable work exists, begin it and transition to RUNNING. Otherwise re-sleep. | 1800s |
+| `BLOCKED` | Do NOT proceed with work. A hard-stop is pending founder input. End turn and re-sleep. | 3600s |
+| `DONE` | End the loop. Do NOT call `ScheduleWakeup`. | — |
+
+`WAVE_DONE` is NOT a valid STATUS value. Cross-wave transitions either stay `RUNNING` (same-turn continuation into wave N+1) or write `HANDOFF` with a handoff.md that points at wave N+1 Stage 0. Stage 11 owns this logic — see `command-center/rules/build-iterations/stages/stage-11-next.md` § STATUS handling.
+
+### Transitioning to DONE
+
+Only Stage 11 writes STATUS=DONE, and only when `npx task-master next` returns nothing AND the daily-checkpoint buckets are empty (i.e. Stage 11 Step 5 "backlog genuinely empty"). If any executable task remains, use STATUS=IDLE instead. If pending tasks exist but all require founder input, also use STATUS=IDLE.
+
+### Context budget — mid-tick handoff (the rule that replaces the "continue vs fresh session?" question)
+
+At every natural pause during execution, you MUST re-check the context budget. If context_used ≥ 75%:
+
+1. Commit whatever's coherent (never force a commit; if the tree is incoherent, note that in handoff).
+2. Write `command-center/management/handoff.md` with:
+   - Wave number + active plan path
+   - Last commit SHA (or `uncommitted: <brief description of dirty state>`)
+   - Where you stopped, what's next
+   - Any in-flight gotchas (partial migrations, stubbed functions, failing tests)
+3. Set STATUS=HANDOFF.
+4. End the turn.
+
+The next tick resumes from `handoff.md`. This is the ONLY mechanism for continue-vs-fresh-session. You MUST NOT ask the founder which to choose — the 75% threshold is the answer.
+
+### Self-management decisions — never asked
+
+Under full-autonomy, the following resolve by rule, not by question, and NEVER go to founder or BOARD:
+
+- Continue-vs-fresh-session → governed by the 75% context rule above
+- Commit granularity within an approved plan
+- Execution sequencing within an approved plan
+- Split-vs-push-through a Stage 4 implementation
+
+If you write "My preference: X" in any checkpoint under full-autonomy, X is the decision — execute it. You MUST NOT emit the "but if you want Y …" alternative tail.
 
 ## Routing table
 
@@ -46,6 +104,11 @@ Even under full-autonomy, the following ALWAYS prompt:
 - **Destructive actions** — force-push, DROP TABLE, `rm -rf`, `git reset --hard`, `kubectl delete`, branch deletion, uncommitted-work overwrites
 - **Money commitments** — new paid SaaS subscription, API tier upgrade with billing, domain purchase, anything with a credit-card hit
 - **Hard-stop member veto** — any BOARD member flagging `HARD-STOP: must be human` with concrete reason
+
+When a hard-stop fires mid-tick, you MUST:
+1. Set STATUS=BLOCKED.
+2. Surface the escalation to the founder in your turn-end message with all context needed to decide.
+3. `ScheduleWakeup` 3600s (founder can respond anytime; that's fine — next tick checks STATUS).
 
 ## BOARD-decidable under full-autonomy (delegated)
 
@@ -99,7 +162,11 @@ User triggers:
 - "I'm back" / "pause" / "stop the autonomous run"
 - "exit full-autonomy" / "switch to semi-assisted"
 
-Orchestrator removes the flag file OR flips `mode:` to `semi-assisted` / removes. Confirm: "Full-autonomy ended. Next escalation goes to you."
+When the user says any of these, you MUST:
+1. Remove `Planning/.autonomous-session` OR flip `mode:` to `semi-assisted` per `mode-switching.md`.
+2. Do NOT modify `command-center/management/STATUS` — it reflects wave state, which persists across modes. The next manual or semi-assisted action reads it.
+3. Exit the /loop: do NOT call `ScheduleWakeup` this turn.
+4. Confirm in one line: `Full-autonomy ended. STATUS=<value>. Next escalation goes to you.`
 
 ## Latency + cost
 
@@ -109,5 +176,6 @@ BOARD convening: ~1-2 min + ~40-50K tokens per decision (7 parallel agents, each
 
 1. **Flag file wins over wave-plan front-matter.** Wave plans do NOT declare `autonomous_mode` (deprecated field).
 2. **Hard-stops always prompt** regardless of flag. Safety gates are not bypassable.
-3. **Founder message at any time** → orchestrator responds immediately, regardless of mode.
-4. **Critical errors still escalate** — if `ultrathink-debugger` also fails after BOARD-approved fix attempts, the issue still surfaces in the digest as `Vetoes & escalations routed back` for founder attention.
+3. **Founder message at any time** → orchestrator responds immediately, regardless of mode or STATUS.
+4. **STATUS is deterministic, never a question.** You MUST NOT ask the founder "continue or fresh session?" — the 75% context rule + STATUS=HANDOFF answers it.
+5. **Critical errors still escalate** — if `ultrathink-debugger` also fails after BOARD-approved fix attempts, the issue still surfaces in the digest as `Vetoes & escalations routed back` for founder attention.

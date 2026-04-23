@@ -45,6 +45,16 @@ Sub-agents must follow the plan. The plan is the contract.
 - **Orchestrator reviews deviations** before accepting the agent's output. If a deviation contradicts a Stage 3 gate finding or a security review requirement, it's rejected — the agent re-implements per plan.
 - **Examples of unacceptable silent deviations:** making a module `@Global` without plan approval, creating extra files not in the spec, changing a guard pattern from what the plan specified, skipping a test case the plan listed.
 
+## Context budget (full-autonomy only)
+
+Under `mode: full-autonomy`, at every natural pause during Stage 4, re-check context_used. If ≥75%:
+1. Commit whatever's coherent.
+2. Write `command-center/management/handoff.md` (wave + plan path, last commit SHA or `uncommitted: <brief>`, where you stopped, what's next, in-flight gotchas).
+3. Set `command-center/management/STATUS=HANDOFF`.
+4. End the turn.
+
+Next /loop tick resumes from handoff.md. Never ask the founder "continue or fresh session?" — the 75% threshold is the answer. See `command-center/management/full-autonomy-mode.md` § Context budget.
+
 ## Deliverable
 Code changes in the working tree (not yet committed).
 

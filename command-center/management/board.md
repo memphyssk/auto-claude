@@ -18,6 +18,18 @@ Under `mode: semi-assisted` or `founder-review`: BOARD does not fire. Escalation
 
 Onboarding: BOARD is OFF during v0-v11 regardless of mode. Founder-review is always in effect for onboarding checkpoints (v1 gaps, v5 stack, v7/v8/v9 design approvals, v10 Tier 3). Full-autonomy activates only after v11 handoff.
 
+## Out of BOARD scope — resolve by rule, never convene
+
+BOARD resolves product, scope, strategy, compliance, and external-commitment decisions. BOARD does NOT resolve:
+
+- Session/context management (STATUS transitions, handoff timing — see `full-autonomy-mode.md` § Tick behavior)
+- Loop cadence and `ScheduleWakeup` delays
+- Commit/push granularity within an approved plan
+- Execution sequencing within an approved plan
+- Stated-preference checkpoints ("My preference: X" auto-resolves to X)
+
+Attempting to convene BOARD for any of the above is a protocol violation — log it in the wave closeout under § Plan-authoring defects and resolve by rule.
+
 ## Hard-stops — NEVER go to BOARD
 
 Route these to founder regardless of mode:
