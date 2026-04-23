@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# auto-claude status — one-line report on pinned version vs upstream.
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/_auto-claude-lib.sh"
+
+PROJECT_ROOT=$(find_project_root)
+cd "$PROJECT_ROOT"
+
+VERSION_FILE="$PROJECT_ROOT/command-center/.brain-version"
+[[ -f "$VERSION_FILE" ]] || die "no .brain-version found — run 'auto-claude init' first"
+
+PINNED_VERSION=$(brain_version_get "$VERSION_FILE" version)
+PINNED_SHA=$(brain_version_get "$VERSION_FILE" sha)
+SOURCE_URL=$(brain_version_get "$VERSION_FILE" source)
+SYNCED_AT=$(brain_version_get "$VERSION_FILE" synced_at)
+
+printf 'pinned:    v%s (sha %s)\n' "$PINNED_VERSION" "${PINNED_SHA:0:7}"
+printf 'source:    %s\n' "$SOURCE_URL"
+printf 'synced at: %s\n' "$SYNCED_AT"
+
+MIRROR=$(ensure_source_cache "$SOURCE_URL")
+TARGET_SHA=$(resolve_ref "$MIRROR" HEAD) || die "can't resolve upstream HEAD"
+
+if [[ "$PINNED_SHA" == "$TARGET_SHA" ]]; then
+  ok "up to date with upstream HEAD"
+  exit 0
+fi
+
+AHEAD=$(git --git-dir="$MIRROR" rev-list --count "${PINNED_SHA}..${TARGET_SHA}" 2>/dev/null || echo "?")
+LATEST_TAG=$(git --git-dir="$MIRROR" describe --tags --abbrev=0 "$TARGET_SHA" 2>/dev/null || echo "(none)")
+printf 'upstream:  %s at %s (%s commits ahead of pin)\n' "$LATEST_TAG" "${TARGET_SHA:0:7}" "$AHEAD"
+info "run 'auto-claude diff' to preview the sync"

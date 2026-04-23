@@ -1,0 +1,308 @@
+#!/usr/bin/env bash
+# auto-claude sync — pull brain updates per .brainignore policy.
+#
+# Interactive files go through git's 3-way merge; clean merges apply silently,
+# conflicts drop into $EDITOR for resolution.
+#
+# Flags:
+#   --to=<ref>          target ref (default: upstream HEAD)
+#   --non-interactive   no prompts; abort on any CONFLICT file
+#   --dry-run           same as `auto-claude diff`
+#   --no-commit         don't create a git commit after applying
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/_auto-claude-lib.sh"
+
+# ── Conflict resolution UI ──────────────────────────────────────────
+# Walks the user through a 3-way merge for one file. Sets CONFLICT_OUTCOME
+# (applied | kept | skipped) on return. Defined before first use.
+handle_conflict_file() {
+  local path="$1"
+  CONFLICT_OUTCOME="skipped"
+
+  local base_pinned base_target project_current
+  base_pinned=$(show_file_at_ref "$MIRROR" "$PINNED_SHA" "$path")
+  base_target=$(show_file_at_ref "$MIRROR" "$TARGET_SHA" "$path")
+  project_current=$(cat "$PROJECT_ROOT/$path")
+
+  echo
+  printf '%s━━━ %s ━━━%s\n' "$C_BOLD" "$path" "$C_RESET"
+  echo
+
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  printf '%s' "$base_pinned" > "$tmpdir/pinned"
+  printf '%s' "$base_target" > "$tmpdir/target"
+
+  printf '%sBrain changes (pinned → target):%s\n' "$C_DIM" "$C_RESET"
+  diff -u "$tmpdir/pinned" "$tmpdir/target" | head -50 || true
+
+  echo
+  printf 'Options: [%sm%s]erge 3-way (opens $EDITOR) ' "$C_BOLD" "$C_RESET"
+  printf '[%so%s]verwrite-with-brain ' "$C_BOLD" "$C_RESET"
+  printf '[%sk%s]eep-project-version ' "$C_BOLD" "$C_RESET"
+  printf '[%ss%s]kip\n' "$C_BOLD" "$C_RESET"
+  read -r -p "? " choice
+
+  case "$choice" in
+    m|M)
+      local merged="$PROJECT_ROOT/$path"
+      if three_way_merge "$base_pinned" "$base_target" "$project_current" "$merged"; then
+        ok "  clean merge"
+        CONFLICT_OUTCOME="applied"
+      else
+        warn "  conflicts — opening editor"
+        "${EDITOR:-vi}" "$merged"
+        if grep -q '^<<<<<<< ' "$merged" 2>/dev/null; then
+          err "  file still contains conflict markers — skipping"
+          git -C "$PROJECT_ROOT" checkout -- "$path" 2>/dev/null || true
+          CONFLICT_OUTCOME="skipped"
+        else
+          ok "  merged"
+          CONFLICT_OUTCOME="applied"
+        fi
+      fi
+      ;;
+    o|O)
+      printf '%s' "$base_target" > "$PROJECT_ROOT/$path"
+      ok "  overwrote with brain version"
+      CONFLICT_OUTCOME="applied"
+      ;;
+    k|K)
+      info "  keeping project version"
+      CONFLICT_OUTCOME="kept"
+      ;;
+    *)
+      info "  skipped"
+      CONFLICT_OUTCOME="skipped"
+      ;;
+  esac
+  rm -rf "$tmpdir"
+}
+
+TARGET_REF=""
+NON_INTERACTIVE=0
+DRY_RUN=0
+NO_COMMIT=0
+for arg in "$@"; do
+  case "$arg" in
+    --to=*) TARGET_REF="${arg#--to=}" ;;
+    --non-interactive) NON_INTERACTIVE=1 ;;
+    --dry-run) DRY_RUN=1 ;;
+    --no-commit) NO_COMMIT=1 ;;
+    -h|--help)
+      cat <<'EOF'
+auto-claude sync — apply brain updates.
+
+Usage:
+  auto-claude sync [--to=<ref>] [--non-interactive] [--dry-run] [--no-commit]
+
+Options:
+  --to=<ref>           Target ref. Default: upstream HEAD.
+  --non-interactive    Auto-apply non-conflicting INTERACTIVE hunks. Abort on CONFLICT.
+  --dry-run            Same as `auto-claude diff` — no writes.
+  --no-commit          Skip creating the sync commit at the end.
+
+Exit: 0 success; 1 conflict-abort; 2 error.
+EOF
+      exit 0
+      ;;
+    *) die "unknown argument: $arg" ;;
+  esac
+done
+
+if (( DRY_RUN )); then
+  exec "$SCRIPT_DIR/auto-claude-diff" ${TARGET_REF:+--to="$TARGET_REF"}
+fi
+
+PROJECT_ROOT=$(find_project_root)
+cd "$PROJECT_ROOT"
+
+VERSION_FILE="$PROJECT_ROOT/command-center/.brain-version"
+[[ -f "$VERSION_FILE" ]] || die "no .brain-version found — run 'auto-claude init' first"
+parse_brainignore "$PROJECT_ROOT/.brainignore"
+
+PINNED_SHA=$(brain_version_get "$VERSION_FILE" sha)
+SOURCE_URL=$(brain_version_get "$VERSION_FILE" source)
+MIRROR=$(ensure_source_cache "$SOURCE_URL")
+
+if [[ -n "$TARGET_REF" ]]; then
+  TARGET_SHA=$(resolve_ref "$MIRROR" "$TARGET_REF") || die "unknown ref: $TARGET_REF"
+else
+  TARGET_SHA=$(resolve_ref "$MIRROR" HEAD)
+fi
+
+if [[ "$PINNED_SHA" == "$TARGET_SHA" ]]; then
+  ok "already at ${TARGET_SHA:0:7} — nothing to sync"
+  exit 0
+fi
+
+TARGET_VERSION=$(cat <(git --git-dir="$MIRROR" show "$TARGET_SHA:command-center/VERSION" 2>/dev/null) | head -n1 | tr -d '[:space:]' || true)
+[[ -n "$TARGET_VERSION" ]] || TARGET_VERSION="${TARGET_SHA:0:7}"
+
+info "syncing pinned ${PINNED_SHA:0:7} → target ${TARGET_SHA:0:7} (v$TARGET_VERSION)"
+
+# Safety: refuse to sync with dirty working tree (only for files we'd touch)
+if ! git -C "$PROJECT_ROOT" diff --quiet HEAD 2>/dev/null; then
+  warn "working tree has uncommitted changes — commit or stash before syncing"
+  exit 2
+fi
+
+SNAPSHOT_DIR="$PROJECT_ROOT/command-center/.brain-snapshot"
+ALL_FILES=$(
+  { list_files_at_ref "$MIRROR" "$PINNED_SHA"
+    list_files_at_ref "$MIRROR" "$TARGET_SHA"; } | sort -u
+)
+
+APPLIED=0
+SKIPPED=0
+CONFLICTS=0
+declare -a APPLIED_PATHS=() CONFLICT_PATHS=() NEW_PATHS=()
+
+while IFS= read -r path <&3; do
+  [[ -z "$path" ]] && continue
+  classification=$(classify_file "$MIRROR" "$PINNED_SHA" "$TARGET_SHA" "$path" "$PROJECT_ROOT" "$SNAPSHOT_DIR")
+  case "$classification" in
+    UNCHANGED|IGNORE)
+      continue
+      ;;
+    NEW)
+      info "  [NEW]        $path"
+      mkdir -p "$(dirname "$PROJECT_ROOT/$path")"
+      show_file_at_ref "$MIRROR" "$TARGET_SHA" "$path" > "$PROJECT_ROOT/$path"
+      APPLIED_PATHS+=("$path")
+      NEW_PATHS+=("$path")
+      APPLIED=$(( APPLIED + 1 ))
+      ;;
+    REMOVED)
+      info "  [REMOVED]    $path"
+      if [[ -f "$PROJECT_ROOT/$path" ]]; then
+        rm "$PROJECT_ROOT/$path"
+        APPLIED_PATHS+=("$path")
+      fi
+      APPLIED=$(( APPLIED + 1 ))
+      ;;
+    OVERWRITE)
+      info "  [OVERWRITE]  $path"
+      mkdir -p "$(dirname "$PROJECT_ROOT/$path")"
+      show_file_at_ref "$MIRROR" "$TARGET_SHA" "$path" > "$PROJECT_ROOT/$path"
+      APPLIED_PATHS+=("$path")
+      APPLIED=$(( APPLIED + 1 ))
+      ;;
+    INTERACTIVE)
+      # Project hasn't diverged; apply brain's new version cleanly.
+      info "  [INTERACTIVE] $path ${C_DIM}(no project changes — applying cleanly)${C_RESET}"
+      show_file_at_ref "$MIRROR" "$TARGET_SHA" "$path" > "$PROJECT_ROOT/$path"
+      APPLIED_PATHS+=("$path")
+      APPLIED=$(( APPLIED + 1 ))
+      ;;
+    CONFLICT)
+      CONFLICT_PATHS+=("$path")
+      CONFLICTS=$(( CONFLICTS + 1 ))
+      if (( NON_INTERACTIVE )); then
+        err "  [CONFLICT]   $path — skipping in non-interactive mode"
+        SKIPPED=$(( SKIPPED + 1 ))
+        continue
+      fi
+      handle_conflict_file "$path"
+      # handle_conflict_file sets outcome:
+      if [[ "${CONFLICT_OUTCOME:-}" == "applied" ]]; then
+        APPLIED_PATHS+=("$path")
+        APPLIED=$(( APPLIED + 1 ))
+      else
+        SKIPPED=$(( SKIPPED + 1 ))
+      fi
+      ;;
+  esac
+done 3<<< "$ALL_FILES"
+
+# ── Abort-on-conflict path for non-interactive ──────────────────────
+if (( NON_INTERACTIVE )) && (( CONFLICTS > 0 )); then
+  err ""
+  err "aborting: $CONFLICTS conflict(s) require interactive review:"
+  for p in "${CONFLICT_PATHS[@]+"${CONFLICT_PATHS[@]}"}"; do err "  - $p"; done
+  err ""
+  err "run 'auto-claude sync' (without --non-interactive) to resolve"
+  # Rollback applied changes to leave tree clean: revert tracked modifications + remove NEW files
+  git -C "$PROJECT_ROOT" checkout -- . 2>/dev/null || true
+  for p in "${NEW_PATHS[@]+"${NEW_PATHS[@]}"}"; do
+    rm -f "$PROJECT_ROOT/$p"
+  done
+  exit 1
+fi
+
+echo
+ok "applied: $APPLIED  skipped: $SKIPPED  conflicts-handled: $CONFLICTS"
+
+if (( APPLIED == 0 )); then
+  ok "no changes applied"
+  exit 0
+fi
+
+# ── Refresh .brain-snapshot to new pinned state ─────────────────────
+info "refreshing .brain-snapshot/ to v$TARGET_VERSION"
+rm -rf "$SNAPSHOT_DIR"
+mkdir -p "$SNAPSHOT_DIR"
+
+# Re-copy brain tree at target SHA, respecting ignore paths.
+while IFS= read -r path; do
+  [[ -z "$path" ]] && continue
+  if path_matches_any "$path" IGNORE_PATHS; then continue; fi
+  mkdir -p "$SNAPSHOT_DIR/$(dirname "$path")"
+  show_file_at_ref "$MIRROR" "$TARGET_SHA" "$path" > "$SNAPSHOT_DIR/$path"
+done < <(list_files_at_ref "$MIRROR" "$TARGET_SHA")
+
+# Re-write the snapshot README
+cat > "$SNAPSHOT_DIR/README.md" <<EOF
+# Brain snapshot — v$TARGET_VERSION
+
+Baseline copy of auto-claude's brain files at the pinned version in
+[\`../.brain-version\`](../.brain-version). Used by \`auto-claude sync\`
+for 3-way conflict detection during interactive file reviews.
+
+Managed by the sync tool; do not hand-edit.
+EOF
+
+# ── Update .brain-version pin ───────────────────────────────────────
+brain_version_set "$VERSION_FILE" \
+  "version=$TARGET_VERSION" \
+  "sha=$TARGET_SHA" \
+  "source=$SOURCE_URL" \
+  "synced_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+# ── Commit ──────────────────────────────────────────────────────────
+if (( NO_COMMIT )); then
+  info "--no-commit: skipping commit. Changes are staged-candidates."
+  exit 0
+fi
+
+git -C "$PROJECT_ROOT" add -A >/dev/null
+
+# Gather CHANGELOG entries between pinned and target for commit-body context
+CHANGELOG_EXCERPT=""
+if git --git-dir="$MIRROR" cat-file -e "$TARGET_SHA:CHANGELOG.md" 2>/dev/null; then
+  CHANGELOG_EXCERPT=$(git --git-dir="$MIRROR" show "$TARGET_SHA:CHANGELOG.md" \
+    | awk -v pv="$(brain_version_get "$VERSION_FILE" version)" -v tv="$TARGET_VERSION" '
+        /^## v/ { in_section=0 }
+        $0 ~ ("^## v" tv) { in_section=1; print; next }
+        in_section && /^## v/ { in_section=0 }
+        in_section { print }
+      ' | head -40)
+fi
+
+COMMIT_MSG="chore(brain-sync): sync to v$TARGET_VERSION ($(echo "$TARGET_SHA" | cut -c1-7))
+
+Applied: $APPLIED file(s). Skipped: $SKIPPED. Conflicts handled: $CONFLICTS.
+
+$CHANGELOG_EXCERPT
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
+
+git -C "$PROJECT_ROOT" commit -m "$COMMIT_MSG" >/dev/null
+ok "committed: $(git -C "$PROJECT_ROOT" log -1 --format='%h %s')"
+

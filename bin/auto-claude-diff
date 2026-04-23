@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# auto-claude diff — read-only preview of what `sync` would do.
+#
+# Classifies every brain-owned path as one of:
+#   IGNORE / UNCHANGED / NEW / REMOVED / OVERWRITE / INTERACTIVE / CONFLICT
+#
+# Exit codes:
+#   0 — no changes pending
+#   1 — changes pending (see output)
+#   2 — error
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/_auto-claude-lib.sh"
+
+TARGET_REF=""
+for arg in "$@"; do
+  case "$arg" in
+    --to=*) TARGET_REF="${arg#--to=}" ;;
+    -h|--help)
+      cat <<'EOF'
+auto-claude diff — preview sync changes.
+
+Usage:
+  auto-claude diff [--to=<ref>]
+
+Options:
+  --to=<ref>   Target ref (tag, branch, SHA). Default: upstream HEAD.
+
+Exit: 0 if no changes; 1 if changes pending.
+EOF
+      exit 0
+      ;;
+    *) die "unknown argument: $arg" ;;
+  esac
+done
+
+PROJECT_ROOT=$(find_project_root)
+cd "$PROJECT_ROOT"
+
+VERSION_FILE="$PROJECT_ROOT/command-center/.brain-version"
+[[ -f "$VERSION_FILE" ]] || die "no .brain-version found — run 'auto-claude init' first"
+parse_brainignore "$PROJECT_ROOT/.brainignore"
+
+PINNED_SHA=$(brain_version_get "$VERSION_FILE" sha)
+SOURCE_URL=$(brain_version_get "$VERSION_FILE" source)
+MIRROR=$(ensure_source_cache "$SOURCE_URL")
+
+if [[ -n "$TARGET_REF" ]]; then
+  TARGET_SHA=$(resolve_ref "$MIRROR" "$TARGET_REF") || die "unknown ref: $TARGET_REF"
+else
+  TARGET_SHA=$(resolve_ref "$MIRROR" HEAD)
+fi
+
+if [[ "$PINNED_SHA" == "$TARGET_SHA" ]]; then
+  ok "already at ${TARGET_SHA:0:7} — nothing to sync"
+  exit 0
+fi
+
+info "diffing pinned ${PINNED_SHA:0:7} → target ${TARGET_SHA:0:7}"
+echo
+
+# Collect union of files (pinned ∪ target) to catch NEW and REMOVED.
+ALL_FILES=$(
+  { list_files_at_ref "$MIRROR" "$PINNED_SHA"
+    list_files_at_ref "$MIRROR" "$TARGET_SHA"; } | sort -u
+)
+
+SNAPSHOT_DIR="$PROJECT_ROOT/command-center/.brain-snapshot"
+
+declare -A COUNTS=( [IGNORE]=0 [UNCHANGED]=0 [NEW]=0 [REMOVED]=0 [OVERWRITE]=0 [INTERACTIVE]=0 [CONFLICT]=0 )
+declare -a REPORT_LINES=()
+
+while IFS= read -r path; do
+  [[ -z "$path" ]] && continue
+  classification=$(classify_file "$MIRROR" "$PINNED_SHA" "$TARGET_SHA" "$path" "$PROJECT_ROOT" "$SNAPSHOT_DIR")
+  COUNTS[$classification]=$(( ${COUNTS[$classification]} + 1 ))
+  case "$classification" in
+    UNCHANGED|IGNORE)
+      # skip individual line reporting; summary at end
+      ;;
+    NEW)
+      REPORT_LINES+=("${C_GREEN}[NEW]        ${C_RESET}$path")
+      ;;
+    REMOVED)
+      REPORT_LINES+=("${C_RED}[REMOVED]    ${C_RESET}$path")
+      ;;
+    OVERWRITE)
+      REPORT_LINES+=("${C_BLUE}[OVERWRITE]  ${C_RESET}$path")
+      ;;
+    INTERACTIVE)
+      REPORT_LINES+=("${C_YELLOW}[INTERACTIVE]${C_RESET} $path")
+      ;;
+    CONFLICT)
+      REPORT_LINES+=("${C_RED}${C_BOLD}[CONFLICT]   ${C_RESET}$path ${C_DIM}(brain and project both changed)${C_RESET}")
+      ;;
+  esac
+done <<< "$ALL_FILES"
+
+# Print per-file report sorted by path
+for line in "${REPORT_LINES[@]}"; do
+  printf '%s\n' "$line"
+done
+
+echo
+info "summary:"
+printf '  new:         %d\n' "${COUNTS[NEW]}"
+printf '  overwrite:   %d\n' "${COUNTS[OVERWRITE]}"
+printf '  interactive: %d\n' "${COUNTS[INTERACTIVE]}"
+printf '  conflict:    %d\n' "${COUNTS[CONFLICT]}"
+printf '  removed:     %d\n' "${COUNTS[REMOVED]}"
+printf '  ignored:     %d  %s(per .brainignore)%s\n' "${COUNTS[IGNORE]}" "$C_DIM" "$C_RESET"
+printf '  unchanged:   %d\n' "${COUNTS[UNCHANGED]}"
+
+CHANGES=$(( ${COUNTS[NEW]} + ${COUNTS[OVERWRITE]} + ${COUNTS[INTERACTIVE]} + ${COUNTS[CONFLICT]} + ${COUNTS[REMOVED]} ))
+if (( CHANGES == 0 )); then
+  ok "no changes"
+  exit 0
+fi
+
+echo
+info "run 'auto-claude sync --to=${TARGET_REF:-HEAD}' to apply"
+exit 1

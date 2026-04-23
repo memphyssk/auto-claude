@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# auto-claude init — bootstrap a new consumer project.
+#
+# Creates:
+#   .brainignore                                 (template, user edits)
+#   command-center/.brain-version                (pinned to target)
+#   command-center/.brain-snapshot/              (baseline copy)
+#   plus copies the brain tree at target SHA
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/_auto-claude-lib.sh"
+
+SOURCE_URL="https://github.com/memphyssk/auto-claude.git"
+TARGET_REF="HEAD"
+
+for arg in "$@"; do
+  case "$arg" in
+    --source=*)  SOURCE_URL="${arg#--source=}" ;;
+    --version=*) TARGET_REF="${arg#--version=}" ;;
+    -h|--help)
+      cat <<'EOF'
+auto-claude init — bootstrap a new consumer project.
+
+Usage:
+  auto-claude init [--source=<git-url>] [--version=<tag-or-sha>]
+
+Defaults:
+  --source=https://github.com/memphyssk/auto-claude.git
+  --version=HEAD
+
+Creates .brainignore (template), .brain-version, .brain-snapshot/, and
+copies the brain tree. Run from the consumer project root.
+EOF
+      exit 0
+      ;;
+    *) die "unknown argument: $arg" ;;
+  esac
+done
+
+PROJECT_ROOT="$PWD"
+[[ -d "$PROJECT_ROOT/.git" ]] || warn "no .git in $PROJECT_ROOT — proceeding, but you should 'git init' before syncing"
+
+if [[ -f "$PROJECT_ROOT/.brainignore" ]]; then
+  die "$PROJECT_ROOT already initialized (.brainignore exists)"
+fi
+
+info "source:  $SOURCE_URL"
+info "version: $TARGET_REF"
+
+MIRROR=$(ensure_source_cache "$SOURCE_URL")
+TARGET_SHA=$(resolve_ref "$MIRROR" "$TARGET_REF") || die "unknown ref: $TARGET_REF"
+TARGET_VERSION=$(git --git-dir="$MIRROR" show "$TARGET_SHA:command-center/VERSION" 2>/dev/null | head -n1 | tr -d '[:space:]' || true)
+[[ -n "$TARGET_VERSION" ]] || TARGET_VERSION="${TARGET_SHA:0:7}"
+
+info "resolving to v$TARGET_VERSION ($TARGET_SHA)"
+
+# ── Write .brainignore template ─────────────────────────────────────
+cat > "$PROJECT_ROOT/.brainignore" <<'EOF'
+# .brainignore — governs how `auto-claude sync` treats each file/directory.
+#
+# Three modes:
+#   ignore:<path>       never modify (project-local content)
+#   interactive:<path>  show hunk-by-hunk diff with 3-way conflict detection
+#   (default)           silent overwrite from brain
+#
+# Paths match gitignore-style: trailing slash = directory (recursive), no slash = file.
+
+# ────────────────────────────────────────────────────────────────────────
+# ignore — project state, never touch from upstream
+# ────────────────────────────────────────────────────────────────────────
+
+ignore:command-center/product/
+ignore:command-center/artifacts/
+ignore:command-center/Sub-agent Observations/
+ignore:command-center/dev/
+ignore:Planning/
+ignore:.taskmaster/
+ignore:design/DESIGN-SYSTEM.md
+ignore:design/staging/
+
+# Brain-repo root files that don't belong in consumer projects
+ignore:CHANGELOG.md
+ignore:LICENSE
+ignore:README.md
+
+# ────────────────────────────────────────────────────────────────────────
+# interactive — project diverges but still wants brain updates
+# ────────────────────────────────────────────────────────────────────────
+
+interactive:CLAUDE.md
+interactive:command-center/rules/dev-principles.md
+interactive:command-center/rules/planning-principles.md
+interactive:command-center/rules/testing-principles.md
+interactive:command-center/rules/triage-routing-table.md
+interactive:command-center/Sub-agent Instructions/
+
+# ────────────────────────────────────────────────────────────────────────
+# default (silent overwrite) — everything else is brain-authoritative
+# ────────────────────────────────────────────────────────────────────────
+EOF
+ok "wrote .brainignore"
+
+parse_brainignore "$PROJECT_ROOT/.brainignore"
+
+# ── Copy brain tree ─────────────────────────────────────────────────
+info "copying brain tree (respecting .brainignore)"
+while IFS= read -r path; do
+  [[ -z "$path" ]] && continue
+  if path_matches_any "$path" IGNORE_PATHS; then continue; fi
+  mkdir -p "$PROJECT_ROOT/$(dirname "$path")"
+  # Only copy if file doesn't already exist in project (preserves existing content)
+  if [[ ! -e "$PROJECT_ROOT/$path" ]]; then
+    show_file_at_ref "$MIRROR" "$TARGET_SHA" "$path" > "$PROJECT_ROOT/$path"
+  fi
+done < <(list_files_at_ref "$MIRROR" "$TARGET_SHA")
+
+# ── Populate .brain-snapshot ────────────────────────────────────────
+SNAPSHOT_DIR="$PROJECT_ROOT/command-center/.brain-snapshot"
+mkdir -p "$SNAPSHOT_DIR"
+while IFS= read -r path; do
+  [[ -z "$path" ]] && continue
+  if path_matches_any "$path" IGNORE_PATHS; then continue; fi
+  mkdir -p "$SNAPSHOT_DIR/$(dirname "$path")"
+  show_file_at_ref "$MIRROR" "$TARGET_SHA" "$path" > "$SNAPSHOT_DIR/$path"
+done < <(list_files_at_ref "$MIRROR" "$TARGET_SHA")
+
+cat > "$SNAPSHOT_DIR/README.md" <<EOF
+# Brain snapshot — v$TARGET_VERSION
+
+Baseline copy of auto-claude's brain files at the pinned version in
+[\`../.brain-version\`](../.brain-version). Used by \`auto-claude sync\`
+for 3-way conflict detection during interactive file reviews.
+
+Managed by the sync tool; do not hand-edit.
+EOF
+ok "populated .brain-snapshot/"
+
+# ── Write .brain-version ────────────────────────────────────────────
+brain_version_set "$PROJECT_ROOT/command-center/.brain-version" \
+  "version=$TARGET_VERSION" \
+  "sha=$TARGET_SHA" \
+  "source=$SOURCE_URL" \
+  "synced_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+ok "wrote .brain-version (v$TARGET_VERSION)"
+
+echo
+ok "initialized to v$TARGET_VERSION"
+echo
+info "next steps:"
+info "  1. review .brainignore and adjust for your project"
+info "  2. run 'auto-claude diff' before future syncs to preview changes"
+info "  3. commit the generated files to your repo"

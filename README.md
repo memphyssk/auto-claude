@@ -232,6 +232,79 @@ Stage 1 problem-framer applies a size rubric to every incoming task. If **any** 
 
 ---
 
+## Keeping the brain in sync across projects — `auto-claude sync`
+
+After forking this repo into N projects, brain updates need to propagate back out. `bin/auto-claude` is a small bash tool that automates the sync while preserving project-local content.
+
+### One-time setup per consumer project
+
+In the consumer project root:
+
+```bash
+# Point at the auto-claude brain repo + pin a starting version
+/path/to/auto-claude/bin/auto-claude init --version=v0.5.0
+
+# Edit the generated .brainignore — mark project-local paths as ignore:
+# and divergent-but-sync-friendly files as interactive:
+$EDITOR .brainignore
+
+# Commit the sync infrastructure
+git add .brainignore command-center/.brain-version command-center/.brain-snapshot/
+git commit -m "chore: add auto-claude sync infrastructure (pinned v0.5.0)"
+```
+
+Three mode keywords in `.brainignore`:
+
+- `ignore:<path>` — never touch this file/directory during sync (product state, benchmarks, project-specific dev lessons, architecture docs, Planning/, etc.)
+- `interactive:<path>` — show hunk-by-hunk diff with 3-way conflict detection; prompt per file when both brain and project have changed
+- (default) — silent overwrite from brain (stage files, management/, monitors/, onboarding stages — everything brain-owned)
+
+### Day-to-day commands
+
+```bash
+# Is my project up to date?
+auto-claude status
+
+# What would sync do?
+auto-claude diff                   # vs upstream HEAD
+auto-claude diff --to=v0.6.0       # vs a specific release
+
+# Apply the sync
+auto-claude sync                   # interactive (prompts for CONFLICT files)
+auto-claude sync --to=v0.6.0       # to a specific version
+auto-claude sync --non-interactive # CI-safe; aborts on any CONFLICT
+auto-claude sync --dry-run         # same as `diff`
+```
+
+### How conflict resolution works
+
+When a file is marked `interactive:` and both the brain *and* your project changed it since the last sync, the tool shows you the brain's diff and offers four choices:
+
+- **[m]erge 3-way** — use git's 3-way merge engine (opens `$EDITOR` if there are true conflicts)
+- **[o]verwrite with brain** — take the brain's version, discard project changes
+- **[k]eep project version** — skip this file, leave project as-is
+- **[s]kip** — defer (same effect as `k` but intentionally non-committal)
+
+After a successful sync:
+- `command-center/.brain-version` updates to the new pin
+- `command-center/.brain-snapshot/` refreshes to match the new pinned state (becomes the new 3-way base for future syncs)
+- A single commit bundles all changes, including the new version pin
+
+### Release workflow (for brain authors)
+
+```bash
+# 1. Land feature commits on main
+# 2. Bump command-center/VERSION
+# 3. Add a CHANGELOG entry using the template at the top of CHANGELOG.md
+# 4. Tag and push
+git tag -a v0.6.0 -m "v0.6.0 — <summary>"
+git push origin main v0.6.0
+```
+
+The `Consumer sync` section in each CHANGELOG entry is what downstream projects read before running `auto-claude sync --to=v0.6.0`.
+
+---
+
 ## License
 
 See `LICENSE`.

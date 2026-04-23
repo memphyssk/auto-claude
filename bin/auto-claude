@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# auto-claude — dispatcher. Routes to subcommand scripts in the same directory.
+#
+# Usage:
+#   auto-claude <subcommand> [args...]
+#
+# Subcommands:
+#   init     — bootstrap a new consumer project
+#   diff     — show what sync would do (read-only)
+#   sync     — pull brain updates per .brainignore policy
+#   status   — one-line pinned-version report
+#   help     — show this help
+#   version  — print tool version
+
+set -o errexit
+set -o nounset
+
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly TOOL_VERSION="0.1.0"
+
+usage() {
+  cat <<'EOF'
+auto-claude — brain sync tool for projects built on auto-claude.
+
+Usage:
+  auto-claude <subcommand> [options]
+
+Subcommands:
+  init [--source=<git-url>] [--version=<tag>]
+      Bootstrap a new consumer project. Writes .brainignore template,
+      command-center/.brain-version, and command-center/.brain-snapshot/.
+
+  diff [--to=<ref>]
+      Show what `sync` would do. Read-only. Classifies each file as
+      IGNORE / UNCHANGED / NEW / REMOVED / OVERWRITE / INTERACTIVE / CONFLICT.
+
+  sync [--to=<ref>] [--non-interactive] [--dry-run]
+      Apply the diff. Interactive files prompt hunk-by-hunk review.
+      --non-interactive: auto-apply non-conflicting; abort on conflict.
+      --dry-run: same as `diff`.
+
+  status
+      One-line summary: pinned version, commits behind upstream.
+
+  version
+      Print tool version.
+
+See also:
+  - .brainignore at consumer project root (3-mode policy)
+  - command-center/.brain-version (pinned SHA)
+  - command-center/.brain-snapshot/ (3-way merge baseline)
+EOF
+}
+
+[[ $# -ge 1 ]] || { usage; exit 1; }
+
+sub="$1"; shift
+case "$sub" in
+  init|diff|sync|status)
+    exec "$SCRIPT_DIR/auto-claude-$sub" "$@"
+    ;;
+  version|--version|-v)
+    echo "auto-claude $TOOL_VERSION"
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    echo "auto-claude: unknown subcommand '$sub'" >&2
+    usage >&2
+    exit 1
+    ;;
+esac
