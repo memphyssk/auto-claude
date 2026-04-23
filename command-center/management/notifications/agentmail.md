@@ -90,56 +90,57 @@ Prefix variants (match Resend spec for familiarity):
 - `[ceo-agent] <project> — NOVEL — <decision-slug>` (no precedent)
 - `[ceo-agent] <project> — ⚠ LOOP HALTED — <cause>` (halt event)
 
-## Body format (~12 line cap)
+## Body format — unified act-first template (~12 line cap)
+
+Every decision email uses past-tense phrasing. The action happened already; the email tells the founder what was done. Reply options are post-hoc override channels (REJECT / MODIFY), not approval gates.
 
 ```
-ceo-agent decided. <ISO timestamp>
+ceo-agent acted. <ISO timestamp>
 
-Context:       <one-line: what was asked>
-Decision:      <one-line outcome>
-Rationale:     <1-2 sentences; cognitive patterns applied>
+Context:       <one-line: what triggered this — BOARD split / stage / rule / stall>
+Action taken:  <past tense: "authorized Paddle switch", "picked up wave 42", "cleared stale monitor M7">
+Why:           <1-2 sentences; cognitive patterns cited>
 
-Charter:       <"no applicable restriction" OR "ceo-bound.md § X">
+Charter:       <"no applicable restriction" OR "ceo-bound.md § X applied">
 Reversibility: <two-way | one-way | medium>
 Novelty:       <true | false>
-Monitor:       <what signal + who + by when>
-
-Full entry:    Planning/ceo-digest-<YYYY-MM-DD>.md
-
-Reply options (agent reads your response within 10 min):
-  approve | ack               → no-op, thread marked read
-  reject | undo               → roll back this decision
-  modify: <instruction>       → execute new instruction instead
-  why? | clarify              → agent replies in-thread with rationale
-```
-
-The Reply options block trains founder inbox heuristics — reply with one of those verbs and the agent acts predictably.
-
-### Nudge-specific body variant
-
-When the email is a stall-monitor NUDGE (subject prefixed `⚠ NUDGE`), use past-tense phrasing to signal that the work is already in motion — this is notification of something done, not a request for approval:
-
-```
-ceo-agent nudged. <ISO timestamp>
-
-Stall:         <STATUS value that stalled> for <duration e.g. "12 min">
-Action taken:  <past tense: "picked up wave 42", "cleared stale monitor M7", etc.>
-Why:           <1-2 sentences: the classification and why this unblocks>
-
-Charter:       <"no applicable restriction" OR "ceo-bound.md § X">
-Reversibility: two-way door   (nudges are always reversible)
-Monitor:       <what signal tells us the nudge worked — often "STATUS transitions off IDLE within next tick">
+Monitor:       <what signal tells us this worked + who watches + by when>
 
 Full entry:    Planning/ceo-digest-<YYYY-MM-DD>.md
 
 Override (post-hoc — work is already in motion):
-  no reply                    → tacit acceptance, work continues
-  reject | undo               → roll back the nudge; stall resumes for founder resolution
+  no reply                    → tacit acceptance
+  reject | undo               → roll back this action; agent reverts within ~10 min
   modify: <instruction>       → change course; agent executes new instruction instead
-  why?                        → agent replies in-thread with fuller reasoning
+  why? | clarify              → agent replies in-thread with fuller rationale
 ```
 
-**Key phrasing difference:** "approve | ack" is absent from nudge bodies — because the action happened already, approval is implicit in not-replying. The agent is telling the founder what it did, not asking permission.
+**The approve/ack path is absent** — because the action happened already, approval is implicit in not-replying. The founder reads the email and chooses: silence (accept), REJECT (undo), MODIFY (redirect), or CLARIFY (ask). All four work for every decision class.
+
+### Exception — charter-proposal body
+
+When ceo-agent hits a `ceo-bound.md` §§ 1-5 restriction, the email reports a **proposal**, not an action. Subject prefix `⚠ CHARTER PROPOSAL`. Body template:
+
+```
+ceo-agent proposes a charter amendment. <ISO timestamp>
+
+Decision requested: <one-line: what ceo-agent would do if permitted>
+Blocked by:         ceo-bound.md § X — "<exact restriction text>"
+Proposed amendment: <specific text change to ceo-bound.md>
+Rationale:          <2-3 sentences: why the amendment is worth making>
+If amended, CEO would: <one-line outcome>
+
+Full proposal: Planning/ceo-charter-proposals.md (latest entry)
+
+Action required — decision does NOT execute until you respond:
+  1. Edit command-center/management/ceo-bound.md to apply the amendment
+     (takes effect on next mode entry; CEO retries on next relevant tick)
+  2. Reject: take no action — CEO continues respecting the restriction
+  3. Override one-off: reply to this thread with "override: <instruction>"
+     (CEO executes the specific decision without amending charter)
+```
+
+This is the ONE email class that gates on founder response. Every other class is fire-and-notify.
 
 ---
 
@@ -149,13 +150,16 @@ When reading an unread reply in a thread, agent parses the first non-quoted line
 
 | Founder reply pattern | Classification | Agent action |
 |---|---|---|
-| `approve` / `ack` / `ok` / `yes` / 👍 / empty reply | APPROVE | Mark thread read. No rollback. Log `founder ack'd` in audit entry. |
-| `reject` / `undo` / `no` / `revert` / `rollback` | REJECT | Roll back this decision's artifacts (revert commits, restore task state, undo file writes). Log `founder rejected` in audit entry. Reply in-thread confirming rollback complete. |
-| `modify: <X>` / `change to X` / `do X instead` | MODIFY | Treat as new directive. Execute new instruction. Original decision rolled back if conflicting. Reply in-thread with the new outcome. |
+| `approve` / `ack` / `ok` / `yes` / 👍 / empty reply / no reply at all | ACK | Tacit or explicit acceptance. Mark thread read. Log `founder ack'd` in audit entry (or nothing if no reply). Work already happened under act-first; ACK is confirmation. |
+| `reject` / `undo` / `no` / `revert` / `rollback` | REJECT | Roll back the action's artifacts (revert commits, restore task state, undo file writes, re-enter the stall that was nudged away). Log `founder rejected` in audit entry. Reply in-thread confirming rollback complete. |
+| `modify: <X>` / `change to X` / `do X instead` | MODIFY | Treat as new directive. Execute new instruction. Original action rolled back if conflicting. Reply in-thread with the new outcome. |
+| `override: <X>` (charter-proposal threads only) | OVERRIDE | Founder is granting a one-off permission for the specific blocked decision. Execute the original decision without amending charter. Reply in-thread confirming. Applies ONLY to threads with subject prefix `⚠ CHARTER PROPOSAL`. |
 | `why?` / `explain` / `why this?` | CLARIFY | Reply in-thread with expanded rationale (cite cognitive patterns, precedent, charter reasoning). No state change. |
-| Anything else (natural language, multi-sentence) | AMBIGUOUS | Default to CLARIFY — reply in-thread asking for one of the four classification verbs. Keep thread unread from agent's perspective until resolved. |
+| Anything else (natural language, multi-sentence, unclassifiable) | AMBIGUOUS | Default to CLARIFY — reply in-thread asking for one of the classification verbs. Keep thread unread from agent's perspective until resolved. |
 
-**Ambiguous replies escalate to CLARIFY, never default to APPROVE or REJECT.** If the founder writes "hmm, I'm not sure about this" the agent asks "should I proceed, roll back, or modify?" — doesn't guess.
+**Silence = ACK** under act-first semantics. Work already happened; no reply means the founder is fine with it. This is the key behavioral difference from approval-gate systems.
+
+**Ambiguous replies never default to ACK or REJECT.** If the founder writes "hmm, I'm not sure about this" the agent asks "should I let it stand, roll it back, or modify?" — doesn't guess.
 
 Agent must re-read the charter before executing a MODIFY reply. If the modify instruction bumps a `ceo-bound.md` restriction, treat as a new charter proposal: agent cannot execute MODIFY blindly just because the founder asked.
 

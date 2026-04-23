@@ -154,12 +154,11 @@ On every `/loop` tick under `danger-builder`:
 Under `danger-builder`, `ceo-bound.md` is a **restriction document**:
 
 - **Silent charter clause** = ceo-agent has authority
-- **Restrictive charter clause** = ceo-agent respects it; cannot act against; may propose amendment
-- **"Outside charter"** is not a concept. Only "bumped a restriction" is a concept.
+- **Restrictive charter clause** = ceo-agent respects it; cannot act against; writes amendment proposal + waits for founder
 
-**Charter-restriction-bump protocol:**
+**Charter-restriction-bump protocol (the ONE exception to act-first):**
 
-1. ceo-agent identifies: "decision would exceed ceo-bound.md § X restriction"
+1. ceo-agent identifies: "decision would exceed `ceo-bound.md` § X restriction"
 2. ceo-agent writes entry to `Planning/ceo-charter-proposals.md`:
    ```
    ### <timestamp> | <decision slug>
@@ -169,16 +168,22 @@ Under `danger-builder`, `ceo-bound.md` is a **restriction document**:
    Rationale: <why the amendment is worth making>
    If amended, CEO would: <what the decision would be>
    ```
-3. Digest surfaces the proposal that day
-4. Founder edits `ceo-bound.md` (or declines); takes effect on next mode entry
+3. Emails founder with subject prefix `⚠ CHARTER PROPOSAL`. **Decision does not execute.**
+4. Founder either edits `ceo-bound.md` to amend (takes effect next mode entry; ceo-agent retries on next relevant tick) OR sends a session message overriding one-off.
 
-**Hard limits (permanent, mode-independent):**
+This is the ONE place ceo-agent waits for founder input. Every other decision class (BOARD split, HARD-STOP veto, stall nudge, Tier 3 product decisions, daily-checkpoint) acts first + notifies; charter-restriction bumps alone require founder action to proceed.
 
-These remain outside reach regardless of charter silence:
-- Amending `ceo-bound.md` (founder-only)
-- Amending `command-center/product/FOUNDER-BETS.md` (founder-only)
-- Halting the loop (founder-only via kill-switch or session message)
-- Running during onboarding v0-v11 (ceo-agent off regardless)
+## Hard invariants (NOT charter-editable — architectural)
+
+These apply regardless of what the founder writes in `ceo-bound.md`. Founder cannot grant ceo-agent authority over these by removing restrictions from the charter — they are built into the system.
+
+- **ceo-agent cannot amend `ceo-bound.md`.** Charter is founder-owned. CEO proposes amendments via `Planning/ceo-charter-proposals.md`; cannot self-apply.
+- **ceo-agent cannot amend `command-center/product/FOUNDER-BETS.md`.** Strategic intent is founder-owned. CEO may question bets in audit entries; cannot change them.
+- **ceo-agent cannot halt the loop.** Kill-switch (`/tmp/ceo-mode-stop`), session message, and `STATUS=STOP` are founder-only controls.
+- **ceo-agent cannot run during onboarding (v0-v11).** Onboarding uses founder-review regardless of mode flag. danger-builder activates only after v11 handoff.
+- **ceo-agent cannot write to project state for tools not in § Tool allowlist** (`ceo-bound.md` § Tool allowlist). Execution always routes through specialists; the allowlist is the narrow exception for ceo-owned infrastructure tools like agentmail.
+
+These are architectural invariants. A founder attempting to grant CEO authority over them by editing the charter will find the edits ignored — the code enforces these regardless.
 
 ---
 

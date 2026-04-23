@@ -34,6 +34,45 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.10.2 — 2026-04-23
+
+Two changes in one release:
+
+1. **Act-first semantics unified across every decision class.** Previously only stall-monitor nudges used fire-and-notify; regular BOARD-escalated decisions waited for founder approval in-thread. Now every decision class (BOARD splits, HARD-STOP vetoes, Tier 3 product decisions, daily-checkpoint resolutions, Stage 1/3b/7b escalations, reply MODIFYs, stall nudges) executes first, then notifies. The ONE exception: charter-restriction bumps — when a decision would violate a `ceo-bound.md` §§ 1-5 rule, ceo-agent writes a proposal and waits for founder amendment.
+
+2. **ceo-bound.md rewritten as a directive restrictions-only document.** 126 lines → ~90 lines. No commentary. No "here's what the CEO can do" scaffolding. Every line in §§ 1-5 is a "must NOT" statement; silent sections mean unlimited authority. Example entries included as guidance; delete when filling.
+
+### Changed — charter
+- `command-center/management/ceo-bound.md` — full rewrite. Five sections (§§ 1-5) for disallow rules: financial, external commitments, customer-facing, strategic, novelty. Each defaults to `(no restriction)`. Removed § 4 "Infrastructure + code" (was non-restrictive text describing wave-loop gates). Consolidated reporting / kill-switch / charter-revision / prereqs into terse reference sections. Moved hard invariants out.
+
+### Changed — hard invariants relocated
+- `command-center/management/danger-builder-mode.md` — new "Hard invariants" section absorbs the architectural-invariants block that used to live in ceo-bound.md § 10. These are NOT charter-editable: (a) ceo-agent cannot amend charter, (b) cannot amend FOUNDER-BETS.md, (c) cannot halt loop, (d) cannot run during onboarding, (e) cannot write project state for non-allowlisted tools. Relocation clarifies that the charter is founder's policy surface, while system invariants live with the mode spec.
+
+### Changed — decision procedure
+- `Sub-agent Instructions/ceo-agent-instructions.md` § Decision procedure — rewritten with explicit act-first flow:
+  - Step 5a EXECUTE → Step 5b audit → Step 5c email (new order; execution before notification)
+  - Step 6 charter-proposal branch is the ONLY flow that waits for founder
+  - Lists 8 decision classes that all act-first; 1 class (charter bump) that waits
+- `Sub-agent Instructions/ceo-agent-instructions.md` § What you will NEVER do — new line: "Wait for founder approval on any decision class except charter-restriction bumps." Old "cannot amend charter" / "cannot halt loop" lines removed (moved to danger-builder-mode.md hard invariants, referenced via pointer).
+- `Sub-agent Instructions/ceo-agent-instructions.md` § What you will NEVER do — new line: "Write to `product/product-decisions.md` yourself. Read it for context; orchestrator appends to it as decisions land." (per founder policy confirmation in v0.10.2 design review)
+
+### Changed — email templates
+- `command-center/management/notifications/agentmail.md` — body format unified. Single template for all decision classes using past-tense phrasing ("ceo-agent acted" + "Action taken: authorized …"). Absorbs what was the `⚠ NUDGE` variant — nudges are just one subject prefix among several, not a separate email shape. Separate charter-proposal template retained for the wait-for-founder exception.
+- Reply classification table: `APPROVE` class renamed `ACK` to emphasize "confirmation of already-done work" vs approval-of-pending; added `OVERRIDE` class for one-off founder grants on charter-proposal threads; explicit rule "silence = ACK" documented.
+
+### Policy highlights
+- **Act-first is universal.** ceo-agent acts first on every decision class except charter-restriction bumps. Founder reads the email, decides: stay silent (ACK), REJECT (undo within ~10 min), MODIFY (redirect), CLARIFY (ask for reasoning).
+- **Charter is pure restrictions.** Reading `ceo-bound.md` should answer "what can't the CEO do?" in 2 minutes. Zero scaffolding, zero explanation of what CEO CAN do.
+- **Hard invariants are architectural, not charter-editable.** Founder cannot grant CEO authority over them by editing the charter — they're enforced structurally.
+- **product-decisions.md is orchestrator-write, ceo-read.** CEO reads for precedent but doesn't write there; the orchestrator appends as decisions land.
+
+### Consumer sync
+- **Breaking for existing charters:** yes — the restructured ceo-bound.md drops § 4 Infra + code and moves hard invariants out. Founders with filled-in charters should migrate their restrictions into the new §§ 1-5 structure. Empty charters (default state) migrate cleanly by re-syncing.
+- **Breaking for any production v0.10.0/v0.10.1 runs:** yes — decision flow now executes before email. If a founder's mental model was "I approve decisions in-thread before they execute," that changes. Act-first applies to every future decision except charter bumps.
+- **Migration:** after syncing to v0.10.2, re-read your `ceo-bound.md` charter. Migrate any restrictions you had to the new §§ 1-5 shape. Re-enter danger-builder mode; behavior now matches the documented act-first flow.
+
+---
+
 ## v0.10.1 — 2026-04-23
 
 Clarifies nudge semantics: **fire-and-notify, not fire-and-wait**. Stall interventions execute the moment ceo-agent decides; the email is notification of something already done, not a request for approval. Founder retains post-hoc override via REJECT / MODIFY reply.
