@@ -34,6 +34,39 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.8.1 — 2026-04-23
+
+Semantic change: replaces daily digest with per-decision notifications under `danger-builder`. Same Resend mechanism, different cadence and body format. Renames directory, renames env vars, updates all cross-references.
+
+### Changed — delivery model
+- **Per-decision emails replace daily digest.** One email per CEO decision, fired immediately after the audit entry is written to `Planning/ceo-digest-YYYY-MM-DD.md`. No midnight-UTC batching. Email body capped at ~12 lines for scannability; full rationale stays in the audit file.
+- **Subject-line prefixes for urgency signaling:** `⚠ ONE-WAY` (irreversible), `⚠ CHARTER PROPOSAL` (restriction bump), `⚠ HARD-STOP OVERRIDDEN` (BOARD veto authorized anyway), `NOVEL` (no precedent).
+- **Cascade safety:** 10 consecutive delivery failures in 1 hour halt the loop with STATUS=BLOCKED. If founder cannot be reached, don't keep deciding.
+
+### Renamed
+- Directory: `command-center/management/digest-delivery/` → `command-center/management/notifications/`
+- Env vars: `CEO_DIGEST_EMAIL_TO` → `CEO_NOTIFY_EMAIL_TO`, `CEO_DIGEST_EMAIL_FROM` → `CEO_NOTIFY_EMAIL_FROM`, `CEO_DIGEST_PROJECT_NAME` → `CEO_NOTIFY_PROJECT_NAME`
+- Flag-file field: `digest_to:` → `notify_to:`
+
+### Changed — files
+- `command-center/management/notifications/resend.md` — rewritten for per-decision model. New sections: why per-decision-not-batched, per-decision email template, charter-proposal template, activation/deactivation/halt templates, cascade-safety failure handling, rate-limit recommendations.
+- `command-center/management/danger-builder-mode.md` — "Digest delivery (daily)" section replaced with "Notifications (per-decision, via Resend)". Tick behavior step 10 updated. Audit + rollback section reflects real-time email signal. Deactivation updated.
+- `command-center/management/ceo-bound.md` — § 0 prerequisites updated (new env var names). § 8 Reporting rewritten to describe notification mechanism + audit log as separate concepts.
+- `command-center/Sub-agent Instructions/ceo-agent-instructions.md` — decision procedure now 7 steps (split old "write digest entry" into "write audit entry" + "send notification email"). Audit entry format includes `Notification sent:` field with Resend message-id. New "Notification email format" section references the template in `notifications/resend.md`.
+- `CLAUDE.md` — trigger row updated (path + concept).
+- `command-center/VERSION` — bumped to 0.8.1.
+
+### Unchanged
+- `Planning/ceo-digest-YYYY-MM-DD.md` file still exists and fills the same role: chronological append-only audit log for retro / post-mortem / rollback. The per-decision email is the push; this file is the log. Two separate roles, neither replaces the other.
+- BOARD → ceo-agent routing, charter semantics, kill-switch, prerequisites, onboarding carve-out — all unchanged.
+
+### Consumer sync
+- **Breaking:** yes, but only for consumers who already activated `danger-builder` under v0.8.0. Since v0.8.0 shipped same day as v0.8.1 and no active consumers exist yet, practical breakage is zero.
+- **Changed files (safe-overwrite):** all listed above — pure semantic shift, no project-local content
+- **Migration for early v0.8.0 adopters:** (1) rename env vars (`CEO_DIGEST_*` → `CEO_NOTIFY_*`), (2) update any scripts or shell profiles referencing old names, (3) re-run `danger-builder` activation to pick up new flag-file field naming.
+
+---
+
 ## v0.8.0 — 2026-04-23
 
 Ships `danger-builder` — fourth operating mode for indefinite (365-day) autonomous operation. Adds `ceo-agent` as BOARD tiebreaker + HARD-STOP resolver + founder-ask fallback, a founder-authored `ceo-bound.md` charter that restricts (not approves) CEO authority, and daily Resend-delivered digest. Every existing stage + rule that could previously escalate to founder under full-autonomy now has a parallel danger-builder branch routing to ceo-agent.

@@ -14,8 +14,8 @@ Charter is founder-edited only. The CEO cannot amend it. Any restriction change 
 
 These are NOT restrictions — they're setup requirements the CEO verifies at mode entry. If any fail, mode entry aborts.
 
-- [ ] `RESEND_API_KEY` env var set (for daily digest)
-- [ ] `CEO_DIGEST_EMAIL_TO` env var set (founder email address)
+- [ ] `RESEND_API_KEY` env var set (for per-decision notifications)
+- [ ] `CEO_NOTIFY_EMAIL_TO` env var set (founder email address)
 - [ ] `Planning/` directory exists and is writable
 - [ ] Kill-switch mechanism tested (see § 7)
 - [ ] `product/FOUNDER-BETS.md` exists and is non-empty (strategic context)
@@ -93,13 +93,14 @@ Alternative halt mechanisms (all active simultaneously):
 
 ## 8. Reporting
 
-Daily digest path: `Planning/ceo-digest-YYYY-MM-DD.md`
-Daily digest email: delivered via Resend to `$CEO_DIGEST_EMAIL_TO`
+**Notification mechanism:** per-decision emails via Resend to `$CEO_NOTIFY_EMAIL_TO`. One email per CEO decision, sent immediately after the decision is recorded. No daily batching. See `command-center/management/notifications/resend.md` for the full spec.
 
-Founder review cadence: `(set this — daily / weekly / on-alert)`
-Founder response SLA (how long before founder acknowledges digest): `(set this)`
+**Audit log path:** `Planning/ceo-digest-YYYY-MM-DD.md` — daily append-only log of every decision with full rationale. This is the retro/post-mortem surface; emails are the push summary.
 
-Weekly summary path: `Planning/ceo-weekly-<ISO-week>.md` (rolls up 7 daily digests)
+**Founder review cadence:** `(set this — per-email / daily / on-alert-only)`
+**Founder response SLA:** `(set this — how long before founder acknowledges or objects to a decision email)`
+
+**Weekly summary:** `Planning/ceo-weekly-<ISO-week>.md` (optional — rolls up a week's daily audit files for retro purposes; not emailed, generated on demand).
 
 ## 9. Charter revision protocol
 

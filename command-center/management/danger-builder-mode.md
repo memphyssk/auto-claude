@@ -1,8 +1,8 @@
 # Mode — Danger-Builder
 
-Unconditional wave-loop execution with **ceo-agent as BOARD tiebreaker + hard-stop resolver + founder-ask fallback**. Founder reviews decisions via daily Resend-delivered digest but does not gate runtime. Intended for indefinite (365-day) autonomous operation.
+Unconditional wave-loop execution with **ceo-agent as BOARD tiebreaker + hard-stop resolver + founder-ask fallback**. Founder is notified per-decision via Resend email but does not gate runtime. Intended for indefinite (365-day) autonomous operation.
 
-**Relationship to full-autonomy:** `danger-builder` extends full-autonomy. Everything `full-autonomy` does, `danger-builder` also does. The addition: when BOARD splits, deadlocks, or a member issues a HARD-STOP veto, ceo-agent resolves instead of routing to founder. When any other would-be founder-ask fires, ceo-agent resolves. The founder is reached only via kill-switch or digest.
+**Relationship to full-autonomy:** `danger-builder` extends full-autonomy. Everything `full-autonomy` does, `danger-builder` also does. The addition: when BOARD splits, deadlocks, or a member issues a HARD-STOP veto, ceo-agent resolves instead of routing to founder. When any other would-be founder-ask fires, ceo-agent resolves. The founder is reached only via kill-switch, session message, or per-decision notification email.
 
 **Hard prerequisite:** `ceo-bound.md` must exist at `command-center/management/ceo-bound.md`. Charter is founder-authored and defines the *restrictions* on ceo-agent authority. A blank or missing charter = unlimited ceo-agent authority, which is usually not what you want — always review `ceo-bound.md` before activating.
 
@@ -25,7 +25,7 @@ All of the following MUST be true. If any fails, abort mode entry and surface to
 - [ ] `command-center/management/ceo-bound.md` exists and is non-empty
 - [ ] `command-center/management/ceo-bound.md` § 0 "Mode activation prerequisites" all boxes can be checked (verify each)
 - [ ] `RESEND_API_KEY` env var is set (`[[ -n "$RESEND_API_KEY" ]]`)
-- [ ] `CEO_DIGEST_EMAIL_TO` env var is set
+- [ ] `CEO_NOTIFY_EMAIL_TO` env var is set
 - [ ] `Planning/` directory exists and is writable
 - [ ] `command-center/Sub-agent Instructions/ceo-agent-instructions.md` exists (ceo-agent instruction file)
 - [ ] BOARD composition is intact (all 7 member agent files present — see `board-members.md`)
@@ -41,7 +41,7 @@ started_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 mode: danger-builder
 reason: <quote user's phrasing>
 charter: command-center/management/ceo-bound.md
-digest_to: $CEO_DIGEST_EMAIL_TO
+notify_to: $CEO_NOTIFY_EMAIL_TO
 expires_on: kill-switch | founder-message | explicit-exit
 EOF
 ```
@@ -52,24 +52,27 @@ Same as full-autonomy: if `command-center/management/STATUS` is missing, write `
 
 ### 4. Send activation notice via Resend
 
-Email to `$CEO_DIGEST_EMAIL_TO`:
+Email to `$CEO_NOTIFY_EMAIL_TO` using the activation template in `command-center/management/notifications/resend.md`.
 
 ```
-Subject: danger-builder ACTIVATED — <project name> — <date>
+Subject: [ceo-agent] <project> — danger-builder ACTIVATED
 
 ceo-agent is now resolving all BOARD splits, HARD-STOPs, and former-founder-asks
 within ceo-bound.md.
 
-Daily digest arrives at <CEO_DIGEST_EMAIL_TO> each day.
-
-Kill switch:  touch /tmp/ceo-mode-stop
-Any message you send in the session halts the loop at next tick.
+You will receive one email per CEO decision. Short, scannable, actionable.
 
 Charter last modified: <mtime of ceo-bound.md>
-Restrictions active: <count of non-(no restriction) entries in ceo-bound.md>
+Restrictions active:   <count of non-(no restriction) entries>
+Started:               <ISO timestamp>
+
+Controls:
+  Kill:         touch /tmp/ceo-mode-stop
+  Session halt: send any message to the Claude Code session
+  Charter edit: edit command-center/management/ceo-bound.md (applies on next mode entry)
 ```
 
-See `command-center/management/digest-delivery/resend.md` for send mechanics.
+See `command-center/management/notifications/resend.md` for full send mechanics, templates, and failure handling.
 
 ### 5. Launch the loop
 
@@ -77,7 +80,7 @@ Invoke `/loop` skill via Skill tool with the autonomous-dynamic sentinel. Same a
 
 ### 6. Confirm in one line
 
-`Danger-builder ON. STATUS=<value>. ceo-agent resolving BOARD escalations + founder-asks within ceo-bound.md. Daily digest → <CEO_DIGEST_EMAIL_TO>. Kill: touch /tmp/ceo-mode-stop.`
+`Danger-builder ON. STATUS=<value>. ceo-agent resolving BOARD escalations + founder-asks within ceo-bound.md. Per-decision email → <CEO_NOTIFY_EMAIL_TO>. Kill: touch /tmp/ceo-mode-stop.`
 
 ### 7. End the turn
 
@@ -87,16 +90,16 @@ Invoke `/loop` skill via Skill tool with the autonomous-dynamic sentinel. Same a
 
 On every `/loop` tick under `danger-builder`:
 
-1. **Kill-switch check (FIRST).** If `/tmp/ceo-mode-stop` exists: set STATUS=BLOCKED, deliver final digest, exit loop. Do NOT call ScheduleWakeup. This supersedes all other logic.
-2. **Founder-message check.** If any founder message arrived in the session since last tick: halt loop, deliver digest up to halt point, set STATUS=BLOCKED.
+1. **Kill-switch check (FIRST).** If `/tmp/ceo-mode-stop` exists: set STATUS=BLOCKED, send halt email (see § Notifications), exit loop. Do NOT call ScheduleWakeup. This supersedes all other logic.
+2. **Founder-message check.** If any founder message arrived in the session since last tick: halt loop, send halt email, set STATUS=BLOCKED.
 3. **STATUS mode check.** Read `command-center/management/STATUS`. If value is `STOP`: halt loop per § 1 above.
-4. **Read charter.** Re-read `ceo-bound.md`. If modified since last tick, respect new restrictions immediately. If materially changed, flag in digest.
+4. **Read charter.** Re-read `ceo-bound.md`. If modified since last tick, respect new restrictions immediately. If materially changed, include a "charter changed" note in the next decision's notification email.
 5. **Route by STATUS value** (same table as full-autonomy): RUNNING / HANDOFF / IDLE / BLOCKED / DONE.
 6. **Execute routed action** until natural pause or 75% context budget.
 7. **Under 75% context rule:** write handoff.md, set STATUS=HANDOFF, end turn (unchanged from full-autonomy).
 8. **Update STATUS before ending turn.**
 9. **Call ScheduleWakeup** with delay per STATUS table, unless STATUS=DONE or halted.
-10. **Append to today's digest** any decisions ceo-agent made this tick. Digest is delivered at end of day (midnight UTC or first tick of new calendar day), not per tick.
+10. **Per-decision notification.** Whenever ceo-agent completes a decision this tick, immediately after writing the entry to `Planning/ceo-digest-YYYY-MM-DD.md`, send the notification email via Resend. One email per decision. See `command-center/management/notifications/resend.md` for templates.
 
 ### STATUS routing table (same as full-autonomy)
 
@@ -177,26 +180,33 @@ Destructive actions do NOT halt the loop under `danger-builder` — they flow th
 
 ---
 
-## Digest delivery (daily)
+## Notifications (per-decision, via Resend)
 
-At the first tick of a new calendar day (UTC), or at any halt:
+One email per CEO decision, sent immediately after the decision entry lands in `Planning/ceo-digest-YYYY-MM-DD.md`. No daily batching.
 
-1. Read `Planning/ceo-digest-YYYY-MM-DD.md` (yesterday's file)
-2. Prepend summary header per `ceo-agent-instructions.md` § "Digest entry format"
-3. Deliver via Resend per `command-center/management/digest-delivery/resend.md`
-4. On delivery success: write marker to `Planning/.digest-sent-YYYY-MM-DD`
-5. On delivery failure: retry 3 times with backoff; after 3 failures, append error to next day's digest and continue (do NOT halt — digest failure is not a decision failure)
+Notification triggers:
 
-Today's in-progress decisions accumulate in `Planning/ceo-digest-<today>.md` throughout the day.
+1. **CEO decision recorded** → per-decision email (primary case, fires after every decision)
+2. **Charter-restriction bump** → charter-proposal email (distinct subject prefix)
+3. **Mode activation** → activation email (one-shot at mode entry)
+4. **Mode deactivation** → deactivation email (one-shot at exit)
+5. **Halt event** (kill-switch, charter destroyed, cascade) → halt email
+
+Send mechanics + templates + failure handling: see `command-center/management/notifications/resend.md`. That file is the single source of truth for notification format.
+
+Key points:
+- **Body is capped ~12 lines.** Full decision rationale still lands in `Planning/ceo-digest-YYYY-MM-DD.md` (the audit log); the email is the push summary.
+- **Failure handling:** 3 retries with exponential backoff. Single failure = log + continue. Cascade (10 failures in 1 hour) = halt loop with STATUS=BLOCKED. Founder cannot be reached = don't keep deciding.
+- **The daily `Planning/ceo-digest-YYYY-MM-DD.md` file still exists** as the audit surface. Email is the push; file is the log. Two separate roles.
 
 ---
 
 ## Audit + rollback
 
-Same surface as BOARD under full-autonomy:
-- Every ceo-agent decision in daily digest
+Same surface as BOARD under full-autonomy, plus per-decision email signal:
+- Every ceo-agent decision emits a notification email (push) + appends to the daily audit file (log)
 - Founder can stop session at any time via kill-switch or message
-- Founder reviews digest → disagrees → session stopped → orchestrator rolls back the specific decision's artifacts (revert commit, restore task status, undo file writes)
+- Founder reviews email → disagrees → session stopped → orchestrator rolls back the specific decision's artifacts (revert commit, restore task status, undo file writes). The per-decision email is designed to enable founder response within minutes, not next-day.
 - `/retro` captures the pattern → routes per `conflict-resolution.md` § Retro feedback loop
 - Retro lessons flow back into `ceo-agent-instructions.md` via founder edits (CEO cannot self-amend instructions)
 
@@ -204,7 +214,7 @@ Same surface as BOARD under full-autonomy:
 
 ## Latency + cost
 
-Per ceo-agent invocation: ~30-60 sec + ~20-30K tokens (single agent, fresh context, reading list + decision + digest write).
+Per ceo-agent invocation: ~30-60 sec + ~20-30K tokens (single agent, fresh context, reading list + decision + digest-file write + notification email send).
 
 Compared to BOARD (~40-50K tokens, 7 parallel agents, ~1-2 min): ceo-agent is faster and cheaper, but only fires on BOARD failures. Net cost per wave ~= BOARD baseline + occasional ceo-agent.
 
@@ -235,9 +245,8 @@ When deactivated:
 1. Remove `Planning/.autonomous-session` OR flip `mode:` to `founder-review` / `semi-assisted` / `full-autonomy`
 2. Do NOT modify `command-center/management/STATUS` — preserve wave state
 3. Exit `/loop` — do NOT call ScheduleWakeup
-4. Deliver final digest for current day (partial day allowed)
-5. Send Resend notice: `danger-builder DEACTIVATED — next escalation routes to <new mode's behavior>`
-6. Confirm in one line: `Danger-builder ended. STATUS=<value>. Final digest delivered. Next escalation: <new routing>.`
+4. Send deactivation email (template in `notifications/resend.md`) — session summary: decisions made, charter proposals, novel decisions, session duration
+5. Confirm in one line: `Danger-builder ended. STATUS=<value>. Deactivation email sent to <CEO_NOTIFY_EMAIL_TO>. Next escalation: <new routing>.`
 
 ---
 
