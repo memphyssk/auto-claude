@@ -79,6 +79,18 @@ Under full-autonomy, the following resolve by rule, not by question, and NEVER g
 
 If you write "My preference: X" in any checkpoint under full-autonomy, X is the decision — execute it. You MUST NOT emit the "but if you want Y …" alternative tail.
 
+### Anti-pattern — waiting on external events is NOT a reason to end the turn
+
+Under full-autonomy, you MUST NOT end a turn because an external event is pending (Railway/Vercel/Netlify deploy, GitHub Actions CI, DNS propagation, Stripe/Auth0 tier activation, etc.). Phrases like "remaining stages need the deploy to land first", "best run in a fresh session", "needs live infra verification before 5b", or "I stopped at merge since the remaining stages need X" are **protocol violations** — they are the unilateral-stop version of the banned "continue vs fresh session?" question.
+
+When work is blocked on wall-clock wait for an external event, you MUST instead do one of:
+
+1. **Wait in-loop.** Call `ScheduleWakeup` with a delay appropriate to the external (deploy ~180s, CI ~300s, DNS ~900s), end the turn, and on next tick run the readiness check (e.g. `curl -sf $PROD_URL/healthz`, `gh run list --limit 1`, `railway status`). If ready, proceed to the next stage in the same turn; if not, re-schedule.
+
+2. **Write HANDOFF with a poll-condition.** In `command-center/management/handoff.md`, include a shell one-liner that returns exit code 0 when the external is ready. Set STATUS=HANDOFF, `ScheduleWakeup` with the delay, end turn. Next tick runs the one-liner first; on success proceed, on failure re-HANDOFF with the same condition.
+
+The loop is the session. A tick spent waiting costs almost nothing. There is no valid third option — no "end here, resume in a fresh session for cleanliness." If you catch yourself writing any of the violation phrases above, stop and choose option 1 or 2 instead.
+
 ## Routing table
 
 Under `mode: full-autonomy`, these escalations route to BOARD:
