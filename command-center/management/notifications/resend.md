@@ -172,14 +172,6 @@ On non-200 response or curl exit non-zero:
 
 The cascade threshold is the key safety measure: it prevents the "500 decisions emailed to a dead address" scenario by forcing the loop to stop when signal loss is persistent.
 
-## Rate limits
-
-- **Resend free tier:** 100 emails/day, 3000/month.
-- **Expected CEO decision rate:** varies by project phase — 1-5/day in steady operation, 20-50/day during active scope or crisis work.
-- **Recommendation:** move to Resend paid tier ($20/mo, 50k emails/mo) once your expected rate exceeds ~50/day. The cost is negligible compared to what CEO-mode is doing; don't let a rate-limit failure halt the loop.
-
-If rate limit is hit mid-loop, the cascade handling above kicks in — loop eventually halts rather than silently dropping notifications.
-
 ## Verification before mode activation
 
 At `danger-builder` mode entry, run a connectivity test:

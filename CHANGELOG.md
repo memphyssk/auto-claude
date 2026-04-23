@@ -34,6 +34,19 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.8.2 — 2026-04-23
+
+Trivial cleanup.
+
+### Removed
+- `command-center/management/notifications/resend.md` — "Rate limits" section removed. Pricing and tier recommendations are external to the brain and drift — consumers check Resend's own docs when they need them.
+
+### Consumer sync
+- **Breaking:** no. Docs-only.
+- **Migration action:** none.
+
+---
+
 ## v0.8.1 — 2026-04-23
 
 Semantic change: replaces daily digest with per-decision notifications under `danger-builder`. Same Resend mechanism, different cadence and body format. Renames directory, renames env vars, updates all cross-references.
