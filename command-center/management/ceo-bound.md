@@ -18,6 +18,7 @@ These are NOT restrictions — they're setup requirements the CEO verifies at mo
 - [ ] `CEO_INBOX_ID` env var set (AgentMail inbox ID for ceo-agent mailbox — e.g. `ceo@<your-domain>`)
 - [ ] Custom domain verified at AgentMail (per `command-center/setup-tools/install.md` § 1 "AgentMail — custom domain + ceo-agent inbox setup")
 - [ ] `CEO_NOTIFY_EMAIL_TO` env var set (founder's email — who receives + replies)
+- [ ] `command-center/management/STATUS-meta.yaml` readable (bootstrapped automatically on first tick if missing)
 - [ ] `Planning/` directory exists and is writable
 - [ ] Kill-switch mechanism tested (see § 7)
 - [ ] `product/FOUNDER-BETS.md` exists and is non-empty (strategic context)
@@ -119,6 +120,33 @@ Even under `danger-builder` with ceo-agent active, these remain out of reach. Th
 - **Amending `command-center/product/FOUNDER-BETS.md`.** Founder-only. CEO may *question* a bet in the digest but cannot change one.
 - **Halting the loop.** Kill-switch is founder-only control.
 - **Onboarding loop (v0-v11).** Runs before `danger-builder` can activate; uses founder-review mode regardless. BOARD and CEO are both OFF during onboarding.
+
+## 11. ceo-owned tools — full read+write authority
+
+Tools listed here grant ceo-agent **full authority** (bypassing the default "read-only analysis" scope in `Sub-agent Instructions/ceo-agent-instructions.md` § Tool invocation authority — Tier 2). Silent here = tool follows the default read-only-for-analysis rule.
+
+This allowlist does NOT bypass **Tier 3 execution rules** — writes to project state (code, infrastructure, user data) still route through specialists regardless of what's listed here. This section is for tools that are *ceo-agent's own infrastructure* (its mailbox, future: its Slack, its calendar) where "write" means updating the agent's own state, not the project's.
+
+```yaml
+ceo_owned_tools:
+  # agentmail — ceo-agent's own mailbox. Sends, replies, manages thread
+  # labels, reads inbox, creates drafts. Full read+write by definition
+  # because the agent IS the mailbox owner. Delivery mechanism for all
+  # management email; see notifications/agentmail.md.
+  - agentmail
+
+  # Add more as you extend ceo-agent's infrastructure. Examples:
+  # - slack       (if you add a #ceo-agent Slack channel)
+  # - calendar    (if you add a scheduling integration)
+  # - task-master (if you want CEO to directly manage TaskMaster rows
+  #               instead of routing through the orchestrator — note:
+  #               this is a meaningful scope expansion; consider impact
+  #               before enabling)
+```
+
+**Rule of thumb for what belongs here:**
+- Tools where "write" only affects ceo-agent's own state → add
+- Tools where "write" affects project code, infrastructure, user data, or external commitments → do NOT add; keep routed through specialists
 
 ---
 

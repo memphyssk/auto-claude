@@ -1,0 +1,44 @@
+# STATUS-meta.yaml — ceo-agent stall-monitor tracking file
+#
+# This file is managed automatically under `danger-builder` mode.
+# Every /loop tick, ceo-agent reads this file, updates `last_ceo_check_at`
+# + `last_ceo_check_saw_status`, and uses the gate conditions (see
+# `Sub-agent Instructions/ceo-agent-instructions.md` § Stall-monitor procedure)
+# to decide whether to intervene.
+#
+# DO NOT hand-edit during an active danger-builder run. The file is
+# overwritten every tick. If you need to reset state, halt the loop
+# (kill-switch / session message), delete this file, and re-enter
+# danger-builder — bootstrap will recreate it.
+#
+# Outside danger-builder mode, this file is inert and ignored.
+
+# ───────────────────── schema ─────────────────────
+#
+# current                     (string) — current STATUS value:
+#                                        RUNNING | HANDOFF | IDLE | BLOCKED | DONE
+# last_modified_at            (ISO-8601 timestamp) — when `current` last changed
+# last_ceo_check_at           (ISO-8601 timestamp) — when ceo-agent last read this file
+# last_ceo_check_saw_status   (string) — what value ceo-agent saw on its last read
+# consecutive_idle_ticks      (integer) — counter: increments while current=IDLE,
+#                                         resets to 0 on any state change or nudge
+#                                         intervention. Informational; not used
+#                                         by the gate (the gate uses timestamp delta).
+#
+# ───────────────────── gating logic ─────────────────────
+#
+# ceo-agent engages stall handler if BOTH:
+#   (1) current == last_ceo_check_saw_status    (no movement since last check)
+#   (2) (now - last_modified_at) >= 600 seconds (STATUS sat for ≥10 min)
+#
+# Else: agent updates last_ceo_check_* fields and returns without intervention.
+
+# ───────────────────── current state ─────────────────────
+# (Placeholder values below are replaced on first tick. File is created
+# via bootstrap if missing when danger-builder mode activates.)
+
+current: IDLE
+last_modified_at: 1970-01-01T00:00:00Z
+last_ceo_check_at: 1970-01-01T00:00:00Z
+last_ceo_check_saw_status: IDLE
+consecutive_idle_ticks: 0

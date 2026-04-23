@@ -34,6 +34,49 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.10.0 — 2026-04-23
+
+ceo-agent becomes a constant-on ticking entity with tool-invocation authority and a stall-monitor role. Under `danger-builder`, ceo-agent runs as step 0 of every tick — checks if the orchestrator has stalled, and nudges forward when it has. Also gains a 3-tier tool authority model (charter-owned + read-only + execution-routed) so it can consult skills/agents/MCPs/CLIs for better decisions without bypassing specialist safety.
+
+### Added — tool authority
+- `command-center/management/ceo-bound.md` § 11 — new `ceo_owned_tools` YAML allowlist (founder-editable). Default starter: `agentmail`. Tools listed here bypass the Tier-2 read-only rule (full authority for operations on ceo-agent's own state) but never bypass Tier-3 execution rules (project-state writes still route through specialists).
+- `Sub-agent Instructions/ceo-agent-instructions.md` § Tool invocation authority — three tiers explicitly defined:
+  - **Tier 1** (ceo-owned per charter § 11) — full read+write
+  - **Tier 2** (read-only analysis) — free invocation up to 5-specialist budget per decision; examples table covers skills, agents, MCPs, CLIs
+  - **Tier 3** (execution) — routes through specialists regardless of Tier 1/2 status
+- **5-specialist budget per decision** enforced with `specialists_spawned: N` field in audit entry. Reaching cap forces decide-or-propose-charter-amendment.
+
+### Added — stall monitor
+- `command-center/management/STATUS-meta.yaml` — new file tracking ceo-agent's gating state. Fields: `current`, `last_modified_at`, `last_ceo_check_at`, `last_ceo_check_saw_status`, `consecutive_idle_ticks`. Bootstrapped on first tick under danger-builder.
+- `Sub-agent Instructions/ceo-agent-instructions.md` § Stall-monitor procedure — complete spec:
+  - Gating: engage only when STATUS unchanged since last check AND `(now - last_modified_at) >= 600s`
+  - Classification table for 9 stall scenarios (IDLE+backlog / IDLE+empty / BLOCKED+monitor-stale / BLOCKED+charter-pending / etc.)
+  - Intervention output: audit entry + `⚠ NUDGE` email + STATUS-meta update
+  - No-op output: STATUS-meta fields updated, no audit/email (keeps noise low)
+  - Respects founder precedence — charter-amendment-pending and hard-stop-awaiting-founder stalls are never resolved by nudge
+
+### Changed
+- `command-center/management/danger-builder-mode.md` — tick behavior gains **step 0: ceo-agent stall check** before any orchestrator logic. Step ordering documented: step 0 (stall) → step 1 (kill) → step 2 (session msg) → step 3 (STATUS mode) → step 4 (inbox) → step 5 (charter) → step 6 (route) → step 7-11 (execute + notify). Rationale: founder replies that resolve stalls should be processed same-tick, so stall check runs before inbox check.
+- `danger-builder-mode.md` — STATUS routing table: IDLE and BLOCKED delays now **600s (10 min)**, aligned with stall-monitor threshold. One tick per stall window = one fresh check. RUNNING/HANDOFF still 60s.
+- `notifications/agentmail.md` — polling cadence note updated from "5 min" → "10 min" to match. Founder-reply SLA is now "within ~10 min of sending."
+- `ceo-bound.md` § 0 prereqs — STATUS-meta.yaml listed (bootstrapped on first tick).
+- `Sub-agent Instructions/ceo-agent-instructions.md` — audit entry format gains `Specialists spawned:` + `Nudge context:` fields.
+
+### Policy highlights
+- **ceo-agent intervenes only when orchestrator stalls.** Active work (RUNNING / HANDOFF with motion) passes through without ceo-agent engagement. The gate prevents tactical interference.
+- **Charter binds nudges same as decisions.** A nudge can't authorize something the charter forbids.
+- **Read-only by default, execution routes through specialists.** ceo-agent spawns `architect-reviewer` to analyze blast radius freely, but `gh pr merge` always goes through the orchestrator's wave-loop discipline.
+- **ceo_owned_tools allowlist is the founder's escape hatch.** Grants full authority for specific tools (default: agentmail). Adding more is an explicit founder decision with documented intent.
+- **Every intervention is audited + emailed.** Nudges produce the same artifacts as regular decisions — audit entry with `Nudge context:` field, email with `⚠ NUDGE` subject prefix.
+
+### Consumer sync
+- **Breaking:** no. Purely additive — mode entry creates STATUS-meta.yaml automatically if missing; existing `danger-builder` workflow unchanged except for the new step 0 behavior.
+- **New files:** `command-center/management/STATUS-meta.yaml` (template)
+- **Changed files:** `danger-builder-mode.md`, `ceo-bound.md`, `ceo-agent-instructions.md`, `notifications/agentmail.md`, `VERSION`
+- **Migration:** no action needed. On first `danger-builder` activation under v0.10.0, ceo-agent bootstraps STATUS-meta.yaml with current timestamp and starts gating from there. Existing charters continue to work; `ceo_owned_tools` defaults to agentmail if not explicitly set.
+
+---
+
 ## v0.9.0 — 2026-04-23
 
 Management email under `danger-builder` switches from **Resend (outbound only)** to **AgentMail (two-way flow)**. ceo-agent now has a persistent mailbox, sends each decision as a new thread, and reads founder replies every 5 minutes to act on approve / reject / modify / clarify classifications.

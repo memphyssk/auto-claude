@@ -26,7 +26,7 @@ Set at machine scope (`~/.bashrc`) for agent inheritance. `CEO_INBOX_ID` is opaq
 
 ---
 
-## Tick-behavior integration (5-min polling)
+## Tick-behavior integration (10-min polling — aligned with ceo-agent stall monitor cadence)
 
 Every `/loop` tick under `danger-builder` now begins with **inbox read** before any decision work. See `danger-builder-mode.md` § Tick behavior for full flow. Condensed:
 
@@ -38,7 +38,7 @@ Every `/loop` tick under `danger-builder` now begins with **inbox read** before 
    - Mark thread read: update message label to remove `unread` (see CLI help for `inboxes:messages update`)
 3. Continue to regular tick work (STATUS routing, decisions, etc.)
 
-**Idle-tick cadence is 300s (5 min)** — founder replies are checked every 5 minutes when STATUS=IDLE. This overrides full-autonomy's 1800s IDLE delay. Active ticks (RUNNING/HANDOFF) still use 60s.
+**Idle-tick cadence is 600s (10 min)** — founder replies are checked every 10 minutes when STATUS=IDLE or BLOCKED. This cadence aligns with the ceo-agent stall monitor's 600s threshold (see `danger-builder-mode.md` § Tick behavior step 0 + `ceo-agent-instructions.md` § Stall-monitor procedure) so a single tick covers both inbox-read and stall-check. Active ticks (RUNNING/HANDOFF) still use 60s.
 
 **Failure on inbox read:** retry with exponential backoff (30s → 2min → 10min). After 3 failures for a single tick, skip inbox read *this tick* but continue with decisions; log to `Planning/agentmail-failures.log`. Cascade: 10 consecutive inbox-read failures in 1 hour = halt loop (STATUS=BLOCKED). Same principle as notification failures: if founder can't be reached, don't keep deciding.
 
@@ -161,7 +161,7 @@ ceo-agent is now resolving all BOARD splits, HARD-STOPs, and former-founder-asks
 within ceo-bound.md.
 
 Per-decision emails arrive in this thread. Reply in-thread to approve / reject /
-modify / ask for clarification. Agent reads your reply within 5 minutes.
+modify / ask for clarification. Agent reads your reply within 10 minutes.
 
 Charter last modified: <mtime>
 Restrictions active:   <count>

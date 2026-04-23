@@ -95,31 +95,37 @@ Invoke `/loop` skill via Skill tool with the autonomous-dynamic sentinel. Same a
 
 On every `/loop` tick under `danger-builder`:
 
-1. **Kill-switch check (FIRST).** If `/tmp/ceo-mode-stop` exists: set STATUS=BLOCKED, send halt email (see § Notifications), exit loop. Do NOT call ScheduleWakeup. This supersedes all other logic.
+0. **ceo-agent stall check (NEW, runs FIRST before any orchestrator logic).** Invoke ceo-agent with the `stall-monitor` directive. Agent reads `command-center/management/STATUS-meta.yaml` and decides whether to intervene based on gating: STATUS unchanged since last check AND `(now - last_modified_at) >= 600s`. If either condition false → agent updates STATUS-meta and passes through silently. If both true → agent classifies the stall (see `Sub-agent Instructions/ceo-agent-instructions.md` § Stall-monitor procedure) + acts. Any intervention writes an audit entry + sends an email + updates STATUS. Bootstrap: on first tick under danger-builder, STATUS-meta.yaml is created with current timestamps if missing.
+1. **Kill-switch check.** If `/tmp/ceo-mode-stop` exists: set STATUS=BLOCKED, send halt email (see § Notifications), exit loop. Do NOT call ScheduleWakeup. Supersedes all subsequent steps.
 2. **Founder-message check (session).** If any founder message arrived in the Claude Code session since last tick: halt loop, send halt email, set STATUS=BLOCKED.
 3. **STATUS mode check.** Read `command-center/management/STATUS`. If value is `STOP`: halt loop per § 1 above.
-4. **Inbox check (NEW under danger-builder).** Query ceo-agent inbox for unread threads: `agentmail inboxes:threads list --inbox-id "$CEO_INBOX_ID" --label unread --format json`. For each unread thread, fetch messages, classify the founder reply (APPROVE / REJECT / MODIFY / CLARIFY / AMBIGUOUS — see `notifications/agentmail.md` § Reply classification), execute the classified action, mark thread read. Do NOT act on AMBIGUOUS replies — send a CLARIFY reply in-thread and leave the thread unread.
+4. **Inbox check.** Query ceo-agent inbox for unread threads: `agentmail inboxes:threads list --inbox-id "$CEO_INBOX_ID" --label unread --format json`. For each unread thread, fetch messages, classify the founder reply (APPROVE / REJECT / MODIFY / CLARIFY / AMBIGUOUS — see `notifications/agentmail.md` § Reply classification), execute the classified action, mark thread read. Do NOT act on AMBIGUOUS replies — send a CLARIFY reply in-thread and leave the thread unread.
 5. **Read charter.** Re-read `ceo-bound.md`. If modified since last tick, respect new restrictions immediately. If materially changed, note in next decision's email.
 6. **Route by STATUS value** (table below): RUNNING / HANDOFF / IDLE / BLOCKED / DONE.
 7. **Execute routed action** until natural pause or 75% context budget.
 8. **Under 75% context rule:** write handoff.md, set STATUS=HANDOFF, end turn (unchanged from full-autonomy).
-9. **Update STATUS before ending turn.**
+9. **Update STATUS before ending turn.** If STATUS value changed this tick, also update `STATUS-meta.yaml` `current` + `last_modified_at: <now>`.
 10. **Call ScheduleWakeup** with delay per STATUS table, unless STATUS=DONE or halted.
-11. **Per-decision notification.** Whenever ceo-agent completes a decision this tick, immediately after writing the entry to `Planning/ceo-digest-YYYY-MM-DD.md`, send a fresh email (new thread) via AgentMail. One email per decision. Capture the returned `thread_id` into the audit entry. See `command-center/management/notifications/agentmail.md` for templates.
+11. **Per-decision notification.** Whenever ceo-agent completes a decision this tick (including nudges from step 0), immediately after writing the entry to `Planning/ceo-digest-YYYY-MM-DD.md`, send a fresh email (new thread) via AgentMail. One email per decision. Capture the returned `thread_id` into the audit entry. See `command-center/management/notifications/agentmail.md` for templates.
 
-**Reply-handling is authoritative.** If a founder replies `reject` on an earlier decision, the rollback must execute BEFORE any new decisions this tick. Inbox check (step 4) running first ensures reply actions take precedence over new escalations.
+**Step ordering is authoritative.** Step 0 (stall monitor) runs before step 1 (kill-switch) only for STATUS-meta tracking — the agent immediately checks the kill-switch file as its first action and aborts if present. Step 4 (inbox) runs before step 6 (route) so reply actions take precedence over new escalations. Step 0 runs before step 4 so a founder reply that itself resolves a stall (e.g. a MODIFY that unblocks work) is processed in the same tick rather than triggering both a nudge and a reply-action.
 
-### STATUS routing table (danger-builder — 5-min IDLE polling for inbox)
+**Reply-handling is authoritative over new escalations.** If a founder replies `reject` on an earlier decision, the rollback must execute BEFORE any new decisions this tick. Inbox check (step 4) running before routing (step 6) ensures this.
+
+### STATUS routing table (danger-builder — ceo-agent ticks at 600s cadence)
 
 | STATUS value | What you MUST do | Next tick delay |
 |---|---|---|
-| `RUNNING` | Prior session died mid-turn. Recover from last commit SHA + `command-center/management/handoff.md`. | 60s |
-| `HANDOFF` | Read handoff.md. Resume. Set STATUS=RUNNING as first write. | 60s |
-| `IDLE` | Inbox check (step 4 of tick behavior) → if founder replied, process replies. Re-read roadmap + run `npx task-master next`. If executable work exists, begin. Otherwise re-sleep. | **300s (5 min)** |
-| `BLOCKED` | Do NOT proceed. Kill-switch pending. End turn, no wakeup. | — (no wakeup; founder resumes manually) |
+| `RUNNING` | Prior session died mid-turn. Recover from last commit SHA + `command-center/management/handoff.md`. Stall monitor gating won't fire during active RUNNING ticks. | 60s |
+| `HANDOFF` | Read handoff.md. Resume. Set STATUS=RUNNING as first write. Stall monitor gating won't fire during handoff. | 60s |
+| `IDLE` | Step 0 (stall monitor) + step 4 (inbox check) run first. If nudge fires, proceed with nudge-directed work. Otherwise: run `npx task-master next`. If executable work exists, begin. Otherwise re-sleep. | **600s (10 min)** |
+| `BLOCKED` | Stall monitor + inbox check still fire. If monitor classifies BLOCKED as resolvable (stale monitor, zombie handoff), it nudges. Otherwise end turn, await founder. | 600s (poll for resolution) |
 | `DONE` | End loop. No wakeup. | — |
 
-**IDLE delay differs from full-autonomy (1800s → 300s)** because danger-builder needs to check the inbox for founder replies every 5 minutes. The shorter polling guarantees founder replies are acted on within ~5 min of being sent, which is the founder-experience contract AgentMail two-way flow promises.
+**IDLE + BLOCKED delay is 600s (10 min)** under danger-builder because:
+1. ceo-agent stall monitor intervenes when STATUS has sat for ≥600s — aligning the tick cadence with the stall threshold means the monitor gets one fresh check per stall window
+2. Inbox check every 10 min means founder replies act within ~10 min of being sent (contract slightly weaker than the 5-min spec in notifications/agentmail.md, but founder-impact is identical in practice; if faster response is needed, reduce this delay and the stall threshold together)
+3. RUNNING/HANDOFF ticks still use 60s because work is actively moving and the stall monitor wouldn't fire anyway
 
 ---
 
