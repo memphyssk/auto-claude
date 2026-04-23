@@ -34,6 +34,48 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.8.0 — 2026-04-23
+
+Ships `danger-builder` — fourth operating mode for indefinite (365-day) autonomous operation. Adds `ceo-agent` as BOARD tiebreaker + HARD-STOP resolver + founder-ask fallback, a founder-authored `ceo-bound.md` charter that restricts (not approves) CEO authority, and daily Resend-delivered digest. Every existing stage + rule that could previously escalate to founder under full-autonomy now has a parallel danger-builder branch routing to ceo-agent.
+
+### Added
+- `command-center/management/danger-builder-mode.md` — mode spec: prerequisite verification at entry, 5-step mode-entry sequence, STATUS routing (shared with full-autonomy plus kill-switch / founder-message / charter-destroyed checks), routing table for BOARD-to-CEO escalation, digest delivery protocol, precedence rules, deactivation sequence
+- `command-center/management/ceo-bound.md` — CEO charter template. **Restrictions-only semantics:** blank sections = unlimited CEO authority; explicit restrictions bind. Eleven sections: mode-activation prerequisites (§ 0), financial (§ 1), external commitments (§ 2), customer-facing (§ 3), infra + code (§ 4), strategic (§ 5), novelty handling (§ 6), kill-switch (§ 7), reporting (§ 8), charter revision protocol (§ 9), permanent hard limits (§ 10). Founder-edited only; CEO cannot amend, can only propose via `Planning/ceo-charter-proposals.md`.
+- `command-center/Sub-agent Instructions/ceo-agent-instructions.md` — 18-pattern cognitive profile synthesized from `/plan-ceo-review` (classification instinct, paranoid scanning, inversion reflex, focus as subtraction, people-first sequencing, speed calibration, proxy skepticism, narrative coherence, temporal depth, founder-mode bias, wartime awareness, courage accumulation, willfulness as strategy, leverage obsession, hierarchy as service, edge case paranoia, subtraction default, design for trust). Voice rules inherited from gstack (no em dashes, no AI vocabulary, no banned phrases, direct-concrete-sharp tone, max 1 dry aside per digest). Decision procedure with 6 ordered steps: read inputs → scan charter → apply patterns → decide → write digest entry → emit decision. Digest format specified. Never-do list: silently amend charter, amend FOUNDER-BETS.md, skip digest, self-rubber-stamp past decisions, ignore charter restrictions.
+- `command-center/management/digest-delivery/resend.md` — Resend integration spec: env vars (`RESEND_API_KEY`, `CEO_DIGEST_EMAIL_TO`, `CEO_DIGEST_EMAIL_FROM`, `CEO_DIGEST_PROJECT_NAME`), send mechanics (plain-text body, daily + activation + deactivation + halt triggers), failure handling (3 retries with exponential backoff, log but never halt loop on delivery failure), rate limits, security notes, pre-activation connectivity test.
+
+### Changed — management/
+- `command-center/management/mode-switching.md` — four-mode table (was three), `danger-builder` trigger phrases, entry/exit transitions, prerequisite verification on `danger-builder` entry, extended flag file format with `charter:` and `digest_to:` fields
+- `command-center/management/board.md` — "Hard-stops — NEVER go to BOARD" section extended with full routing-by-mode table; under `danger-builder`, destructive + money + HARD-STOP all route to ceo-agent (within charter restrictions), never to founder during runtime
+- `command-center/management/conflict-resolution.md` — "Escalation path" section split into two: BOARD → founder (first three modes) and BOARD → ceo-agent (danger-builder). HARD-STOP veto semantics updated for danger-builder: weighed as strong signal, recorded in digest, not a hard halt
+
+### Changed — stages + rules
+- `command-center/rules/build-iterations/stages/stage-0b-product-decisions.md` — Step 5 Tier 3 resolution gains danger-builder branch (BOARD → ceo-agent fallback)
+- `command-center/rules/build-iterations/stages/stage-1-problem-reframing.md` — user-ask escalations (a/b/c/d) gain danger-builder branch
+- `command-center/rules/build-iterations/stages/stage-3b-design-gap.md` — 3-cap escalation gains danger-builder branch
+- `command-center/rules/build-iterations/stages/stage-7b-triage.md` — /investigate chain exhaustion gains danger-builder branch
+- `command-center/rules/build-iterations/stages/stage-11-next.md` — STATUS handling section renamed from "full-autonomy only" to "full-autonomy + danger-builder"; hard-stop branch extended
+- `command-center/rules/daily-checkpoint.md` — three-bucket resolution gains danger-builder branch (BOARD first, ceo-agent for unresolved items)
+- `command-center/rules/roadmap-refresh-ritual.md` — Step 4 founder-checkpoint gains danger-builder branch (CEO resolves; founder reviews via digest retroactively)
+- `command-center/rules/backlog-planning.md` — Step 4 user-approval gains danger-builder branch (CEO approves + reprioritizes; wave execution proceeds same tick)
+- `CLAUDE.md` — new trigger-table row for `danger-builder` activation. Always-on rule #10 rewritten for four-mode handling with explicit hard-stop routing table.
+
+### Policy highlights
+- **Charter is a limiter, not an approver.** This is a deliberate reframe from normal permission systems. Silent `ceo-bound.md` = unlimited CEO authority inside that section. Founder adds restrictions only for categories they genuinely want to stay involved in. More restrictions = more founder involvement = less autonomy.
+- **HARD-STOP vetoes route to CEO under danger-builder, not founder.** CEO weighs the veto, may still authorize, records engagement in digest. Keeps the veto as signaling tool without blocking indefinite operation.
+- **Daily digest via Resend** — not optional. A file-only digest defeats the 365-day premise (log nobody reads). Mode refuses to activate if `RESEND_API_KEY` + `CEO_DIGEST_EMAIL_TO` are not set.
+- **Kill-switch is always founder-only.** `touch /tmp/ceo-mode-stop` halts the loop. So does any session message, `STATUS=STOP`, or mode-flag change.
+- **Onboarding carve-out.** ceo-agent + BOARD both OFF during v0-v11 regardless of mode. High-taste moment; founder presence is the feature. danger-builder only activates after v11 handoff.
+
+### Consumer sync
+- **Breaking:** no. Purely additive — existing full-autonomy behavior unchanged; danger-builder is a new mode that consumers adopt opt-in.
+- **New files:** 4 files (`management/danger-builder-mode.md`, `management/ceo-bound.md`, `Sub-agent Instructions/ceo-agent-instructions.md`, `management/digest-delivery/resend.md`) — safe to pull
+- **Changed files (safe-overwrite):** stages 0b/1/3b/7b/11, daily-checkpoint, roadmap-refresh-ritual, backlog-planning, management/{mode-switching,board,conflict-resolution}.md, VERSION — assuming not customized project-side
+- **Changed files (review recommended):** `CLAUDE.md` (new trigger row + rewritten always-on rule #10 — both merge cleanly if not locally customized)
+- **Migration action:** to activate `danger-builder`: (1) fill in `command-center/management/ceo-bound.md` with your charter restrictions (default all blank = unlimited CEO authority), (2) set `RESEND_API_KEY` + `CEO_DIGEST_EMAIL_TO` env vars, (3) verify kill-switch works: `touch /tmp/ceo-mode-stop && rm /tmp/ceo-mode-stop`, (4) say "danger builder" to Claude Code. Mode entry runs prerequisite checks and aborts if anything is missing.
+
+---
+
 ## v0.7.0 — 2026-04-23
 
 Ships the `/update-tools` skill with auto-claude. The skill reads `command-center/setup-tools/install.md` as the canonical source, runs verification checks against the current machine, and prompts per item to install anything missing. Wired into onboarding v0 as the prerequisite gate; the founder can also invoke it manually anytime.

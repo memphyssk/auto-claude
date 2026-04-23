@@ -31,7 +31,7 @@ Close the current wave and pick the next task. This is the loop point — after 
    - If `<3` planned milestones: append a `proposal:refresh-ritual` entry to `Planning/pending.md` with the current planned count. Next daily checkpoint surfaces it. **Do NOT auto-fire the refresh ritual — propose only.**
    - Select the task as the next wave scope and proceed to Stage 0 regardless of health-check outcome
 
-## STATUS handling (full-autonomy only)
+## STATUS handling (full-autonomy + danger-builder)
 
 Stage 11 is the only stage that writes `command-center/management/STATUS` across a wave boundary. Stages 8–10 leave STATUS=`RUNNING`. Perform these steps in order at the end of Stage 11:
 
@@ -42,9 +42,9 @@ Stage 11 is the only stage that writes `command-center/management/STATUS` across
    - **Task found + context_used ≥ 75%** → write `command-center/management/handoff.md` pointing at wave N+1 Stage 0 (task ID, title, any pre-work notes — plan not yet authored). Set STATUS=`HANDOFF`. Commit the closeout + handoff. End turn. `ScheduleWakeup` 60s.
    - **No task executable without founder input, but pending tasks exist** (all blocked on founder input / Tier 3 / daily-checkpoint buckets non-empty after resolution attempt) → Set STATUS=`IDLE`. End turn. `ScheduleWakeup` 1800s.
    - **Zero tasks at all** (Step 5: "backlog empty, loop genuinely ended") → Set STATUS=`DONE`. End turn. Do NOT call `ScheduleWakeup`.
-   - **Hard-stop fired during Stage 11** (e.g. destructive action or money commitment surfaced in Step 3's daily-checkpoint resolution) → Set STATUS=`BLOCKED`. End turn. `ScheduleWakeup` 3600s.
+   - **Hard-stop fired during Stage 11** (e.g. destructive action or money commitment surfaced in Step 3's daily-checkpoint resolution) → under `full-autonomy`: Set STATUS=`BLOCKED`. End turn. `ScheduleWakeup` 3600s. Under `danger-builder`: route to ceo-agent per `danger-builder-mode.md` § Routing table; STATUS stays `RUNNING` once CEO decides.
 
-See `command-center/management/full-autonomy-mode.md` § Tick behavior for the full STATUS contract.
+See `command-center/management/full-autonomy-mode.md` § Tick behavior for the full STATUS contract. Under `danger-builder`, see also `command-center/management/danger-builder-mode.md` § Tick behavior — identical base plus kill-switch / founder-message / charter-destroyed halt checks.
 
 ## Deliverable
 None — this stage transitions to the next wave.

@@ -53,6 +53,7 @@ If the first routed expert fails to fix the issue:
 - If `/investigate` also fails: **mode-aware final escalation**:
   - **founder-review / semi-assisted:** escalate to user with root-cause analysis and options
   - **full-autonomy:** spawn BOARD (decision-slug `stage7b-investigate-exhausted-<finding-slug>`, default 4+/7 threshold per `command-center/management/conflict-resolution.md`). BOARD picks among: (i) accept the residual as an opportunistic finding for next wave (c/d classification), (ii) pause wave for founder review, (iii) route to a different specialist (architect-reviewer or ultrathink-debugger) with BOARD-provided context. Append to `Planning/board-digest-<YYYY-MM-DD>.md`.
+  - **danger-builder:** spawn BOARD first (same options, same threshold). If BOARD falls short or any HARD-STOP fires: spawn **ceo-agent** with the BOARD file. ceo-agent decides using full cognitive pattern set (technical reversibility weighs heavily here), appends to `Planning/ceo-digest-YYYY-MM-DD.md`, returns resolution. CEO may invoke option (iii) — routing to a different specialist — which counts as a single CEO decision even though it starts another investigation.
 
 ## Phase 3 — Log (c) and (d) items
 

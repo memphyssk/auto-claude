@@ -183,6 +183,8 @@ Read the active mode from `Planning/.autonomous-session` per `command-center/man
 - If 6+/7 threshold NOT met (e.g., 5+2, 4+3, three-way split, or hard-stop veto): fall back to `founder-review` path for this item — queue in `Planning/pending.md` + record the BOARD vote reference. Next founder-available moment (digest review or session resume) resolves
 - Append all BOARD decisions to `Planning/board-digest-<YYYY-MM-DD>.md`
 
+**Under `danger-builder`:** Tier 3 items route to BOARD first (same 6+/7 strict threshold). If BOARD reaches 6+/7: apply. If BOARD falls short OR any member issues a HARD-STOP veto: spawn **ceo-agent** per `command-center/Sub-agent Instructions/ceo-agent-instructions.md` with the BOARD file as input. ceo-agent reads `ceo-bound.md` § 5 for any strategic-decision restrictions. If charter permits (default: silent = unlimited), ceo-agent decides; entry appended to `Planning/ceo-digest-YYYY-MM-DD.md`. If charter restricts, ceo-agent writes amendment proposal to `Planning/ceo-charter-proposals.md` and escalates via digest (no mid-loop founder-ask). See `command-center/management/danger-builder-mode.md` § Routing table.
+
 The wave proceeds without waiting — implementation under a Tier 3 task blocks only if the implementer hits the un-decided branch. Most tasks can advance despite open Tier 3 questions elsewhere in the backlog.
 
 ### Step 6 — Unassigned queue health check

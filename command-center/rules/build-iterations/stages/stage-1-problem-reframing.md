@@ -106,6 +106,8 @@ Read both outputs. Consolidate:
 
 **Under `mode: full-autonomy`:** escalations (a), (b), (c), (d) route to BOARD instead of user, using the default 4+/7 threshold (see `command-center/management/full-autonomy-mode.md` § Routing table + `command-center/management/conflict-resolution.md`). Hard-stops (destructive / money / member veto) still route to founder. Decision-slug = `stage1-<verdict-class>-<wave-N>`. BOARD result applies directly to Stage 2 if 4+/7 consensus; falls back to founder-ask if threshold not met.
 
+**Under `mode: danger-builder`:** escalations (a), (b), (c), (d) route to BOARD first (same 4+/7 threshold). If BOARD falls short OR any member issues a HARD-STOP: spawn **ceo-agent** with the BOARD file. ceo-agent reads `ceo-bound.md` § 5 (strategic restrictions), decides, appends to `Planning/ceo-digest-YYYY-MM-DD.md`, and emits the verdict back to this stage. Result applies to Stage 2 same turn. See `command-center/management/danger-builder-mode.md` § Routing table.
+
 ## Skip conditions
 - Pure typo/copy fixes (<5 LOC, no logic change)
 - Pure dependency bumps

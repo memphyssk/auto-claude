@@ -31,19 +31,35 @@ For: Tier 3 product decisions.
 | 7+0+0 (unanimous) | Apply (clean decision) |
 | Any pattern with `HARD-STOP: must be human` | Escalate regardless of vote math (member veto) |
 
-## Escalation path (BOARD → founder)
+## Escalation path
 
-When BOARD escalates to founder (under full-autonomy):
+Where BOARD escalations route depends on the active mode:
+
+### Under `founder-review` / `semi-assisted` / `full-autonomy` — BOARD → founder
+
 1. Orchestrator writes `Planning/wave-<N>-board-<decision-slug>.md` with all 7 votes
 2. Appends to `Planning/board-digest-<YYYY-MM-DD>.md` § Vetoes & escalations routed back
-3. Stage waits (per current founder-review escalation handling — AskUserQuestion or pause)
+3. Stage waits (per current mode's founder-escalation handling — AskUserQuestion or pause)
 4. Wave resumes when founder answers
 
-The BOARD vote file becomes input to founder's decision — they see what the board thought, dissent included.
+### Under `danger-builder` — BOARD → ceo-agent
+
+1. Orchestrator writes `Planning/wave-<N>-board-<decision-slug>.md` with all 7 votes (same)
+2. Spawns **ceo-agent** via `Sub-agent Instructions/ceo-agent-instructions.md` with the BOARD file + decision context
+3. ceo-agent reads `ceo-bound.md` charter restrictions
+4. If a charter restriction blocks the decision: ceo-agent writes to `Planning/ceo-charter-proposals.md` and escalates to founder via daily digest (not mid-loop)
+5. If no restriction applies: ceo-agent decides, writes entry to `Planning/ceo-digest-YYYY-MM-DD.md`, emits decision back to the calling stage
+6. Wave resumes same turn
+
+ceo-agent does not vote. It decides. One outcome, recorded with rationale, cognitive-pattern citations, and reversibility classification. See `danger-builder-mode.md` § Routing table + `Sub-agent Instructions/ceo-agent-instructions.md` § Decision procedure.
+
+The BOARD vote file becomes input to ceo-agent's decision — the agent sees what the board thought, including dissent and any HARD-STOP vetoes.
 
 ## Hard-stop member veto
 
 Any BOARD member may emit `HARD-STOP: must be human — <reason>` instead of APPROVE/REJECT. This overrides the voting math — even a 7+/7 APPROVE outcome with 1 hard-stop escalates.
+
+**Under `danger-builder`, HARD-STOP routes to ceo-agent, not founder.** ceo-agent weighs the veto as strong signal, records engagement with the reason in the digest, and may still authorize if justified. This keeps the veto as a *signaling* tool (dissent is loud and visible in digest) without actually blocking execution under the pre-authorized CEO mode.
 
 Legitimate hard-stop examples:
 - **founder-proxy**: "no founder precedent in memory; this is a genuinely new call"

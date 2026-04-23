@@ -90,9 +90,9 @@ Any entry sized `XL` is split BEFORE presentation to founder — don't push mono
 
 No XL entries reach the founder approval step (§Step 4). This kills monoliths at authorship rather than at Stage 1.
 
-### Step 4 — User approval
+### Step 4 — Approval (mode-aware)
 
-Present the prioritized backlog for user approval **before** starting wave execution. Format:
+**Under `founder-review` / `semi-assisted` / `full-autonomy`:** present the prioritized backlog to the user for approval **before** starting wave execution. Format:
 
 ```
 ## Proposed backlog (next N waves)
@@ -103,6 +103,8 @@ Shall I proceed?
 ```
 
 **Do NOT spawn any wave-execution sub-agents until the user approves.** The backlog is a proposal, not a commitment. User may reorder, cut, or add items before approval.
+
+**Under `danger-builder`:** skip the user-approval step. The backlog proposal routes to **ceo-agent** which reads `ceo-bound.md` (no default restriction on backlog — § 5 applies if set), applies cognitive patterns (focus as subtraction: what shouldn't we do?), approves or reprioritizes the backlog, and appends the approved list to `Planning/ceo-digest-YYYY-MM-DD.md`. Orchestrator proceeds to wave execution same tick.
 
 ---
 

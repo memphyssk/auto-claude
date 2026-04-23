@@ -97,8 +97,9 @@ Invoke `/plan-ceo-review` on ROADMAP.md with the integrity report and fresh comp
 
 ---
 
-### Step 4 — Founder checkpoint
+### Step 4 — Founder checkpoint (mode-aware)
 
+**Under `founder-review` / `semi-assisted` / `full-autonomy`:**
 Orchestrator presents the CEO-review recommendations to the founder via `AskUserQuestion`, batched into one session. Include:
 
 1. **Per-milestone disposition** — KEEP / RETHEME / RESCOPE / DEFER / KILL / PROMOTE / DEMOTE — with one-line CEO reasoning
@@ -108,7 +109,12 @@ Orchestrator presents the CEO-review recommendations to the founder via `AskUser
 
 Founder answers. Any override replaces the CEO recommendation.
 
-**Anti-pattern:** do NOT spawn implementers or modify any file before founder resolves this checkpoint.
+**Under `danger-builder`:**
+This checkpoint routes to **ceo-agent** instead of founder. Spawn ceo-agent with the full refresh packet (Step 2 competitive sweep + Step 3 CEO-review output). ceo-agent reads `ceo-bound.md` § 5 (pivot / roadmap-refresh / product-kill authority) — all default to unlimited; explicit restrictions bind. ceo-agent resolves all four bullets in one decision pass, appends entry to `Planning/ceo-digest-YYYY-MM-DD.md` with per-milestone disposition + reasoning, returns the approved refresh state to orchestrator.
+
+Founder reviews the refresh retroactively via the daily digest. Overrides can be applied via the rollback path (session halt + manual revert of the refresh commit).
+
+**Anti-pattern:** do NOT spawn implementers or modify any file before this checkpoint resolves (regardless of mode).
 
 ---
 

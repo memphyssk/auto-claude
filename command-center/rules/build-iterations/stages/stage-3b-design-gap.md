@@ -115,6 +115,7 @@ _Note: if `/ckm:design` becomes available, swap in per `review-gate.md` — the 
 3. Mode-aware resolution:
    - **founder-review / semi-assisted:** escalate to user — defer the gap via `bug-design` tag OR pause wave per user's call
    - **full-autonomy:** spawn BOARD (decision-slug `stage3b-3cap-<feature>`, default 4+/7 threshold per `command-center/management/conflict-resolution.md`). BOARD picks among: (i) accept one of the 3 staged attempts despite reviewer concerns, (ii) defer to `bug-design` tag, (iii) pause wave (escalate back to founder). Append to `Planning/board-digest-<YYYY-MM-DD>.md`.
+   - **danger-builder:** spawn BOARD first (same options, same 4+/7 threshold). If BOARD falls short or any HARD-STOP fires: spawn **ceo-agent** with the BOARD file. ceo-agent reads `ceo-bound.md` (no specific design-gap restriction by default — CEO has authority unless charter § 5 is set), applies cognitive patterns (hierarchy as service, design for trust, subtraction default), picks one of (i)/(ii)/(iii), appends entry to `Planning/ceo-digest-YYYY-MM-DD.md`, returns resolution. See `command-center/management/danger-builder-mode.md` § Routing table.
 
 ---
 

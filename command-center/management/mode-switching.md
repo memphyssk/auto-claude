@@ -1,6 +1,6 @@
 # Mode Switching
 
-Three modes, one flag file, simple transitions.
+Four modes, one flag file, simple transitions.
 
 ## The modes
 
@@ -9,6 +9,7 @@ Three modes, one flag file, simple transitions.
 | **founder-review** (default) | Absent | Every user-ask goes to founder. Baseline. |
 | **semi-assisted** | Present with `mode: semi-assisted` | Skips Dx preview + Stage 1b checkpoint + other nice-to-haves. Strategic / hard-stops still to founder. See `semi-assisted-mode.md`. |
 | **full-autonomy** | Present with `mode: full-autonomy` | BOARD (7 members) handles all non-hard-stop escalations. Morning digest for founder audit. See `full-autonomy-mode.md`. |
+| **danger-builder** | Present with `mode: danger-builder` | ceo-agent resolves everything BOARD can't — splits, HARD-STOP vetoes, and all former-founder-asks — within `ceo-bound.md` charter restrictions. Daily Resend-delivered digest; loop runs indefinitely. See `danger-builder-mode.md`. |
 
 ## Flag file
 
@@ -16,9 +17,12 @@ Three modes, one flag file, simple transitions.
 
 ```yaml
 started_at: <ISO-timestamp>
-mode: semi-assisted | full-autonomy
+mode: semi-assisted | full-autonomy | danger-builder
 reason: <one-line quote of user's phrasing>
 expires_on: user-says-stop | orchestrator-finishes-all-work
+# danger-builder only:
+charter: command-center/management/ceo-bound.md
+digest_to: <value of CEO_DIGEST_EMAIL_TO env var>
 ```
 
 When absent → **founder-review** by default.
@@ -35,14 +39,22 @@ When absent → **founder-review** by default.
 - "full autonomy" / "go completely autonomous" / "board mode"
 - "unconditional loop" / "don't stop for anything"
 
+### Activate danger-builder
+- "danger builder" / "danger-builder mode"
+- "ship it mode" / "ceo mode" / "ceo-agent mode"
+- "run indefinitely" / "365 mode"
+- "full delegation" / "total autonomy"
+
 ### Return to founder-review
 - "I'm back" / "I'm awake"
 - "pause" / "let's discuss" / "stop running"
 - "exit autonomous mode" / "stop the autonomous run"
+- "stop danger-builder" / "exit ceo mode"
 
 ### Switch between modes mid-run
 - "switch to semi-assisted" / "turn off BOARD"
 - "switch to full-autonomy" / "turn on BOARD"
+- "switch to danger-builder" / "bring in ceo-agent"
 
 ## Transitions
 
@@ -50,9 +62,11 @@ When absent → **founder-review** by default.
 |---|---|---|
 | founder-review | semi-assisted | Create flag file with `mode: semi-assisted` |
 | founder-review | full-autonomy | Create flag file with `mode: full-autonomy` |
-| semi-assisted | full-autonomy | Update flag file `mode:` field |
-| full-autonomy | semi-assisted | Update flag file `mode:` field |
-| any | founder-review | Delete flag file |
+| founder-review | danger-builder | Verify prerequisites (see `danger-builder-mode.md` § 1); create flag file with `mode: danger-builder` |
+| semi-assisted ↔ full-autonomy | | Update flag file `mode:` field |
+| full-autonomy → danger-builder | | Verify prerequisites; update flag file `mode:` field |
+| danger-builder → anything | | Update flag file `mode:` field; deliver final digest |
+| any | founder-review | Delete flag file (or flip `mode:` field; for danger-builder, also deliver final digest) |
 
 Orchestrator confirms every transition in one line.
 

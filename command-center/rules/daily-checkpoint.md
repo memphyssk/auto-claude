@@ -115,6 +115,12 @@ Per stayed-unassigned (bucket 1c): BOARD "map or leave" vote with default 4+/7 t
 
 All BOARD decisions append to `Planning/board-digest-<YYYY-MM-DD>.md` grouped by bucket. Close splits and vetoes flagged at top of digest for founder review.
 
+**Under `danger-builder`** — BOARD resolves the three buckets first (same thresholds and logic as full-autonomy). Any bucket item that BOARD can't resolve (threshold miss or HARD-STOP) routes to **ceo-agent**:
+
+Per unresolved item: spawn ceo-agent per `Sub-agent Instructions/ceo-agent-instructions.md` with the BOARD vote file + bucket context. ceo-agent reads `ceo-bound.md` for any relevant restriction (§ 5 for strategic, § 2 for vendor/contract Tier 3 items, etc.). ceo-agent decides; entry appended to `Planning/ceo-digest-YYYY-MM-DD.md` grouped by bucket.
+
+daily-checkpoint under `danger-builder` effectively never blocks — every item resolves within the same tick (BOARD if possible, ceo-agent as fallback). The checkpoint ritual completes autonomously and the results appear in the following day's digest for founder review.
+
 ---
 
 ### Step 4 — Apply and commit

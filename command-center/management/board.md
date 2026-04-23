@@ -32,7 +32,7 @@ Attempting to convene BOARD for any of the above is a protocol violation — log
 
 ## Hard-stops — NEVER go to BOARD
 
-Route these to founder regardless of mode:
+Route these to founder (under `founder-review` / `semi-assisted` / `full-autonomy`) or to **ceo-agent** (under `danger-builder`) — BOARD never decides these on its own:
 
 | Class | Examples |
 |---|---|
@@ -40,7 +40,25 @@ Route these to founder regardless of mode:
 | **Money commitments** | new paid SaaS subscription, API tier upgrade with billing, domain purchase, anything with a credit-card hit |
 | **Hard-stop member veto** | any BOARD member flags `HARD-STOP: must be human` with concrete reason |
 
-Identity/legal and external communications (emails to real users, Slack posts, OSS PR descriptions, ToS/privacy-text copy) ARE BOARD-decidable — founder delegates these in full-autonomy mode.
+### Routing summary by mode
+
+| Class | founder-review | semi-assisted | full-autonomy | danger-builder |
+|---|---|---|---|---|
+| Destructive actions | founder | founder | founder | **ceo-agent** (restricted by `ceo-bound.md` § 4 if set) |
+| Money commitments | founder | founder | founder | **ceo-agent** (restricted by `ceo-bound.md` § 1 if set) |
+| HARD-STOP member veto | founder | founder | founder | **ceo-agent** (weighs veto, records engagement in digest) |
+| Standard 4+/7 split | founder | founder | founder | **ceo-agent** |
+| Tier 3 6+/7 strict fall-short | founder | founder | founder | **ceo-agent** |
+
+Under `danger-builder`, the **only** escalations that still reach the founder are:
+1. Kill-switch file (`/tmp/ceo-mode-stop`)
+2. Founder message directly to the session
+3. `STATUS=STOP` written manually
+4. Mode flag change
+5. Charter destroyed mid-run
+6. ceo-agent hits a charter restriction it cannot resolve (surfaces via `Planning/ceo-charter-proposals.md` + digest)
+
+Identity/legal and external communications (emails to real users, Slack posts, OSS PR descriptions, ToS/privacy-text copy) ARE BOARD-decidable — founder delegates these in full-autonomy mode. Under `danger-builder`, ceo-agent resolves them directly within ceo-bound.md § 3 restrictions.
 
 ## Composition
 
