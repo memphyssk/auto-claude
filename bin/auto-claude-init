@@ -88,6 +88,10 @@ ignore:CHANGELOG.md
 ignore:LICENSE
 ignore:README.md
 
+# Sync tool itself — lives in the auto-claude repo, invoked from there.
+# Consumers don't copy it into their own projects.
+ignore:bin/
+
 # ────────────────────────────────────────────────────────────────────────
 # interactive — project diverges but still wants brain updates
 # ────────────────────────────────────────────────────────────────────────
