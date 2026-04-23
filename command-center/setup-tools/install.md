@@ -50,15 +50,40 @@ npm install -g netlify-cli
 # references `railway status --json`). Installed per Railway's own docs, not npm.
 bash <(curl -fsSL cli.new)
 
+# Resend CLI — required for danger-builder mode per-decision notifications.
+# Can also be used for any other email needs in the project. Auth + send via
+# structured commands; agent-friendly JSON output via --json flag.
+npm install -g resend-cli
+
 # RTK (Rust Token Killer) — transparent CLI proxy, 60-90% token savings on dev operations.
 # Installed at ~/.local/bin/rtk with a Bash PreToolUse hook rewriting commands.
 # See: https://github.com/memphyssk/rtk (or wherever your copy lives)
 # After install, verify: `rtk --version` and `rtk gain`
 ```
 
+### Resend CLI — one-time auth
+
+After `resend-cli` is installed, authenticate once per machine:
+
+```bash
+# Non-interactive (recommended for headless VPS)
+resend login --key re_xxxxxxxxxxxx
+
+# Or interactive (opens browser SSO)
+resend login
+
+# Verify
+resend doctor            # JSON report: API key valid, domain status, version
+resend domains list      # Shows your verified sending domains
+```
+
+The key is stored in the system credential manager (Keychain / Credential Manager / secret service). For plaintext storage on servers without a credential service, add `--insecure-storage` to the login command.
+
+**The `RESEND_API_KEY` env var overrides saved credentials if set.** For the auto-claude brain, setting the env var at machine scope (e.g. in `~/.bashrc`) is the simplest path — every sub-agent and skill inherits it without needing to know about the credential manager. `resend login` is an alternative for founders who prefer not to expose the key via env.
+
 After installing, verify each:
 ```bash
-which task-master playwright-mcp domain-mcp netlify railway rtk gh
+which task-master playwright-mcp domain-mcp netlify railway resend rtk gh
 ```
 
 ---
@@ -448,6 +473,8 @@ pnpm --version
 gh --version
 task-master --version
 playwright-mcp --version
+resend --version          # Resend CLI (email delivery for danger-builder)
+resend doctor             # JSON report — 'ok': true if key is valid
 rtk --version
 rtk gain                  # should not error
 

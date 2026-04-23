@@ -34,6 +34,31 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.8.3 — 2026-04-23
+
+Switches notification delivery from raw curl to the official Resend CLI (`resend-cli`).
+
+### Changed
+- `command-center/setup-tools/install.md` § 1 — adds `npm install -g resend-cli` to the global CLIs install block. New "Resend CLI — one-time auth" subsection documents `resend login --key <...>` and `resend doctor` verification.
+- `command-center/setup-tools/install.md` § 8 — verification checklist adds `resend --version` + `resend doctor`.
+- `command-center/management/notifications/resend.md` — prereqs block added; send mechanics rewritten to use `resend emails send --json` instead of raw curl POST to `api.resend.com/emails`; verification block uses `resend doctor --json` instead of curl to `/domains`. Rationale for CLI-over-curl documented inline.
+- `command-center/management/danger-builder-mode.md` § 1 prerequisites — `RESEND_API_KEY env var set` replaced with `Resend CLI installed and authenticated: resend doctor --json returns "ok": true`. CLI handles auth resolution (env → saved → flag) automatically.
+
+### Why the CLI
+- Auth resolution handled automatically (env → saved credentials in system keychain → flag)
+- Stable JSON output format for agent parsing
+- Built-in retry on transient network errors
+- Idempotency headers included automatically
+- `resend doctor` diagnostic is more informative than a raw 200 check against `/domains`
+
+Raw curl to the REST API still works (documented by Resend); we just don't re-implement auth + retries + error parsing ourselves.
+
+### Consumer sync
+- **Breaking:** no — existing `RESEND_API_KEY` env var approach continues to work (CLI picks it up). Consumers who want to use saved credentials instead can run `resend login`.
+- **Migration action:** install Resend CLI on any machine running `danger-builder` — `npm install -g resend-cli`. One-time per machine.
+
+---
+
 ## v0.8.2 — 2026-04-23
 
 Trivial cleanup.

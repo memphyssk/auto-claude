@@ -1,14 +1,26 @@
 # Decision notifications — Resend
 
-Spec for sending per-decision notification emails via Resend under `danger-builder` mode. One email per CEO decision. Short, scannable, actionable.
+Spec for sending per-decision notification emails via the **Resend CLI** (`resend-cli`) under `danger-builder` mode. One email per CEO decision. Short, scannable, actionable.
+
+## Prerequisites
+
+Resend CLI must be installed and authenticated. Install + auth steps live in `command-center/setup-tools/install.md` § 1 ("Resend CLI — one-time auth"). At a minimum on a freshly-installed machine:
+
+```bash
+npm install -g resend-cli
+resend login --key re_xxxxxxxxxxxx    # or: resend login (interactive)
+resend doctor                          # confirm ok: true
+```
+
+The CLI reads its API key from (in order): `--api-key` flag → `RESEND_API_KEY` env var → saved credentials in the system credential manager. For headless agents, setting `RESEND_API_KEY` at machine scope is the cleanest path.
 
 ## Required env vars
 
 | Var | Purpose |
 |---|---|
-| `RESEND_API_KEY` | Resend API key (get from <https://resend.com/api-keys>) |
+| `RESEND_API_KEY` | Resend API key (get from <https://resend.com/api-keys>). Alternative: save via `resend login` and the CLI finds it automatically. |
 | `CEO_NOTIFY_EMAIL_TO` | Founder email address (single recipient) |
-| `CEO_NOTIFY_EMAIL_FROM` | Optional. Defaults to `ceo-agent@<your-domain>` (domain must be verified at Resend). If unset, uses `onboarding@resend.dev` test sender (free tier, verified-address-only). |
+| `CEO_NOTIFY_EMAIL_FROM` | Optional. Defaults to `ceo-agent@<your-domain>` (domain must be verified at Resend). If unset, uses `onboarding@resend.dev` test sender (Resend's shared-domain sandbox; only sends to your own verified addresses). |
 | `CEO_NOTIFY_PROJECT_NAME` | Optional. Defaults to `auto-claude project`. Shows in email subject. |
 
 Set these at machine scope (e.g., `~/.bashrc`) or per-project `.env` loaded via Claude Code's env-var exposure.
@@ -32,23 +44,22 @@ No daily batching. No midnight-UTC send. The founder's inbox reflects the CEO's 
 
 ## Send mechanics
 
-Resend HTTPS POST to `https://api.resend.com/emails`:
+Use the `resend emails send` subcommand. The `--json` flag forces JSON output (stable, parseable by the agent) and suppresses the interactive spinner.
 
 ```bash
-curl -s -X POST 'https://api.resend.com/emails' \
-  -H "Authorization: Bearer $RESEND_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d @- <<EOF
-{
-  "from": "${CEO_NOTIFY_EMAIL_FROM:-onboarding@resend.dev}",
-  "to": ["$CEO_NOTIFY_EMAIL_TO"],
-  "subject": "$SUBJECT",
-  "text": "$BODY"
-}
-EOF
+resend emails send \
+  --from "${CEO_NOTIFY_EMAIL_FROM:-onboarding@resend.dev}" \
+  --to "$CEO_NOTIFY_EMAIL_TO" \
+  --subject "$SUBJECT" \
+  --text "$BODY" \
+  --json
 ```
 
-Response: 200 with `{"id": "..."}` on success; non-200 with error detail on failure.
+Success response (stdout): `{"id": "re_abc123...", "to": [...], "from": "..."}` — capture `.id` to record the message-id in the audit entry (`Notification sent:` field).
+
+Failure response: non-zero exit code. stderr contains error detail. Parse for specific failure modes (auth / network / rate-limit / invalid address). On non-zero exit, invoke the failure handling protocol below.
+
+**Why CLI, not raw curl:** the CLI handles auth resolution (env → saved → flag), retry-on-transient-network-errors, response parsing, and idempotency headers automatically. Raw curl to `https://api.resend.com/emails` works and is documented by Resend, but re-implements all of that.
 
 ## Per-decision email format
 
@@ -174,16 +185,16 @@ The cascade threshold is the key safety measure: it prevents the "500 decisions 
 
 ## Verification before mode activation
 
-At `danger-builder` mode entry, run a connectivity test:
+At `danger-builder` mode entry, run the CLI's built-in diagnostic:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" \
-  -H "Authorization: Bearer $RESEND_API_KEY" \
-  https://api.resend.com/domains
-# Expect 200 on success
+resend doctor --json
+# Expect: {"ok": true, "checks": [...]}
+# If "ok": false, the `checks` array lists exactly what's missing
+# (CLI version stale / API key missing / domain unverified / etc.)
 ```
 
-If this fails, mode activation fails — either the API key is invalid or Resend is unreachable. Founder surfaces the error and resolves.
+If `ok` is not true, mode activation fails — surface the failing checks to the founder and resolve before retrying.
 
 Mode activation also sends the activation email — if that send fails 3x, mode entry aborts (can't trust the delivery pipeline if the first message didn't land).
 

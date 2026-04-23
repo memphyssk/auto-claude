@@ -24,7 +24,7 @@ All of the following MUST be true. If any fails, abort mode entry and surface to
 
 - [ ] `command-center/management/ceo-bound.md` exists and is non-empty
 - [ ] `command-center/management/ceo-bound.md` § 0 "Mode activation prerequisites" all boxes can be checked (verify each)
-- [ ] `RESEND_API_KEY` env var is set (`[[ -n "$RESEND_API_KEY" ]]`)
+- [ ] Resend CLI installed and authenticated: `resend doctor --json` returns `"ok": true`
 - [ ] `CEO_NOTIFY_EMAIL_TO` env var is set
 - [ ] `Planning/` directory exists and is writable
 - [ ] `command-center/Sub-agent Instructions/ceo-agent-instructions.md` exists (ceo-agent instruction file)
