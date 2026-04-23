@@ -21,6 +21,8 @@ Quick smoke test on the live deploy before the full Playwright swarm. Catches cr
 
 **Both platforms confirmed? Only then proceed to smoke tests.**
 
+**If a platform is still in-progress at Stage 5b entry:** under full-autonomy, do NOT hold the session polling and do NOT end the turn citing "need deploy to land first." Create a `MONITOR:` task per `command-center/rules/monitors/monitor-principles.md` (use `railway-deploy.md` / `netlify-deploy.md` templates), set parent wave STATUS=BLOCKED with blocker referencing the MONITOR, end turn. The /loop tick resumes Stage 5b after the monitor clears.
+
 ### 2. Verify env var changes propagated (if this wave changed env vars)
 
 Changing env vars via CLI/MCP/dashboard does NOT auto-trigger a deploy on most platforms. After env var changes:

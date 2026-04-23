@@ -83,13 +83,18 @@ If you write "My preference: X" in any checkpoint under full-autonomy, X is the 
 
 Under full-autonomy, you MUST NOT end a turn because an external event is pending (Railway/Vercel/Netlify deploy, GitHub Actions CI, DNS propagation, Stripe/Auth0 tier activation, etc.). Phrases like "remaining stages need the deploy to land first", "best run in a fresh session", "needs live infra verification before 5b", or "I stopped at merge since the remaining stages need X" are **protocol violations** — they are the unilateral-stop version of the banned "continue vs fresh session?" question.
 
-When work is blocked on wall-clock wait for an external event, you MUST instead do one of:
+When work is blocked on wall-clock wait for an external event, you MUST instead do one of the following, in order of preference:
 
-1. **Wait in-loop.** Call `ScheduleWakeup` with a delay appropriate to the external (deploy ~180s, CI ~300s, DNS ~900s), end the turn, and on next tick run the readiness check (e.g. `curl -sf $PROD_URL/healthz`, `gh run list --limit 1`, `railway status`). If ready, proceed to the next stage in the same turn; if not, re-schedule.
+1. **Spawn-and-Block (preferred for any wait >5 min).** Create a `MONITOR:` task in TaskMaster, declare `success_condition` + `failure_condition` + `timeout_budget` per `command-center/rules/monitors/monitor-principles.md`. Copy from a platform template in `command-center/rules/monitors/` — do NOT invent the conditions from memory. Set parent wave STATUS=BLOCKED with a blocker entry referencing the MONITOR task ID. End the turn. The next /loop tick processes the MONITOR task: on SUCCESS it clears the blocker and resumes the parent wave; on FAILURE it creates a triage task and keeps the parent BLOCKED; on TIMEOUT it escalates to founder. This is a structured delegation — no polling loop, no session held open.
 
-2. **Write HANDOFF with a poll-condition.** In `command-center/management/handoff.md`, include a shell one-liner that returns exit code 0 when the external is ready. Set STATUS=HANDOFF, `ScheduleWakeup` with the delay, end turn. Next tick runs the one-liner first; on success proceed, on failure re-HANDOFF with the same condition.
+2. **Short-wait in-loop (acceptable for waits <5 min with a trivially-checkable condition).** Call `ScheduleWakeup` with a delay appropriate to the external (fast deploy ~120s, propagation tick ~300s), end the turn, and on next tick run the readiness check directly. Use this ONLY for short, high-confidence waits where Spawn-and-Block's overhead isn't justified. You MUST still think about the failure path — if the check could return "not yet" or "failed" indistinguishably, use Spawn-and-Block instead.
 
-The loop is the session. A tick spent waiting costs almost nothing. There is no valid third option — no "end here, resume in a fresh session for cleanliness." If you catch yourself writing any of the violation phrases above, stop and choose option 1 or 2 instead.
+You MUST NOT do any of the following:
+- End the turn citing "best run in a fresh session" / "needs live infra verification" / "I'll come back when deploy lands" — these are the banned phrases; see § Anti-pattern header.
+- Create a MONITOR task with only a success condition — this is the single biggest monitor failure mode (a failed Railway deploy kept a monitor sitting forever because only success was checked). See `monitor-principles.md` § Named anti-patterns.
+- Check `/healthz` or similar health endpoint as the success signal for a deploy — a 200 can be served by old code. Check the platform's deploy-state endpoint instead.
+
+The loop is the session. A tick spent waiting (or a MONITOR task ticking in the background) costs almost nothing. There is no valid third option — no "end here, resume in a fresh session for cleanliness." If you catch yourself writing any banned phrase, stop and choose option 1 or 2 instead.
 
 ## Routing table
 

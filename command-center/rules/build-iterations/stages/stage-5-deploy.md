@@ -72,6 +72,10 @@ Before moving to Stage 5b/Stage 6, verify Railway deploy is complete:
 - Verify uptime < 300s (fresh deploy) or response includes matching commit SHA
 - If uptime > 300s: Railway did not redeploy. Check deploy status, force-deploy if needed.
 
+### Async deploy under full-autonomy — use Spawn-and-Block
+
+Under `mode: full-autonomy`, if any of the three deploy targets is still in-progress when you finish the post-merge verification loop (e.g., Railway queued, Netlify building, GitHub CI still running), you MUST NOT end the turn with "deploy will land later" — that's the banned anti-pattern. Instead, create a `MONITOR:` task per `command-center/rules/monitors/monitor-principles.md`, using the platform-specific template in that directory (`railway-deploy.md`, `netlify-deploy.md`, `gh-actions.md`). The monitor's three conditions (success, failure, timeout) MUST all be declared — a monitor with only a success check will sit forever on a failed deploy.
+
 ## Deliverable
 - Merged PR on main
 - CI green

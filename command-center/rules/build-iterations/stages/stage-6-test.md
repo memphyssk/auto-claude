@@ -10,6 +10,7 @@ The authoritative testing mechanism. Real browser tests against production. `/qa
 - READ `command-center/rules/testing-principles.md`
 - READ `command-center/test-writing-principles.md` §15-16
 - **If the wave touches auth / payments / user creation / sessions:** READ `command-center/rules/security-waves.md` — LIVE E2E Auth0 round-trip + session-persistence scenarios are MANDATORY for this wave, not just code review.
+- **Prod URL must serve the merged commit.** If there is any doubt (new CDN cache, long-tail deploy propagation, DNS change), under full-autonomy create a `MONITOR:` task per `command-center/rules/monitors/monitor-principles.md` with a readiness check that confirms the new code is live — NOT just a `/healthz` 200. Do not run the Playwright swarm against stale prod.
 
 ## Actions
 
