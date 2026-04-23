@@ -55,6 +55,13 @@ bash <(curl -fsSL cli.new)
 # structured commands; agent-friendly JSON output via --json flag.
 npm install -g resend-cli
 
+# AgentMail CLI — programmatic email inboxes, threads, and two-way messaging
+# designed for AI agents (read-and-reply flows, not just one-shot sends).
+# Complements Resend (one-shot outbound notifications) with full inbox state
+# so an agent can operate a mailbox end-to-end.
+# https://github.com/agentmail-to/agentmail-cli
+npm install -g agentmail-cli
+
 # RTK (Rust Token Killer) — transparent CLI proxy, 60-90% token savings on dev operations.
 # Installed at ~/.local/bin/rtk with a Bash PreToolUse hook rewriting commands.
 # See: https://github.com/memphyssk/rtk (or wherever your copy lives)
@@ -81,9 +88,27 @@ The key is stored in the system credential manager (Keychain / Credential Manage
 
 **The `RESEND_API_KEY` env var overrides saved credentials if set.** For the auto-claude brain, setting the env var at machine scope (e.g. in `~/.bashrc`) is the simplest path — every sub-agent and skill inherits it without needing to know about the credential manager. `resend login` is an alternative for founders who prefer not to expose the key via env.
 
+**Note on `resend login` without a flag:** the command fails in non-TTY shells (headless SSH, CI, agent sessions) with `missing_key`. Always pass `--key re_xxx` in those contexts. The interactive form assumes a local browser is available.
+
+### AgentMail CLI — one-time auth
+
+After `agentmail-cli` is installed, set the API key as an env var (there is no `login` subcommand):
+
+```bash
+# Get a key from: https://agentmail.to
+export AGENTMAIL_API_KEY=am_us_xxxxxxxxxxxx
+
+# Verify — lists your inboxes as JSON
+agentmail --format json inboxes list
+```
+
+Persist the export to `~/.bashrc` (or equivalent) so every agent session inherits it. The CLI also accepts `--api-key am_us_...` as a per-invocation flag for ad-hoc overrides or CI use.
+
+Unlike Resend (stateless one-shot sends), AgentMail manages **persistent inboxes + threads + drafts + replies** — appropriate when an agent needs to operate a mailbox end-to-end (read incoming customer messages, reply in thread, maintain conversation state). Resend is the right tool for pushing notifications *out*; AgentMail is the right tool when the agent *is the mailbox*.
+
 After installing, verify each:
 ```bash
-which task-master playwright-mcp domain-mcp netlify railway resend rtk gh
+which task-master playwright-mcp domain-mcp netlify railway resend agentmail rtk gh
 ```
 
 ---
@@ -475,6 +500,8 @@ task-master --version
 playwright-mcp --version
 resend --version          # Resend CLI (email delivery for danger-builder)
 resend doctor             # JSON report — 'ok': true if key is valid
+agentmail --version       # AgentMail CLI (agent-operated inboxes + threads)
+agentmail --format json inboxes list  # lists inboxes if AGENTMAIL_API_KEY is set
 rtk --version
 rtk gain                  # should not error
 

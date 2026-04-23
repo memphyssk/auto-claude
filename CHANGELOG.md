@@ -34,6 +34,27 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.8.4 — 2026-04-23
+
+Adds AgentMail CLI to the setup-tools baseline. Complements Resend (outbound one-shot notifications) for the case where an agent needs to *operate a mailbox end-to-end* — read incoming messages, reply in-thread, manage drafts, maintain conversation state.
+
+### Changed
+- `command-center/setup-tools/install.md` § 1 — adds `npm install -g agentmail-cli` to the global CLIs block. New "AgentMail CLI — one-time auth" subsection documents `export AGENTMAIL_API_KEY=am_us_xxx` and verification via `agentmail --format json inboxes list`.
+- `command-center/setup-tools/install.md` § 1 — Resend auth subsection now documents the known failure mode of `resend login` (no flag) in non-TTY shells with `missing_key` — always pass `--key re_xxx` in headless contexts.
+- `command-center/setup-tools/install.md` § 8 — verification checklist adds `agentmail --version` + `agentmail --format json inboxes list`.
+
+### Why both Resend and AgentMail
+- **Resend** — stateless one-shot sends. Right for pushing notifications *out* (danger-builder's per-decision emails, deploy alerts, digests).
+- **AgentMail** — persistent inboxes + threads + drafts. Right when the agent *is the mailbox* (customer-facing support mailbox, outbound thread management, read-and-reply flows). Source: <https://github.com/agentmail-to/agentmail-cli>.
+
+Both are optional at machine scope; the brain doesn't require AgentMail by default. Projects that want agent-operated inboxes install and configure it; others ignore.
+
+### Consumer sync
+- **Breaking:** no. Purely additive.
+- **Migration action:** none required. Install AgentMail on any machine running projects that need agent-operated inboxes: `npm install -g agentmail-cli && export AGENTMAIL_API_KEY=am_us_xxx`.
+
+---
+
 ## v0.8.3 — 2026-04-23
 
 Switches notification delivery from raw curl to the official Resend CLI (`resend-cli`).
