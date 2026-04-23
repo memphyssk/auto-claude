@@ -34,6 +34,30 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.6.0 — 2026-04-23
+
+Setup tooling documentation + brain-sync tooling (`bin/auto-claude`).
+
+### Added
+- `command-center/setup-tools/` — new directory
+  - `install.md` — canonical external-tooling setup guide. Covers Claude Code agents (VoltAgent marketplace + custom Jenny/karen/founder-proxy), skills (gstack family + built-ins + claude-mem plugin skills), MCP servers (aidesigner, Playwright × 10, mcp-search, domain-mcp), plugins (claude-mem), supporting CLIs (task-master, playwright-mcp, rtk, gh, netlify, railway), shell config (rtk hook, SSH keep-alive, tmux persistence), project bootstrap, verification checklist, and known gotchas.
+  - `README.md` — directory overview + when to consult it
+- `bin/auto-claude` + subcommands — brain-sync tool (init / diff / sync / status). See README § "Keeping the brain in sync across projects".
+- Trigger table row in `CLAUDE.md` for "Setting up a new machine / onboarding team member / diagnosing skill-not-found or MCP-not-available errors" → `command-center/setup-tools/install.md`
+
+### Changed
+- `README.md` — adds `command-center/setup-tools/` row to the directory table. Adds full section on `auto-claude sync` tool (consumer setup + day-to-day commands + release workflow for brain authors).
+- `command-center/VERSION` — bumped to 0.6.0
+
+### Consumer sync
+- **Breaking:** no. Purely additive.
+- **New files:** `command-center/setup-tools/{install.md,README.md}` + `bin/auto-claude*` scripts (~1000 LOC in bash) — safe to pull
+- **Changed files (safe-overwrite):** `command-center/VERSION`
+- **Changed files (review recommended):** `CLAUDE.md` (one new trigger row — merge cleanly if not locally customized), `README.md` (new directory row + new full section)
+- **Migration action:** consumers on pre-0.6 should install `bin/auto-claude*` once (or use it from the auto-claude clone directly), then future syncs run through the tool.
+
+---
+
 ## v0.5.0 — 2026-04-23
 
 External-wait doctrine. Adds STATUS state machine, `/loop` bootstrap, Spawn-and-Block pattern, and the three-condition monitor contract.

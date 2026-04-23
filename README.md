@@ -161,6 +161,7 @@ Each stage file lives at `command-center/rules/build-iterations/stages/stage-<N>
 | `command-center/artifacts/` | `user-journey-map.md`, `Concept/`, `competitive-benchmarks/`. **Populated by onboarding v2 + v4**. |
 | `command-center/dev/` | Dev-time artifacts: `stack-decisions.md`, `architecture/*.md`, `module-list.md`. **Populated by onboarding v5 + v6 + v6b**. |
 | `command-center/test-writing-principles.md` | Master testing guide — §0-13 code-level patterns, §15-16 live production E2E with Playwright. |
+| `command-center/setup-tools/` | `install.md` — external-tooling setup (Claude Code agents, skills, MCPs, plugins, supporting CLIs). Hand-authored reference; consult when bootstrapping a new machine or debugging "skill/MCP not found" errors. |
 | `design/` | Canonical design pipeline: `DESIGN-SYSTEM.md`, `brief-template.md`, `review-gate.md`, `staging/`. **Populated by onboarding v7 + v8 + v9**, maintained by Stage 3b. |
 
 ---

@@ -69,6 +69,7 @@ _(local dev + prod canonical test accounts — never commit passwords)_
 | Encountering any technical error / bug / failure during execution | `command-center/rules/triage-routing-table.md` (classify first, route to specialist — orchestrator does NOT fix directly) |
 | Running full-site product mega-testing (user invokes "mega test" or "product mega-testing") | `command-center/rules/product-mega-testing/product-mega-testing.md` + scenarios in `user-scenarios/` |
 | Historical research / competitive spec needed | `command-center/artifacts/` (Concept/, competitive-benchmarks/) — design system lives in `design/DESIGN-SYSTEM.md` |
+| Setting up a new machine / onboarding team member / diagnosing "skill not found" or "MCP not available" errors | `command-center/setup-tools/install.md` (canonical external-tooling setup: Claude Code agents, skills, MCPs, plugins, CLIs — with install commands + verification checklist) |
 
 **Companion docs (referenced by many files):**
 - `command-center/artifacts/user-journey-map.md` — canonical inventory of every screen, route, endpoint, user flow
