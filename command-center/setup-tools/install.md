@@ -152,6 +152,36 @@ ls ~/.claude/agents/Jenny.md ~/.claude/agents/karen.md 2>&1   # verify reviewer 
 
 ---
 
+## 2d. auto-claude bundled skills (install once from the repo)
+
+auto-claude ships its own skills alongside the brain. Currently just one:
+
+- **`/update-tools`** — verifies this very install.md and prompts per item
+  to install what's missing. Always asks before fixing; prints JSON
+  fragments for MCPs rather than editing config silently.
+
+Install by symlink (recommended — updates propagate on `auto-claude sync`):
+
+```bash
+mkdir -p ~/.claude/skills
+ln -s /path/to/auto-claude/command-center/setup-tools/skills/update-tools \
+      ~/.claude/skills/update-tools
+```
+
+Or copy:
+```bash
+cp -r /path/to/auto-claude/command-center/setup-tools/skills/update-tools \
+      ~/.claude/skills/update-tools
+```
+
+After install, the skill is invokable as `/update-tools`. It's wired into
+onboarding v0 as the prerequisite check — you can also invoke it manually
+at any time to audit the machine.
+
+See [`skills/README.md`](./skills/README.md) for details.
+
+---
+
 ## 3. Claude Code Skills
 
 Skills live at `~/.claude/skills/`. The brain references these via `/skill-name` invocations in `CLAUDE.md`, `rules/skill-use.md`, and stage files.

@@ -34,6 +34,34 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.7.0 — 2026-04-23
+
+Ships the `/update-tools` skill with auto-claude. The skill reads `command-center/setup-tools/install.md` as the canonical source, runs verification checks against the current machine, and prompts per item to install anything missing. Wired into onboarding v0 as the prerequisite gate; the founder can also invoke it manually anytime.
+
+### Added
+- `command-center/setup-tools/skills/` — new subdirectory for auto-claude's own shipped skills
+  - `README.md` — explains install options (symlink vs copy) and the rationale for shipping skills via the brain repo
+  - `update-tools/SKILL.md` — full skill specification: install.md discovery order, three-tier risk classification (low-risk auto-fix-if-approved / medium-risk command-before-running / high-friction print-instructions-only), always-ask policy, report/prompt/summary flow, subcommand filters (`agents` / `skills` / `mcps` / `clis` / `plugins` / `shell`)
+- `setup-tools/install.md` § 2d — new subsection documenting how to install the `/update-tools` skill itself (symlink or copy from the auto-claude repo)
+
+### Changed
+- `command-center/rules/onboarding/onboarding-loop.md` — Prerequisite section now invokes `/update-tools` directly, with a fallback for first-ever auto-claude machines where the skill isn't yet installed
+- `command-center/rules/onboarding/stages/stage-v0-input.md` — prereq block references the skill rather than manual checklist verification
+- `command-center/VERSION` — bumped to 0.7.0
+
+### Policy notes
+- `/update-tools` **always asks per item** — there is no `--yes` batch flag. This is deliberate: founder remains in control of every install.
+- For high-friction items (MCP configs, auth, shell config), the skill **never modifies files**. It prints copy-pasteable JSON fragments and exact commands; the founder applies them manually.
+- The skill is **not wired anywhere except onboarding v0**. Founder invokes it otherwise. No CLAUDE.md trigger row, no wave-loop pre-check, no full-autonomy mode-entry integration.
+
+### Consumer sync
+- **Breaking:** no. Purely additive.
+- **New files:** `command-center/setup-tools/skills/README.md` + `command-center/setup-tools/skills/update-tools/SKILL.md` — safe to pull
+- **Changed files (safe-overwrite):** `command-center/VERSION`, `command-center/rules/onboarding/onboarding-loop.md`, `command-center/rules/onboarding/stages/stage-v0-input.md`, `command-center/setup-tools/install.md` — assuming not customized project-side
+- **Migration action:** after sync, run the one-line symlink from install.md § 2d to install `/update-tools` into `~/.claude/skills/update-tools`. The skill is available across all auto-claude projects on that machine once installed once.
+
+---
+
 ## v0.6.1 — 2026-04-23
 
 Refines v0.6.0 setup tooling: reorganizes agent sources into three categories, removes built-in-agent references, and moves the entry point from the CLAUDE.md trigger table into the onboarding loop (where it naturally belongs — setup runs before any tool is needed).

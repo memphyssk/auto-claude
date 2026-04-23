@@ -8,11 +8,17 @@ Before EVERY stage, read the corresponding stage file. Do not invent stages, ski
 
 Onboarding spawns sub-agents, invokes skills (`/aidesigner`, `/plan-ceo-review`, `/browse`, etc.), and uses MCP servers (aidesigner, playwright-*, mcp-search). If the machine isn't provisioned with these, v0 will fail at the first sub-agent spawn with "agent not found" or similar.
 
-**Before starting v0 on a freshly-installed machine:**
+**Before starting v0, invoke the `/update-tools` skill.** It reads `command-center/setup-tools/install.md` as the canonical source, runs the verification checks, and prompts per item to install anything missing. Always asks before fixing — you remain in control.
 
+```
+/update-tools
+```
+
+If `/update-tools` is not available (first-ever auto-claude machine):
 1. READ `command-center/setup-tools/install.md` front-to-back
-2. Run the verification checklist in `install.md` § 8
-3. Only once every verification passes: proceed to v0
+2. Install the `/update-tools` skill per § 2d (one-line symlink)
+3. Invoke `/update-tools` to verify the rest
+4. Only once every verification passes: proceed to v0
 
 If you're onboarding a project on an already-configured machine where a prior auto-claude project has run successfully, skip this prerequisite — the tooling is already in place. The sub-agent spawn in v0 will confirm.
 
