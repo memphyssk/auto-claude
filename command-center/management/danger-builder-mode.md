@@ -24,8 +24,11 @@ All of the following MUST be true. If any fails, abort mode entry and surface to
 
 - [ ] `command-center/management/ceo-bound.md` exists and is non-empty
 - [ ] `command-center/management/ceo-bound.md` § 0 "Mode activation prerequisites" all boxes can be checked (verify each)
-- [ ] Resend CLI installed and authenticated: `resend doctor --json` returns `"ok": true`
-- [ ] `CEO_NOTIFY_EMAIL_TO` env var is set
+- [ ] AgentMail CLI installed: `agentmail --version` returns 0.7.x or higher
+- [ ] `AGENTMAIL_API_KEY` env var is set and valid: `agentmail --format json inboxes list` returns a JSON array (empty or otherwise)
+- [ ] Custom domain verified at AgentMail (per `command-center/setup-tools/install.md` § 1 "AgentMail — custom domain + ceo-agent inbox setup") — `agentmail --format json domains get --domain-id <your-domain>` shows `status: VERIFIED`
+- [ ] ceo-agent inbox created and `CEO_INBOX_ID` env var set: `agentmail --format json inboxes get --inbox-id "$CEO_INBOX_ID"` returns the inbox object
+- [ ] `CEO_NOTIFY_EMAIL_TO` env var is set (founder's email)
 - [ ] `Planning/` directory exists and is writable
 - [ ] `command-center/Sub-agent Instructions/ceo-agent-instructions.md` exists (ceo-agent instruction file)
 - [ ] BOARD composition is intact (all 7 member agent files present — see `board-members.md`)
@@ -50,9 +53,9 @@ EOF
 
 Same as full-autonomy: if `command-center/management/STATUS` is missing, write `IDLE`. If present, preserve.
 
-### 4. Send activation notice via Resend
+### 4. Send activation notice via AgentMail
 
-Email to `$CEO_NOTIFY_EMAIL_TO` using the activation template in `command-center/management/notifications/resend.md`.
+Send from ceo-agent inbox (`$CEO_INBOX_ID`) to founder (`$CEO_NOTIFY_EMAIL_TO`) using the activation template in `command-center/management/notifications/agentmail.md`.
 
 ```
 Subject: [ceo-agent] <project> — danger-builder ACTIVATED
@@ -60,19 +63,21 @@ Subject: [ceo-agent] <project> — danger-builder ACTIVATED
 ceo-agent is now resolving all BOARD splits, HARD-STOPs, and former-founder-asks
 within ceo-bound.md.
 
-You will receive one email per CEO decision. Short, scannable, actionable.
+Per-decision emails arrive in this thread. Reply in-thread to approve / reject /
+modify / ask for clarification. Agent reads your reply within 5 minutes.
 
 Charter last modified: <mtime of ceo-bound.md>
 Restrictions active:   <count of non-(no restriction) entries>
+Inbox:                 ceo@<your-domain>  (inbox ID: $CEO_INBOX_ID)
 Started:               <ISO timestamp>
 
 Controls:
-  Kill:         touch /tmp/ceo-mode-stop
-  Session halt: send any message to the Claude Code session
-  Charter edit: edit command-center/management/ceo-bound.md (applies on next mode entry)
+  Kill (immediate):    touch /tmp/ceo-mode-stop
+  Session halt:        send any message to the Claude Code session
+  Charter edit:        edit command-center/management/ceo-bound.md (applies on next mode entry)
 ```
 
-See `command-center/management/notifications/resend.md` for full send mechanics, templates, and failure handling.
+See `command-center/management/notifications/agentmail.md` for full send + reply mechanics, templates, and failure handling.
 
 ### 5. Launch the loop
 
@@ -91,25 +96,30 @@ Invoke `/loop` skill via Skill tool with the autonomous-dynamic sentinel. Same a
 On every `/loop` tick under `danger-builder`:
 
 1. **Kill-switch check (FIRST).** If `/tmp/ceo-mode-stop` exists: set STATUS=BLOCKED, send halt email (see § Notifications), exit loop. Do NOT call ScheduleWakeup. This supersedes all other logic.
-2. **Founder-message check.** If any founder message arrived in the session since last tick: halt loop, send halt email, set STATUS=BLOCKED.
+2. **Founder-message check (session).** If any founder message arrived in the Claude Code session since last tick: halt loop, send halt email, set STATUS=BLOCKED.
 3. **STATUS mode check.** Read `command-center/management/STATUS`. If value is `STOP`: halt loop per § 1 above.
-4. **Read charter.** Re-read `ceo-bound.md`. If modified since last tick, respect new restrictions immediately. If materially changed, include a "charter changed" note in the next decision's notification email.
-5. **Route by STATUS value** (same table as full-autonomy): RUNNING / HANDOFF / IDLE / BLOCKED / DONE.
-6. **Execute routed action** until natural pause or 75% context budget.
-7. **Under 75% context rule:** write handoff.md, set STATUS=HANDOFF, end turn (unchanged from full-autonomy).
-8. **Update STATUS before ending turn.**
-9. **Call ScheduleWakeup** with delay per STATUS table, unless STATUS=DONE or halted.
-10. **Per-decision notification.** Whenever ceo-agent completes a decision this tick, immediately after writing the entry to `Planning/ceo-digest-YYYY-MM-DD.md`, send the notification email via Resend. One email per decision. See `command-center/management/notifications/resend.md` for templates.
+4. **Inbox check (NEW under danger-builder).** Query ceo-agent inbox for unread threads: `agentmail inboxes:threads list --inbox-id "$CEO_INBOX_ID" --label unread --format json`. For each unread thread, fetch messages, classify the founder reply (APPROVE / REJECT / MODIFY / CLARIFY / AMBIGUOUS — see `notifications/agentmail.md` § Reply classification), execute the classified action, mark thread read. Do NOT act on AMBIGUOUS replies — send a CLARIFY reply in-thread and leave the thread unread.
+5. **Read charter.** Re-read `ceo-bound.md`. If modified since last tick, respect new restrictions immediately. If materially changed, note in next decision's email.
+6. **Route by STATUS value** (table below): RUNNING / HANDOFF / IDLE / BLOCKED / DONE.
+7. **Execute routed action** until natural pause or 75% context budget.
+8. **Under 75% context rule:** write handoff.md, set STATUS=HANDOFF, end turn (unchanged from full-autonomy).
+9. **Update STATUS before ending turn.**
+10. **Call ScheduleWakeup** with delay per STATUS table, unless STATUS=DONE or halted.
+11. **Per-decision notification.** Whenever ceo-agent completes a decision this tick, immediately after writing the entry to `Planning/ceo-digest-YYYY-MM-DD.md`, send a fresh email (new thread) via AgentMail. One email per decision. Capture the returned `thread_id` into the audit entry. See `command-center/management/notifications/agentmail.md` for templates.
 
-### STATUS routing table (same as full-autonomy)
+**Reply-handling is authoritative.** If a founder replies `reject` on an earlier decision, the rollback must execute BEFORE any new decisions this tick. Inbox check (step 4) running first ensures reply actions take precedence over new escalations.
+
+### STATUS routing table (danger-builder — 5-min IDLE polling for inbox)
 
 | STATUS value | What you MUST do | Next tick delay |
 |---|---|---|
 | `RUNNING` | Prior session died mid-turn. Recover from last commit SHA + `command-center/management/handoff.md`. | 60s |
 | `HANDOFF` | Read handoff.md. Resume. Set STATUS=RUNNING as first write. | 60s |
-| `IDLE` | Re-read roadmap + run `npx task-master next`. If executable work exists, begin. Otherwise re-sleep. | 1800s |
-| `BLOCKED` | Do NOT proceed. Kill-switch pending. End turn, no wakeup. | — (no wakeup under danger-builder; founder resumes manually) |
+| `IDLE` | Inbox check (step 4 of tick behavior) → if founder replied, process replies. Re-read roadmap + run `npx task-master next`. If executable work exists, begin. Otherwise re-sleep. | **300s (5 min)** |
+| `BLOCKED` | Do NOT proceed. Kill-switch pending. End turn, no wakeup. | — (no wakeup; founder resumes manually) |
 | `DONE` | End loop. No wakeup. | — |
+
+**IDLE delay differs from full-autonomy (1800s → 300s)** because danger-builder needs to check the inbox for founder replies every 5 minutes. The shorter polling guarantees founder replies are acted on within ~5 min of being sent, which is the founder-experience contract AgentMail two-way flow promises.
 
 ---
 
@@ -180,24 +190,27 @@ Destructive actions do NOT halt the loop under `danger-builder` — they flow th
 
 ---
 
-## Notifications (per-decision, via Resend)
+## Notifications (per-decision + two-way replies, via AgentMail)
 
-One email per CEO decision, sent immediately after the decision entry lands in `Planning/ceo-digest-YYYY-MM-DD.md`. No daily batching.
+One email per CEO decision creates a new thread in the ceo-agent inbox. Founder replies in-thread. Agent reads the inbox on every tick (step 4 of tick behavior) and acts on classified replies. No daily batching.
 
 Notification triggers:
 
-1. **CEO decision recorded** → per-decision email (primary case, fires after every decision)
-2. **Charter-restriction bump** → charter-proposal email (distinct subject prefix)
+1. **CEO decision recorded** → per-decision email, new thread (primary case, fires after every decision)
+2. **Charter-restriction bump** → charter-proposal email, new thread with `⚠ CHARTER PROPOSAL` subject prefix
 3. **Mode activation** → activation email (one-shot at mode entry)
 4. **Mode deactivation** → deactivation email (one-shot at exit)
 5. **Halt event** (kill-switch, charter destroyed, cascade) → halt email
+6. **CLARIFY follow-up** → agent replies in the same thread as the founder's ambiguous or `why?` message
 
-Send mechanics + templates + failure handling: see `command-center/management/notifications/resend.md`. That file is the single source of truth for notification format.
+Send mechanics + templates + reply classification + failure handling: see `command-center/management/notifications/agentmail.md`. That file is the single source of truth for notification format.
 
 Key points:
 - **Body is capped ~12 lines.** Full decision rationale still lands in `Planning/ceo-digest-YYYY-MM-DD.md` (the audit log); the email is the push summary.
-- **Failure handling:** 3 retries with exponential backoff. Single failure = log + continue. Cascade (10 failures in 1 hour) = halt loop with STATUS=BLOCKED. Founder cannot be reached = don't keep deciding.
-- **The daily `Planning/ceo-digest-YYYY-MM-DD.md` file still exists** as the audit surface. Email is the push; file is the log. Two separate roles.
+- **Two-way flow.** Founder replies (`approve`, `reject`, `modify: X`, `why?`) are parsed + acted on within ~5 min (IDLE tick cadence). See `agentmail.md` § Reply classification for the full taxonomy.
+- **Ambiguous replies never act.** If the agent can't classify a reply, it sends one CLARIFY reply in-thread and leaves the thread unread until resolved.
+- **Failure handling.** Send failure: 3 retries with backoff; single failure logged + decision stands; 10-in-1-hour cascade halts the loop. Inbox-read failure: skip this tick + log; 10-in-1-hour cascade halts. Founder unreachable = don't keep deciding.
+- **The daily `Planning/ceo-digest-YYYY-MM-DD.md` file still exists** as the audit surface. Threads are the live conversation; file is the log. Two separate roles.
 
 ---
 

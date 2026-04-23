@@ -50,45 +50,24 @@ npm install -g netlify-cli
 # references `railway status --json`). Installed per Railway's own docs, not npm.
 bash <(curl -fsSL cli.new)
 
-# Resend CLI — required for danger-builder mode per-decision notifications.
-# Can also be used for any other email needs in the project. Auth + send via
-# structured commands; agent-friendly JSON output via --json flag.
-npm install -g resend-cli
-
-# AgentMail CLI — programmatic email inboxes, threads, and two-way messaging
-# designed for AI agents (read-and-reply flows, not just one-shot sends).
-# Complements Resend (one-shot outbound notifications) with full inbox state
-# so an agent can operate a mailbox end-to-end.
+# AgentMail CLI — REQUIRED for danger-builder mode. Persistent inboxes,
+# threads, drafts, and two-way messaging. ceo-agent sends per-decision
+# emails and reads founder replies here. See:
 # https://github.com/agentmail-to/agentmail-cli
 npm install -g agentmail-cli
+
+# Resend CLI — OPTIONAL, product-scope. For transactional user-facing emails
+# the PRODUCT sends to its users (signup verification, password reset, deploy
+# alerts). Not used by danger-builder or any brain management flow; projects
+# install this only if the product they're building needs stateless one-shot
+# email delivery.
+npm install -g resend-cli
 
 # RTK (Rust Token Killer) — transparent CLI proxy, 60-90% token savings on dev operations.
 # Installed at ~/.local/bin/rtk with a Bash PreToolUse hook rewriting commands.
 # See: https://github.com/memphyssk/rtk (or wherever your copy lives)
 # After install, verify: `rtk --version` and `rtk gain`
 ```
-
-### Resend CLI — one-time auth
-
-After `resend-cli` is installed, authenticate once per machine:
-
-```bash
-# Non-interactive (recommended for headless VPS)
-resend login --key re_xxxxxxxxxxxx
-
-# Or interactive (opens browser SSO)
-resend login
-
-# Verify
-resend doctor            # JSON report: API key valid, domain status, version
-resend domains list      # Shows your verified sending domains
-```
-
-The key is stored in the system credential manager (Keychain / Credential Manager / secret service). For plaintext storage on servers without a credential service, add `--insecure-storage` to the login command.
-
-**The `RESEND_API_KEY` env var overrides saved credentials if set.** For the auto-claude brain, setting the env var at machine scope (e.g. in `~/.bashrc`) is the simplest path — every sub-agent and skill inherits it without needing to know about the credential manager. `resend login` is an alternative for founders who prefer not to expose the key via env.
-
-**Note on `resend login` without a flag:** the command fails in non-TTY shells (headless SSH, CI, agent sessions) with `missing_key`. Always pass `--key re_xxx` in those contexts. The interactive form assumes a local browser is available.
 
 ### AgentMail CLI — one-time auth
 
@@ -106,9 +85,196 @@ Persist the export to `~/.bashrc` (or equivalent) so every agent session inherit
 
 Unlike Resend (stateless one-shot sends), AgentMail manages **persistent inboxes + threads + drafts + replies** — appropriate when an agent needs to operate a mailbox end-to-end (read incoming customer messages, reply in thread, maintain conversation state). Resend is the right tool for pushing notifications *out*; AgentMail is the right tool when the agent *is the mailbox*.
 
+### AgentMail — custom domain + ceo-agent inbox setup
+
+One-time setup per domain per AgentMail organization. Wires a custom domain into AgentMail so ceo-agent sends from `ceo@<your-domain>` instead of the shared `@agentmail.to` sandbox. Required before `danger-builder` mode can activate.
+
+Typical elapsed time: 5-60 min (bounded by DNS propagation, not your effort). Steps reference `claudomat.dev` (auto-claude's own reference domain) as the example; swap in yours.
+
+#### Prerequisites for this sub-section
+- Domain registered and controlled by you (any registrar, any nameservers you can edit)
+- AgentMail CLI installed + `AGENTMAIL_API_KEY` env var set (section above)
+- DNS-write capability — dashboard access at your registrar, or an API-key-driven tool (e.g. the auto-claude `domain-mcp` for Dynadot domains, or direct `api3.json` calls)
+
+#### Step 1 — Register the domain at AgentMail
+
+```bash
+agentmail --format json domains create --domain claudomat.dev --feedback-enabled
+```
+
+`--feedback-enabled` routes bounce and complaint notifications to inboxes on this domain (recommended).
+
+Response includes `domain_id`, `status` (starts `NOT_STARTED` → transitions to `PENDING` after first verify → `VERIFIED` once DNS propagates), `dkim_selector` (typically `agentmail`), and a `records[]` array with the exact DNS records to apply. 5 records total: 2 MX, 3 TXT.
+
+```json
+{
+  "records": [
+    { "type": "TXT", "name": "agentmail._domainkey", "value": "v=DKIM1; k=rsa; p=MIIBIj..." },
+    { "type": "MX",  "name": "@",     "value": "inbound-smtp.us-east-1.amazonaws.com",   "priority": 10 },
+    { "type": "MX",  "name": "mail",  "value": "feedback-smtp.us-east-1.amazonses.com",  "priority": 10 },
+    { "type": "TXT", "name": "mail",  "value": "v=spf1 include:amazonses.com -all" },
+    { "type": "TXT", "name": "_dmarc","value": "v=DMARC1; p=reject; rua=mailto:dmarc@claudomat.dev" }
+  ]
+}
+```
+
+Purpose: `agentmail._domainkey` TXT (DKIM signs outgoing) / `@` MX (inbound routes replies to ceo@ inbox) / `mail.<domain>` MX (SES bounce feedback) / `mail.<domain>` TXT (SPF) / `_dmarc` TXT (DMARC reject policy).
+
+#### Step 2 — Apply DNS records at your registrar
+
+**Option A — Dynadot direct API call** (recommended for Dynadot domains — the `domain-mcp` tool has a gap where it doesn't translate `priority` → Dynadot's `distance` field, so MX records fail via MCP):
+
+```bash
+DYNADOT_KEY=$YOUR_DYNADOT_API_KEY
+DOMAIN=claudomat.dev
+DKIM='v=DKIM1; k=rsa; p=MIIBIj...'      # from Step 1 response
+
+curl -sG 'https://api.dynadot.com/api3.json' \
+  --data-urlencode "key=$DYNADOT_KEY" \
+  --data-urlencode 'command=set_dns2' \
+  --data-urlencode "domain=$DOMAIN" \
+  --data-urlencode 'main_record_type0=mx' \
+  --data-urlencode 'main_record0=inbound-smtp.us-east-1.amazonaws.com' \
+  --data-urlencode 'main_recordx0=10' \
+  --data-urlencode 'subdomain0=agentmail._domainkey' \
+  --data-urlencode 'sub_record_type0=txt' \
+  --data-urlencode "sub_record0=$DKIM" \
+  --data-urlencode 'subdomain1=mail' \
+  --data-urlencode 'sub_record_type1=mx' \
+  --data-urlencode 'sub_record1=feedback-smtp.us-east-1.amazonses.com' \
+  --data-urlencode 'sub_recordx1=10' \
+  --data-urlencode 'subdomain2=mail' \
+  --data-urlencode 'sub_record_type2=txt' \
+  --data-urlencode 'sub_record2=v=spf1 include:amazonses.com -all' \
+  --data-urlencode 'subdomain3=_dmarc' \
+  --data-urlencode 'sub_record_type3=txt' \
+  --data-urlencode "sub_record3=v=DMARC1; p=reject; rua=mailto:dmarc@$DOMAIN" \
+  --data-urlencode 'ttl=3600'
+# Expect: {"SetDnsResponse":{"ResponseCode":0,"Status":"success"}}
+```
+
+**`set_dns2` is destructive** — replaces ALL records for the domain. If you have pre-existing records (homepage A record, other services), include them in the same call. Query first via `curl ...?command=get_dns` or `mcp__domain-mcp__dns` get.
+
+**Dynadot record types must be lowercase** (`mx`, `txt`, `a`, `cname`) — uppercase rejects with "invalid record type". Noted in `command-center/rules/dev-principles.md`.
+
+**Option B — registrar dashboard** (any registrar): add each record from Step 1's `records[]` array through the DNS panel. Field naming varies: Host/Name = `name`, Type = MX/TXT, Value = `value`, Priority/Distance = 10 (MX only), TTL = 3600.
+
+#### Step 3 — Verify propagation externally before asking AgentMail
+
+```bash
+dig +short NS  claudomat.dev @8.8.8.8                                  # nameservers
+dig +short MX  claudomat.dev @1.1.1.1                                  # apex MX
+dig +short TXT agentmail._domainkey.claudomat.dev @1.1.1.1 | head -1   # DKIM
+dig +short MX  mail.claudomat.dev @1.1.1.1                             # feedback MX
+dig +short TXT mail.claudomat.dev @1.1.1.1                             # SPF
+dig +short TXT _dmarc.claudomat.dev @1.1.1.1                           # DMARC
+```
+
+Empty result = not propagated yet. Typical propagation to `1.1.1.1` / `8.8.8.8`: 5-15 min; slower ISPs up to 1 hour. **Don't trigger AgentMail verify until all 6 dig commands return expected values** — premature verify consumes rate-limited retry attempts.
+
+If in doubt, query the authoritative nameserver directly (e.g. `dig ... @ns1.dyna-ns.net`) to confirm records are set correctly, regardless of public caching.
+
+#### Step 4 — Trigger AgentMail verification
+
+```bash
+agentmail --format json domains verify --domain-id claudomat.dev
+sleep 30
+agentmail --format json domains get --domain-id claudomat.dev | head -40
+```
+
+Target state: `status: VERIFIED` with every `records[].status: VALID`.
+
+Transitional states:
+- `VERIFYING` — AgentMail is re-checking DNS; usually resolves in 1-3 min
+- `PENDING` with `records[].status: MISSING` — DNS not yet visible to AgentMail's resolver; wait 5 min, retry verify
+- `FAILED` — records don't match what AgentMail expects; re-check Step 2 values against Step 1 response
+
+Retry verify at 5-min intervals, not faster.
+
+#### Step 5 — Create the ceo-agent inbox
+
+Once `status: VERIFIED`:
+
+```bash
+agentmail --format json inboxes create \
+  --username ceo \
+  --domain claudomat.dev \
+  --display-name "ceo-agent" \
+  --client-id "auto-claude-ceo-agent"
+```
+
+Capture `inbox_id` from the response — save as `CEO_INBOX_ID` env var.
+
+**Display-name restriction:** AgentMail rejects `<`, `@`, `>`. Use plain text. Don't try `"ceo-agent <ceo@claudomat.dev>"`.
+
+#### Step 6 — Export env vars for danger-builder
+
+Append to `~/.bashrc`:
+
+```bash
+# AgentMail — management email for danger-builder
+export AGENTMAIL_API_KEY=am_us_xxxxxxxxxxxx
+export CEO_INBOX_ID=inb_xxxxxxxxxxxx           # from Step 5 response
+export CEO_NOTIFY_EMAIL_TO=you@example.com     # the human who receives + replies
+export CEO_NOTIFY_PROJECT_NAME="my-project"    # optional; shows in subject lines
+```
+
+#### Step 7 — End-to-end test
+
+```bash
+agentmail --format json inboxes:messages send \
+  --inbox-id "$CEO_INBOX_ID" \
+  --to "$CEO_NOTIFY_EMAIL_TO" \
+  --subject "[ceo-agent] setup test — please ignore" \
+  --text "Setup test. Reply 'ok' to confirm two-way flow."
+```
+
+Within ~1 min you receive the email at `$CEO_NOTIFY_EMAIL_TO`. Reply from your founder inbox, wait ~30 sec, then:
+
+```bash
+agentmail --format json inboxes:threads list --inbox-id "$CEO_INBOX_ID" --label unread
+```
+
+Your reply appearing = two-way flow is working. Domain is ready for `danger-builder` activation.
+
+#### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| "Domain not verified" on inbox create | Step 4 didn't reach `VERIFIED` | Wait for propagation, re-run verify |
+| "Display name contains invalid character(s)" | `<`, `@`, `>` in display name | Use plain text |
+| Dynadot "invalid record type" | Types uppercase | Use lowercase (`mx` not `MX`) |
+| Dynadot "Please enter a distance for this mail host" | MCP tool doesn't pass priority | Use direct `api3.json` curl per Option A |
+| DNS propagates to `8.8.8.8` but not your ISP | Stale negative-cache at ISP | Test with `1.1.1.1` or `8.8.8.8`; AgentMail verifier uses global resolvers |
+| Verify stuck `PENDING` >1 hour after propagation | AgentMail re-check cached failure | Delete + re-create the domain (Step 1 is idempotent) |
+
+### Resend CLI — one-time auth (product-scope only, optional)
+
+Skip this subsection entirely if your project doesn't send transactional user-facing emails. Resend is NOT used by any brain management flow — ceo-agent, BOARD, and danger-builder all use AgentMail.
+
+After `resend-cli` is installed, authenticate once per machine:
+
+```bash
+# Non-interactive (recommended for headless VPS)
+resend login --key re_xxxxxxxxxxxx
+
+# Or interactive (opens browser SSO)
+resend login
+
+# Verify
+resend doctor            # JSON report: API key valid, domain status, version
+resend domains list      # Shows your verified sending domains
+```
+
+The key is stored in the system credential manager (Keychain / Credential Manager / secret service). For plaintext storage on servers without a credential service, add `--insecure-storage` to the login command.
+
+**The `RESEND_API_KEY` env var overrides saved credentials if set.** Setting the env var at machine scope (e.g. in `~/.bashrc`) is the simplest path when the key needs to be available to product code.
+
+**Note on `resend login` without a flag:** the command fails in non-TTY shells (headless SSH, CI, agent sessions) with `missing_key`. Always pass `--key re_xxx` in those contexts. The interactive form assumes a local browser is available.
+
 After installing, verify each:
 ```bash
-which task-master playwright-mcp domain-mcp netlify railway resend agentmail rtk gh
+which task-master playwright-mcp domain-mcp netlify railway agentmail resend rtk gh
 ```
 
 ---

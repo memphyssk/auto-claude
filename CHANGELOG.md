@@ -34,6 +34,54 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.9.0 — 2026-04-23
+
+Management email under `danger-builder` switches from **Resend (outbound only)** to **AgentMail (two-way flow)**. ceo-agent now has a persistent mailbox, sends each decision as a new thread, and reads founder replies every 5 minutes to act on approve / reject / modify / clarify classifications.
+
+Separation of concerns:
+- **AgentMail** — management (ceo-agent ↔ founder). Persistent inboxes, threads, replies. Required for `danger-builder`.
+- **Resend** — product-scope (transactional user-facing emails the product sends). Optional. Not used by any brain management flow.
+
+### Added
+- `command-center/management/notifications/agentmail.md` — full two-way flow spec: CLI commands, tick-behavior integration, reply classification taxonomy (APPROVE / REJECT / MODIFY / CLARIFY / AMBIGUOUS), thread-label protocol, failure handling (send cascade + inbox-read cascade), activation/deactivation/halt email templates.
+- `command-center/setup-tools/install.md` § 1 "AgentMail — custom domain + ceo-agent inbox setup" — 7-step runbook: register domain → apply DNS records (including Dynadot direct-API workaround for MX priority) → verify propagation → trigger AgentMail verify → create inbox → export env vars → end-to-end test. Uses `claudomat.dev` as reference example with real output shapes. Troubleshooting matrix covers the common gotchas (invalid record type, MX distance, display-name character restrictions, stale propagation caching).
+
+### Changed
+- `command-center/setup-tools/install.md` § 1 — AgentMail repositioned as REQUIRED for danger-builder; Resend repositioned as OPTIONAL product-scope. Install-block order swapped to put the required tool first.
+- `command-center/management/danger-builder-mode.md` — prerequisites swap Resend env-var check for AgentMail CLI + domain-verified + inbox-created checks. Tick behavior gains **step 4: inbox check** before decision work, with explicit rule that reply actions take precedence over new escalations. STATUS routing table updates IDLE delay to **300s (5 min)** for inbox polling cadence. Notifications section rewritten for thread-per-decision semantics.
+- `command-center/management/ceo-bound.md` — § 0 prereqs (env vars) + § 8 Reporting rewritten for AgentMail two-way flow with 5-min founder-reply SLA.
+- `command-center/Sub-agent Instructions/ceo-agent-instructions.md` — new "Inbox reply handling" section with full reply classification table and per-reply action rules. Decision procedure step 6 updates to use AgentMail's `inboxes:messages send` (thread creation); new audit-entry field `Thread: <thread_id>` captures the canonical handle for replies.
+- `command-center/management/board.md` + `conflict-resolution.md` — no changes (semantics already mode-agnostic; delivery mechanism is mode-specific).
+
+### Removed
+- `command-center/management/notifications/resend.md` — deleted. Management no longer uses Resend. Resend auth info retained in install.md under "product-scope only, optional" header for projects that use it for product emails.
+
+### Concrete setup (auto-claude reference domain)
+- Domain: `claudomat.dev` registered at Dynadot, verified at AgentMail (2026-04-23)
+- Inbox: `ceo@claudomat.dev` (inbox_id: `ceo@claudomat.dev`)
+- DNS records: 5 records (MX @, MX mail, TXT agentmail._domainkey, TXT mail, TXT _dmarc) applied via Dynadot `set_dns2` API
+- Test email sent end-to-end, thread_id captured: confirmed working
+
+### Policy highlights
+- **AgentMail is the single source of truth for management email.** No Resend fallback.
+- **Two-way flow is mandatory.** Agent reads inbox every tick (5-min cadence when IDLE). Replies classified into 5 buckets; AMBIGUOUS replies trigger a CLARIFY response and keep the thread unread.
+- **Reply actions pre-empt new decisions.** If an unread REJECT reply exists, rollback runs before any new escalation is resolved this tick.
+- **Inbox-unreachable cascade halts the loop.** 10 consecutive failed inbox reads in 1 hour = STATUS=BLOCKED. Same safety principle as notification send cascade.
+
+### Consumer sync
+- **Breaking:** yes, for anyone who activated `danger-builder` under v0.8.x with the Resend-based env vars. Practical impact: near-zero (v0.8.x never reached a production run in the wild).
+- **New files:** `notifications/agentmail.md`, expanded `install.md` § 1 AgentMail domain-setup subsection — safe to pull
+- **Changed files (safe-overwrite):** `danger-builder-mode.md`, `ceo-bound.md`, `ceo-agent-instructions.md`, `install.md`, `VERSION`
+- **Removed:** `notifications/resend.md`
+- **Migration action for anyone mid-v0.8:**
+  1. `npm install -g agentmail-cli`
+  2. Set `AGENTMAIL_API_KEY` env var (key from <https://agentmail.to>)
+  3. Follow `install.md` § 1 "AgentMail — custom domain + ceo-agent inbox setup" to verify a custom domain + create the ceo inbox
+  4. Set `CEO_INBOX_ID` env var to the new inbox ID
+  5. Re-enter `danger-builder` mode — prereq checks will confirm the new setup
+
+---
+
 ## v0.8.4 — 2026-04-23
 
 Adds AgentMail CLI to the setup-tools baseline. Complements Resend (outbound one-shot notifications) for the case where an agent needs to *operate a mailbox end-to-end* — read incoming messages, reply in-thread, manage drafts, maintain conversation state.

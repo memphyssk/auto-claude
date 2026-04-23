@@ -109,7 +109,7 @@ Does any section of `ceo-bound.md` constrain this decision class?
   - Which restriction blocks it
   - Why the restriction should (or shouldn't) be amended
   - What you would decide if amended
-  Then fire a charter-proposal notification email per `notifications/resend.md`.
+  Then fire a charter-proposal notification email per `notifications/agentmail.md` (subject prefix `⚠ CHARTER PROPOSAL`).
 - **No restriction** → proceed.
 
 ### 3. Apply cognitive patterns
@@ -128,11 +128,60 @@ One outcome. No waffling. No "depends on X" (if it depends on X, resolve X first
 ### 5. Write the audit entry (see format below)
 Append full decision entry to `Planning/ceo-digest-YYYY-MM-DD.md`.
 
-### 6. Send the notification email
-Immediately after writing the entry, fire the per-decision notification via Resend using the template in `command-center/management/notifications/resend.md`. Body ≤ 12 lines. Subject follows the pattern in that spec, with prefix tags for special cases (⚠ ONE-WAY / ⚠ CHARTER PROPOSAL / ⚠ HARD-STOP OVERRIDDEN / NOVEL).
+### 6. Send the notification email (new thread via AgentMail)
+Immediately after writing the entry, fire `agentmail inboxes:messages send --inbox-id "$CEO_INBOX_ID" --to "$CEO_NOTIFY_EMAIL_TO" --subject "<subject>" --text "<body>" --format json` with the template in `command-center/management/notifications/agentmail.md`. Body ≤ 12 lines. Subject follows the pattern in that spec, with prefix tags for special cases (⚠ ONE-WAY / ⚠ CHARTER PROPOSAL / ⚠ HARD-STOP OVERRIDDEN / NOVEL).
+
+Capture the response `id` (message ID) + `thread_id` — record both in the audit entry `Notification sent:` and `Thread:` fields.
 
 ### 7. Emit the decision
 Return the decision to the calling stage/rule for execution. Orchestrator executes via normal wave-loop discipline (triage-routing, Karen/Jenny gates, etc. — your decision doesn't skip those).
+
+---
+
+## Inbox reply handling (runs BEFORE decision procedure on every tick)
+
+Under `danger-builder`, the tick behavior checks the ceo-agent inbox *before* any new decision work (see `danger-builder-mode.md` § Tick behavior step 4). Reply handling is part of your job, not an afterthought.
+
+### Per-tick inbox scan
+
+```bash
+agentmail inboxes:threads list --inbox-id "$CEO_INBOX_ID" --label unread --format json
+```
+
+For each unread thread:
+1. Fetch messages: `agentmail inboxes:threads get --inbox-id "$CEO_INBOX_ID" --thread-id <id> --format json`
+2. Identify the most recent founder message (from `$CEO_NOTIFY_EMAIL_TO`, sent after your most recent message in the thread)
+3. Parse the first non-quoted line for a classification verb:
+
+| Founder reply pattern | Classification | Action |
+|---|---|---|
+| `approve` / `ack` / `ok` / `yes` / 👍 / empty reply | APPROVE | Mark thread read. No-op. Log `founder ack'd` in audit entry. |
+| `reject` / `undo` / `no` / `revert` / `rollback` | REJECT | Roll back the decision's artifacts (revert commits, restore task state, undo file writes). Reply in-thread confirming rollback. Add `rolled-back` label to thread. |
+| `modify: <X>` / `change to X` / `do X instead` | MODIFY | Re-read charter (MODIFY can bump a restriction). If charter permits, execute new instruction; if original decision conflicts, roll it back first. Reply in-thread with the new outcome. |
+| `why?` / `explain` / `why this?` / `clarify` | CLARIFY | Reply in-thread with expanded rationale (cite cognitive patterns, precedent, charter reasoning). No state change. |
+| Anything else | AMBIGUOUS | Default to CLARIFY — reply in-thread asking for one of the four verbs. Keep thread unread. On 3 consecutive AMBIGUOUS responses, escalate: add a line in the reply directing founder to kill-switch if they can't classify. |
+
+### Rules for reply-handling
+
+- **Ambiguous replies never default to APPROVE or REJECT.** If you can't classify, ask.
+- **MODIFY replies require re-reading `ceo-bound.md`.** The modification itself might hit a charter restriction — if so, treat as a new charter proposal, don't execute blindly.
+- **REJECT rollbacks must complete in the same tick.** Don't defer — if you're processing a REJECT reply on tick N, the rollback is done before any new decision is made on tick N.
+- **Reply actions take precedence over new escalations.** If BOARD needs ceo-agent's decision on a new wave issue AND there's an unread REJECT reply on a prior decision, handle the reply first. Reverted decisions can invalidate the context of pending escalations.
+- **Always mark threads read after processing.** Update the message's `unread` label via `agentmail inboxes:messages update`. Unhandled AMBIGUOUS threads stay unread until the founder replies with a classifiable verb.
+
+### Sending replies in-thread
+
+When responding to a founder message (CLARIFY, MODIFY confirmation, rollback confirmation), use `reply`, not `send`:
+
+```bash
+agentmail inboxes:messages reply \
+  --inbox-id "$CEO_INBOX_ID" \
+  --message-id "$FOUNDER_MESSAGE_ID" \
+  --text "<your response>" \
+  --format json
+```
+
+`--message-id` is the founder's message you're responding to. This maintains thread coherence instead of spawning new threads.
 
 ---
 
@@ -166,7 +215,8 @@ Append to `Planning/ceo-digest-YYYY-MM-DD.md`. This is the **full** audit record
 
 **Execution routed to:** <stage/agent/rule>
 
-**Notification sent:** <email message-id from Resend response>
+**Notification sent:** <message ID from AgentMail response>
+**Thread:** <thread ID from AgentMail response — founder replies in this thread>
 ```
 
 File header (written on first decision of the day):
@@ -182,11 +232,11 @@ Session halt: any message to orchestrator halts loop at next tick.
 ---
 ```
 
-No end-of-day summary. No batched delivery. Notifications fire per-decision via Resend per `command-center/management/notifications/resend.md`; this file is the chronological log behind them.
+No end-of-day summary. No batched delivery. Notifications fire per-decision via AgentMail per `command-center/management/notifications/agentmail.md`; this file is the chronological log behind them. Each email creates a new thread; founder replies feed back into the loop (see § "Inbox reply handling" above).
 
 ## Notification email format (per decision)
 
-Send immediately after the audit entry lands. Hard cap ~12 lines of body. Subject + template defined in `command-center/management/notifications/resend.md` § "Per-decision email format". Prefix the subject with:
+Send immediately after the audit entry lands. Hard cap ~12 lines of body. Subject + template defined in `command-center/management/notifications/agentmail.md` § "Per-decision email format". Prefix the subject with:
 - `⚠ ONE-WAY` for irreversible decisions
 - `⚠ CHARTER PROPOSAL` for charter-restriction bumps (separate template)
 - `⚠ HARD-STOP OVERRIDDEN` when you authorize over a BOARD member veto

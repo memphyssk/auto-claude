@@ -14,8 +14,10 @@ Charter is founder-edited only. The CEO cannot amend it. Any restriction change 
 
 These are NOT restrictions — they're setup requirements the CEO verifies at mode entry. If any fail, mode entry aborts.
 
-- [ ] `RESEND_API_KEY` env var set (for per-decision notifications)
-- [ ] `CEO_NOTIFY_EMAIL_TO` env var set (founder email address)
+- [ ] `AGENTMAIL_API_KEY` env var set (for per-decision notifications + inbox reads)
+- [ ] `CEO_INBOX_ID` env var set (AgentMail inbox ID for ceo-agent mailbox — e.g. `ceo@<your-domain>`)
+- [ ] Custom domain verified at AgentMail (per `command-center/setup-tools/install.md` § 1 "AgentMail — custom domain + ceo-agent inbox setup")
+- [ ] `CEO_NOTIFY_EMAIL_TO` env var set (founder's email — who receives + replies)
 - [ ] `Planning/` directory exists and is writable
 - [ ] Kill-switch mechanism tested (see § 7)
 - [ ] `product/FOUNDER-BETS.md` exists and is non-empty (strategic context)
@@ -93,12 +95,12 @@ Alternative halt mechanisms (all active simultaneously):
 
 ## 8. Reporting
 
-**Notification mechanism:** per-decision emails via Resend to `$CEO_NOTIFY_EMAIL_TO`. One email per CEO decision, sent immediately after the decision is recorded. No daily batching. See `command-center/management/notifications/resend.md` for the full spec.
+**Notification mechanism:** per-decision emails via AgentMail from `$CEO_INBOX_ID` (e.g. `ceo@<your-domain>`) to `$CEO_NOTIFY_EMAIL_TO`. One email per CEO decision, each creating a new thread. **Two-way flow:** founder replies in-thread with `approve` / `reject` / `modify: <X>` / `why?`; ceo-agent reads inbox every 5 minutes and acts on classified replies. See `command-center/management/notifications/agentmail.md` for the full spec.
 
-**Audit log path:** `Planning/ceo-digest-YYYY-MM-DD.md` — daily append-only log of every decision with full rationale. This is the retro/post-mortem surface; emails are the push summary.
+**Audit log path:** `Planning/ceo-digest-YYYY-MM-DD.md` — daily append-only log of every decision with full rationale. This is the retro/post-mortem surface; threads are the live conversation; file is the log.
 
-**Founder review cadence:** `(set this — per-email / daily / on-alert-only)`
-**Founder response SLA:** `(set this — how long before founder acknowledges or objects to a decision email)`
+**Founder review cadence:** `(set this — reply to each / daily skim / on-alert-only)`
+**Founder response SLA:** `(set this — how long before founder acknowledges or replies to a decision thread; agent reads inbox every 5 min so any reply acts within ~5 min after send)`
 
 **Weekly summary:** `Planning/ceo-weekly-<ISO-week>.md` (optional — rolls up a week's daily audit files for retro purposes; not emailed, generated on demand).
 
