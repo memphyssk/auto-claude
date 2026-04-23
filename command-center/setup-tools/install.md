@@ -4,9 +4,11 @@ The auto-claude brain expects a specific tooling environment. This document list
 
 **Scope:** tooling that sits *outside* the brain files themselves — Claude Code agents, skills, MCP servers, plugins, and supporting CLIs. The brain at `command-center/` is pulled via `auto-claude sync` (see [README.md](../../README.md) § Keeping the brain in sync).
 
-**Audience:** founder or DevOps engineer setting up a new VPS or dev machine to run auto-claude projects. You already have Claude Code installed and working.
+**When to run:** **before starting the onboarding loop on a new machine.** Stage v0's prerequisites link here. If you're onboarding a project on an already-configured machine, skip straight to [section 7](#7-project-bootstrap--bringing-a-new-project-onto-auto-claude).
 
-**Verified against:** a working system running Claude Code on Linux (Ubuntu 24.04). Pin down specific versions only where the brain depends on them.
+**Audience:** founder or DevOps engineer setting up a new VPS or dev machine. You already have Claude Code installed and working.
+
+**Verified against:** a working system running Claude Code on Linux (Ubuntu 24.04).
 
 ---
 
@@ -61,17 +63,39 @@ which task-master playwright-mcp domain-mcp netlify railway rtk gh
 
 ---
 
-## 2. Claude Code Agents
+## 2. Claude Code Agents — three sources
 
-The brain references ~20 sub-agents by name. These are installed into `~/.claude/agents/` either from the VoltAgent marketplace or as auto-claude custom agents.
+The brain references ~20 sub-agents by name. They come from three sources, each a separate ecosystem. Install in the order below; later sources may override earlier ones if names collide.
 
-### 2a. VoltAgent marketplace agents (generic roles)
+### 2a. gstack (agents + skills together)
+
+Source: <https://github.com/garrytan/gstack>
+
+gstack is a full AI builder framework — agents, skills, and tooling in one install. Primary contribution to the brain is its 30+ skills (see [section 3a](#3a-gstack-skills)) but it also bundles supporting agents.
+
+Install:
+```bash
+# Follow gstack's README:
+# https://github.com/garrytan/gstack#installation
+# Typical flow:
+git clone https://github.com/garrytan/gstack ~/.cache/gstack
+cd ~/.cache/gstack
+# Run the gstack installer (follow repo instructions)
+```
+
+After install, verify:
+```bash
+ls ~/.claude/skills/gstack/SKILL.md           # gstack meta-skill exists
+ls ~/.claude/skills/browse ~/.claude/skills/qa ~/.claude/skills/ship   # core skills present
+```
+
+### 2b. VoltAgent sub-agents
 
 Source: <https://github.com/VoltAgent/awesome-claude-code-subagents>
 
-The brain uses these directly by name (via the `subagent_type` parameter in Claude Code's Agent tool). The full system currently has 152 agents installed; only a subset are actively referenced by the brain.
+Generic dev-role agents (backend-developer, frontend-developer, react-specialist, etc.). The brain spawns these at Stage 4 execution and for BOARD reviewers.
 
-Minimum required set (referenced by wave-loop stages + Sub-agent Instructions):
+Minimum required set for the wave loop + BOARD:
 ```
 architect-reviewer          backend-developer           frontend-developer
 nextjs-developer            react-specialist            refactoring-specialist
@@ -82,14 +106,13 @@ ux-researcher               risk-manager                ceo-reviewer
 problem-framer              claude-md-compliance-checker
 ```
 
-Install via the bundled `agent-installer` agent:
+Install via the bundled `agent-installer` agent (if you have it):
 ```
 Tell Claude Code: "Use the agent-installer agent to install the following agents from
-awesome-claude-code-subagents: architect-reviewer, backend-developer, frontend-developer,
-nextjs-developer, react-specialist, ...[full list above]"
+awesome-claude-code-subagents: architect-reviewer, backend-developer, frontend-developer, ..."
 ```
 
-Or clone the repo and copy manually:
+Or clone and copy manually:
 ```bash
 git clone https://github.com/VoltAgent/awesome-claude-code-subagents ~/.cache/voltagent
 for agent in architect-reviewer backend-developer frontend-developer nextjs-developer \
@@ -101,42 +124,43 @@ for agent in architect-reviewer backend-developer frontend-developer nextjs-deve
 done
 ```
 
-Liberal install (all 152 agents): just copy the whole `categories/*/` tree from the VoltAgent repo into `~/.claude/agents/`. Harmless — unused agents cost nothing at rest.
+Liberal install (all available agents): copy the whole `categories/*/` tree from the VoltAgent repo into `~/.claude/agents/`. Unused agents cost nothing at rest.
 
-### 2b. Custom auto-claude agents
+### 2c. DarcyEGB agents
 
-Three agents are custom to this system and live in this repo — install them after the VoltAgent set:
+Source: <https://github.com/darcyegb/ClaudeCodeAgents>
 
-| Agent | Purpose | Source |
-|---|---|---|
-| `Jenny.md` | Spec-semantic verification — runs at Stage 3 gate + Stage 7 reality check | This repo, or wherever you store your reviewer agents |
-| `karen.md` | Source-claim verification (anti-hallucination) — runs at Stage 3 + Stage 7 | Same |
-| `ceo-reviewer.md` | Strategic direction / bet alignment — spawned at Stage 1 + BOARD | Uses `Sub-agent Instructions/ceo-reviewer-instructions.md` as its instruction layer |
-| `founder-proxy.md` | Founder voice simulation via claude-mem — BOARD-only member | Uses `Sub-agent Instructions/founder-proxy-instructions.md` + claude-mem plugin |
+Supplementary agents that cover roles VoltAgent doesn't, or provide alternative takes on roles that do overlap. The brain may reference specific DarcyEGB agents in future releases; for now, install them as an optional expansion pack.
 
-Installation: Jenny and karen live at `~/.claude/agents/{Jenny,karen}.md` in the reference system. If you need them, ask your brain-author to share the files, or look at commit history for `auto-claude/command-center/Sub-agent Instructions/{Jenny,karen}-instructions.md` — the instruction file is the project-readable source of truth; the agent file wraps it for Claude Code.
+Install:
+```bash
+git clone https://github.com/darcyegb/ClaudeCodeAgents ~/.cache/darcyegb-agents
+# Copy agent files into ~/.claude/agents/. Check the repo's README for the
+# expected layout — if agents live at the repo root, a flat copy works:
+cp ~/.cache/darcyegb-agents/*.md ~/.claude/agents/ 2>/dev/null
+# Otherwise, if they are nested in subdirectories by category:
+find ~/.cache/darcyegb-agents -name '*.md' -not -path '*/.*' -exec cp {} ~/.claude/agents/ \;
+```
 
-### 2c. Built-in agents
+If a DarcyEGB agent has the same filename as a VoltAgent one, the later install wins. That's usually fine — DarcyEGB tends to ship more opinionated takes. If you want to preserve the VoltAgent version, rename before copying.
 
-These ship with Claude Code — no install needed:
-
-- `Explore` — fast codebase exploration (replaces multiple grep/find calls)
-- `Plan` — software architect agent for implementation plans
-- `general-purpose` — for custom roles defined via project instruction files (e.g., founder-proxy is spawned as `general-purpose` + the founder-proxy-instructions.md)
+After all three installs:
+```bash
+ls ~/.claude/agents/ | wc -l       # expect a large number (100+)
+ls ~/.claude/agents/Jenny.md ~/.claude/agents/karen.md 2>&1   # verify reviewer agents if you use BOARD
+```
 
 ---
 
 ## 3. Claude Code Skills
 
-45 skills live at `~/.claude/skills/`. The brain references these via `/skill-name` invocations in CLAUDE.md, rules/skill-use.md, and stage files.
+Skills live at `~/.claude/skills/`. The brain references these via `/skill-name` invocations in `CLAUDE.md`, `rules/skill-use.md`, and stage files.
 
-### 3a. gstack skill family (required — 30+ skills)
+### 3a. gstack skills
 
-Source: gstack — a suite of QA, planning, review, and DX skills that the wave loop leans on heavily.
+Installed alongside gstack agents in [section 2a](#2a-gstack-agents--skills-together). The wave loop leans heavily on this skill family.
 
-Install: follow gstack's README. After install, skills appear at `~/.claude/skills/<name>/SKILL.md`.
-
-Minimum brain-referenced skills:
+Brain-referenced skills:
 ```
 /office-hours           /plan-ceo-review        /plan-eng-review
 /plan-design-review     /plan-devex-review      /autoplan
@@ -156,25 +180,12 @@ Verify: `ls ~/.claude/skills/` shows all the above directories. Each should cont
 ### 3b. Stand-alone skills
 
 - `/make-pdf` — markdown → publication-quality PDF. Install: the skill's SKILL.md + any script deps
-- `/continuous-agent-loop` — patterns for autonomous agent loops (used by `/loop` and full-autonomy mode)
+- `/continuous-agent-loop` — patterns for autonomous agent loops (used by full-autonomy mode)
 - `/benchmark-models` — cross-model benchmark harness (Claude vs GPT via Codex CLI vs Gemini)
 
-### 3c. Built-in skills
+### 3c. claude-mem plugin skills
 
-These come with Claude Code:
-
-- `/loop` — recurring interval runner (also triggered programmatically by full-autonomy mode)
-- `/schedule` — cron-scheduled remote agents
-- `/claude-api` — Claude API / SDK assistance
-- `/update-config` — settings.json configuration
-- `/keybindings-help` — custom key-chord rebindings
-- `/fewer-permission-prompts` — auto-allowlist common read-only tool calls
-- `/statusline-setup` — status line configuration
-- `/simplify` — review + dedupe recently changed code
-
-### 3d. claude-mem plugin skills
-
-The `claude-mem` plugin (section 4) adds:
+Registered when the `claude-mem` plugin is installed (see [section 4](#4-plugins)):
 - `/mem-search` — cross-session persistent memory search
 - `/make-plan` — phased implementation plans with doc discovery
 - `/do` — execute phased plans via subagents
@@ -375,7 +386,7 @@ mkdir my-new-project && cd my-new-project && git init
 npx task-master init
 
 # 3. Install the brain — pin to latest auto-claude release
-/path/to/auto-claude/bin/auto-claude init --version=v0.5.0
+/path/to/auto-claude/bin/auto-claude init --version=v0.6.0
 
 # 4. Review the generated .brainignore and adjust for project-local paths
 $EDITOR .brainignore
@@ -383,7 +394,7 @@ $EDITOR .brainignore
 # 5. Commit the sync infrastructure
 git add .brainignore command-center/.brain-version command-center/.brain-snapshot/ \
         command-center/ CLAUDE.md design/
-git commit -m "chore: bootstrap auto-claude brain (pinned v0.5.0)"
+git commit -m "chore: bootstrap auto-claude brain (pinned v0.6.0)"
 
 # 6. Start the onboarding loop
 # Open Claude Code in the project, tell it:
@@ -410,9 +421,9 @@ playwright-mcp --version
 rtk --version
 rtk gain                  # should not error
 
-# Agents
-ls ~/.claude/agents/ | wc -l     # should be 20+ (minimum set) or 150+ (liberal)
-ls ~/.claude/agents/Jenny.md     # custom reviewer agent (if using BOARD)
+# Agents (all three sources combined)
+ls ~/.claude/agents/ | wc -l     # expect 100+ after all three installs
+ls ~/.claude/agents/Jenny.md     # reviewer agent (if using BOARD)
 ls ~/.claude/agents/karen.md
 
 # Skills
@@ -434,10 +445,11 @@ cat ~/.claude/plugins/installed_plugins.json | grep claude-mem
 ## 9. Known gotchas
 
 - **Playwright MCP `browser_close` kills the MCP instance for subsequent agents.** This is enforced by always-on rule #5 in CLAUDE.md. If you see swarm tests mysteriously fail mid-batch, check for rogue `browser_close` calls.
-- **Railway cache pollution during `auto-claude sync`.** The sync tool's `ensure_source_cache` runs `git fetch --all` which overwrites local test refs in `~/.cache/auto-claude/source.git`. If you're testing sync against a local branch, push it to the mirror after each fetch.
+- **Sync cache pollution during `auto-claude sync`.** The sync tool's `ensure_source_cache` runs `git fetch --all` which overwrites local test refs in `~/.cache/auto-claude/source.git`. If you're testing sync against a local branch, push it to the mirror after each fetch.
 - **Claude Code settings.json is shared across all projects.** Hooks, enabled plugins, and global permissions apply everywhere. Per-project overrides go in the project's `.claude/settings.local.json` if one is configured.
 - **`~/.claude.json` contains per-project MCP configs + auth tokens.** Don't commit it, don't copy it between machines naively.
 - **`domain-mcp` stores the Dynadot API key in args.** If you dump MCP configs in logs or screenshots, redact it.
+- **Agent name collisions across the three sources.** If gstack, VoltAgent, and DarcyEGB all ship a `backend-developer.md`, the last install wins. Verify after all three installs that the agent you expect is the one on disk (`head -20 ~/.claude/agents/backend-developer.md`).
 
 ---
 

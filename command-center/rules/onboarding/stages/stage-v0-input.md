@@ -4,7 +4,7 @@
 Receive the founder-provided documents that describe the service/product being built. These are the raw material for every subsequent onboarding stage. No analysis happens here — just acquisition, validation, and storage.
 
 ## Prerequisites
-- None. This is the first stage of the onboarding loop.
+- **Machine tooling installed.** `command-center/setup-tools/install.md` verification checklist (§ 8) passes. Skip this on machines where a prior auto-claude project has run successfully — tools are already in place.
 - The repo scaffold from auto-claude exists (CLAUDE.md, command-center/, design/).
 - `command-center/rules/onboarding/onboarding-loop.md` has been read.
 

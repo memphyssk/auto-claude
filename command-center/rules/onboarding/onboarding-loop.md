@@ -4,6 +4,20 @@
 
 Before EVERY stage, read the corresponding stage file. Do not invent stages, skip stages, or reorder stages.
 
+## Prerequisite — machine setup (run once per machine, not per project)
+
+Onboarding spawns sub-agents, invokes skills (`/aidesigner`, `/plan-ceo-review`, `/browse`, etc.), and uses MCP servers (aidesigner, playwright-*, mcp-search). If the machine isn't provisioned with these, v0 will fail at the first sub-agent spawn with "agent not found" or similar.
+
+**Before starting v0 on a freshly-installed machine:**
+
+1. READ `command-center/setup-tools/install.md` front-to-back
+2. Run the verification checklist in `install.md` § 8
+3. Only once every verification passes: proceed to v0
+
+If you're onboarding a project on an already-configured machine where a prior auto-claude project has run successfully, skip this prerequisite — the tooling is already in place. The sub-agent spawn in v0 will confirm.
+
+Surface any missing dependency as a hard-stop: do not attempt to proceed with a partial install. Missing `playwright-mcp` will silently degrade Stage 6; missing `claude-mem` will break BOARD under full-autonomy; missing `ceo-reviewer` agent will break Stage 1 reframing. Complete install before proceeding.
+
 ## Stage sequence
 
 ```

@@ -34,6 +34,30 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.6.1 — 2026-04-23
+
+Refines v0.6.0 setup tooling: reorganizes agent sources into three categories, removes built-in-agent references, and moves the entry point from the CLAUDE.md trigger table into the onboarding loop (where it naturally belongs — setup runs before any tool is needed).
+
+### Changed
+- `command-center/setup-tools/install.md` — agent section restructured into three explicit sources:
+  - (a) **gstack** — <https://github.com/garrytan/gstack> (agents + skills together)
+  - (b) **VoltAgent** — <https://github.com/VoltAgent/awesome-claude-code-subagents> (generic dev-role agents)
+  - (c) **DarcyEGB** — <https://github.com/darcyegb/ClaudeCodeAgents> (supplementary / alternative takes)
+  Collision handling documented (last install wins; verify specific agents after install).
+- `install.md` — removed "Built-in agents" subsection (`Explore`, `Plan`, `general-purpose`). These ship with Claude Code and don't need documentation in this guide.
+- `install.md` — removed "Built-in skills" subsection for the same reason.
+- `command-center/rules/onboarding/onboarding-loop.md` — new "Prerequisite — machine setup" section directs founder to read `setup-tools/install.md` and run verification checklist before v0. Runs once per machine, not per project.
+- `command-center/rules/onboarding/stages/stage-v0-input.md` — prerequisites block now explicitly requires machine tooling to be installed.
+- `CLAUDE.md` — **removed** the "setting up a new machine" trigger-table row added in v0.6.0. Setup is an onboarding prerequisite, not a runtime trigger; no need for trigger-table weight.
+
+### Consumer sync
+- **Breaking:** no.
+- **Changed files (safe-overwrite):** `command-center/setup-tools/install.md`, `command-center/rules/onboarding/onboarding-loop.md`, `command-center/rules/onboarding/stages/stage-v0-input.md`, `command-center/VERSION` — assuming not customized project-side
+- **Changed files (review recommended):** `CLAUDE.md` (one row removed — consumers with locally-customized trigger tables need to decide whether to keep or remove the setup-tools row)
+- **Migration action:** none required. Projects already on v0.6.0 lose the trigger-table row for setup-tools but gain the onboarding prerequisite — both point at the same `install.md`, so there's no loss of routing.
+
+---
+
 ## v0.6.0 — 2026-04-23
 
 Setup tooling documentation + brain-sync tooling (`bin/auto-claude`).
@@ -43,7 +67,7 @@ Setup tooling documentation + brain-sync tooling (`bin/auto-claude`).
   - `install.md` — canonical external-tooling setup guide. Covers Claude Code agents (VoltAgent marketplace + custom Jenny/karen/founder-proxy), skills (gstack family + built-ins + claude-mem plugin skills), MCP servers (aidesigner, Playwright × 10, mcp-search, domain-mcp), plugins (claude-mem), supporting CLIs (task-master, playwright-mcp, rtk, gh, netlify, railway), shell config (rtk hook, SSH keep-alive, tmux persistence), project bootstrap, verification checklist, and known gotchas.
   - `README.md` — directory overview + when to consult it
 - `bin/auto-claude` + subcommands — brain-sync tool (init / diff / sync / status). See README § "Keeping the brain in sync across projects".
-- Trigger table row in `CLAUDE.md` for "Setting up a new machine / onboarding team member / diagnosing skill-not-found or MCP-not-available errors" → `command-center/setup-tools/install.md`
+- Trigger table row in `CLAUDE.md` for "Setting up a new machine / onboarding team member / diagnosing skill-not-found or MCP-not-available errors" → `command-center/setup-tools/install.md` (**superseded in v0.6.1** — now an onboarding prerequisite instead).
 
 ### Changed
 - `README.md` — adds `command-center/setup-tools/` row to the directory table. Adds full section on `auto-claude sync` tool (consumer setup + day-to-day commands + release workflow for brain authors).
