@@ -276,13 +276,19 @@ When gating fires, classify the stall + act:
 | `RUNNING` + context ≥75% + no commit in >10 min | Orchestrator stuck mid-work | Force the 75% rule: write handoff.md with "force-rescue: agent appeared stuck; resuming from last commit X", flip STATUS=HANDOFF. |
 | `DONE` | Loop terminated | No-op; agent's work is over. |
 
-### Intervention output
+### Intervention output — fire-and-notify, NEVER fire-and-wait
 
-Every intervention produces:
+**Every intervention ACTS FIRST, then notifies.** You do not wait for founder approval before executing a nudge. The email is notification, not an approval gate. Founder retains a post-hoc override channel via reply (REJECT = rollback; MODIFY = change-after-the-fact), but the nudge takes effect the moment you decide it.
 
-1. **Audit entry** in `Planning/ceo-digest-YYYY-MM-DD.md` — use decision-slug format `nudge-<cause>-<HHMM>`. Required fields: Context (which stall + how long), Decision (what you did), Reversibility (always mark nudges as two-way doors), Monitor (what signal tells you the nudge worked).
-2. **Email via AgentMail** — subject prefix `⚠ NUDGE` (e.g. `[ceo-agent] claudomat.dev — ⚠ NUDGE — IDLE stalled 12m`). Body follows the standard template but makes clear this is a stall intervention, not a decision on a new escalation.
-3. **STATUS-meta.yaml update** — write `last_modified_at: <now>`, `current: <new status>`, `last_ceo_check_at: <now>`, `last_ceo_check_saw_status: <new status>`, `consecutive_idle_ticks: 0` (counter reset on intervention).
+Order of operations (strict):
+1. **Execute the nudge** — update `STATUS` file, write `handoff.md`, clear/create TaskMaster tasks, whatever the classification requires. This is done atomically before anything else.
+2. **Write audit entry** in `Planning/ceo-digest-YYYY-MM-DD.md` — decision-slug format `nudge-<cause>-<HHMM>`. Required fields: Context (which stall + how long), Decision (what you did — past tense, already happened), Reversibility (always mark nudges as two-way doors), Monitor (what signal tells you the nudge worked).
+3. **Send email via AgentMail** — subject prefix `⚠ NUDGE` (e.g. `[ceo-agent] claudomat.dev — ⚠ NUDGE — IDLE stalled 12m`). Body uses past-tense phrasing ("I picked up wave 42 because nothing moved for 12 minutes") — the founder should understand the work is already in motion. Reply options still present (founder can REJECT to roll back or MODIFY to redirect), but framed as post-hoc override, not approval.
+4. **Update STATUS-meta.yaml** — write `last_modified_at: <now>`, `current: <new status>`, `last_ceo_check_at: <now>`, `last_ceo_check_saw_status: <new status>`, `consecutive_idle_ticks: 0`.
+
+**Why fire-and-notify, not fire-and-wait:** stall intervention loses its purpose if it waits. The whole reason to nudge is that the orchestrator has sat at IDLE for 10+ minutes — adding another 10-20 min for founder approval compounds the stall instead of resolving it. The asymmetry: waiting on an ambiguous stall costs real forward motion; a wrong nudge is reversible by a one-line REJECT reply. Act, then tell.
+
+This differs from a regular BOARD-escalated decision where the decision-sender waits for your ruling — nudges are your *own* initiative as the stall monitor, not someone else's request for a ruling.
 
 ### No-intervention output
 

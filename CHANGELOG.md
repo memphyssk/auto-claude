@@ -34,6 +34,26 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.10.1 — 2026-04-23
+
+Clarifies nudge semantics: **fire-and-notify, not fire-and-wait**. Stall interventions execute the moment ceo-agent decides; the email is notification of something already done, not a request for approval. Founder retains post-hoc override via REJECT / MODIFY reply.
+
+### Changed
+- `Sub-agent Instructions/ceo-agent-instructions.md` § Intervention output — rewritten to make the order explicit: (1) execute nudge, (2) write audit entry, (3) send email, (4) update STATUS-meta. Adds explicit rationale for fire-and-notify: "waiting on an ambiguous stall costs real forward motion; a wrong nudge is reversible by a one-line REJECT reply. Act, then tell."
+- `notifications/agentmail.md` — new "Nudge-specific body variant" subsection with past-tense template ("ceo-agent nudged. … Action taken: picked up wave 42"). Drops "approve | ack" from reply options for nudges because approval is implicit in not-replying. `no reply → tacit acceptance, work continues` becomes the explicit default.
+- `notifications/agentmail.md` — reply-options SLA updated from "5 min" to "10 min" to match v0.10.0's cadence change.
+
+### Policy highlights
+- **Nudges ACT FIRST, then notify.** The asymmetry justifies it: stall-extension from waiting hurts more than a reversible nudge. REJECT rolls back cleanly if founder disagrees.
+- **Regular decisions (BOARD-escalated) still wait-and-then-decide** — those are someone else's request for a ruling. The act-first rule applies only to ceo-agent's own initiative as stall monitor.
+- **Subject prefix `⚠ NUDGE`** distinguishes from regular decisions in the inbox. Past-tense body text reinforces "already happened."
+
+### Consumer sync
+- **Breaking:** no. Purely semantic clarification to docs; no behavioral change to what v0.10.0 shipped (the intervention was always meant to act-first, this release just makes that explicit in the spec).
+- **Migration action:** none.
+
+---
+
 ## v0.10.0 — 2026-04-23
 
 ceo-agent becomes a constant-on ticking entity with tool-invocation authority and a stall-monitor role. Under `danger-builder`, ceo-agent runs as step 0 of every tick — checks if the orchestrator has stalled, and nudges forward when it has. Also gains a 3-tier tool authority model (charter-owned + read-only + execution-routed) so it can consult skills/agents/MCPs/CLIs for better decisions without bypassing specialist safety.

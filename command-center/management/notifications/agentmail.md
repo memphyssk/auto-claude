@@ -106,7 +106,7 @@ Monitor:       <what signal + who + by when>
 
 Full entry:    Planning/ceo-digest-<YYYY-MM-DD>.md
 
-Reply options (agent reads your response within 5 min):
+Reply options (agent reads your response within 10 min):
   approve | ack               → no-op, thread marked read
   reject | undo               → roll back this decision
   modify: <instruction>       → execute new instruction instead
@@ -114,6 +114,32 @@ Reply options (agent reads your response within 5 min):
 ```
 
 The Reply options block trains founder inbox heuristics — reply with one of those verbs and the agent acts predictably.
+
+### Nudge-specific body variant
+
+When the email is a stall-monitor NUDGE (subject prefixed `⚠ NUDGE`), use past-tense phrasing to signal that the work is already in motion — this is notification of something done, not a request for approval:
+
+```
+ceo-agent nudged. <ISO timestamp>
+
+Stall:         <STATUS value that stalled> for <duration e.g. "12 min">
+Action taken:  <past tense: "picked up wave 42", "cleared stale monitor M7", etc.>
+Why:           <1-2 sentences: the classification and why this unblocks>
+
+Charter:       <"no applicable restriction" OR "ceo-bound.md § X">
+Reversibility: two-way door   (nudges are always reversible)
+Monitor:       <what signal tells us the nudge worked — often "STATUS transitions off IDLE within next tick">
+
+Full entry:    Planning/ceo-digest-<YYYY-MM-DD>.md
+
+Override (post-hoc — work is already in motion):
+  no reply                    → tacit acceptance, work continues
+  reject | undo               → roll back the nudge; stall resumes for founder resolution
+  modify: <instruction>       → change course; agent executes new instruction instead
+  why?                        → agent replies in-thread with fuller reasoning
+```
+
+**Key phrasing difference:** "approve | ack" is absent from nudge bodies — because the action happened already, approval is implicit in not-replying. The agent is telling the founder what it did, not asking permission.
 
 ---
 
