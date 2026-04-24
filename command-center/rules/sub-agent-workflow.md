@@ -8,16 +8,16 @@
 
 Three-step gate. Run in order; do not skip Step 1 even for "obviously installed" agents — silent-fail is the failure mode this gate prevents.
 
-1. **Consult the capability sheet.** Open `Planning/.capability-sheet.md` (section "Agents at ~/.claude/agents/") and confirm the target agent name appears. If absent → **STOP**. Either (a) install the agent per `setup-tools/install.md` and regenerate the sheet, (b) pick the closest substitute from the catalog and record the swap in the spawn context, or (c) halt and surface to founder. Do not proceed on faith that the name is correct — "I used it last wave" is not verification.
+1. **Consult the capability sheet.** Open `Planning/.capability-sheet.md` (section "Agents at ~/.claude/agents/") and confirm the target agent name appears. If absent, either (a) install the agent per `setup-tools/install.md` and regenerate the sheet, or (b) pick the closest substitute from the catalog and record the swap in the spawn context. Do not proceed on faith that the name is correct — "I used it last wave" is not verification.
 
 2. **Read the agent's instruction file** at `command-center/Sub-agent Instructions/<agent-name>-instructions.md` and inject the contents as the FIRST directive in the spawn prompt.
    - If present → inject verbatim
    - If absent but the agent is installed → the agent's global system card is the first directive (documented fallback); create an empty stub file for future overrides
-   - If the plan specifically relies on a project-customized instruction file and it's missing → **STOP**, flag as a plan-authoring defect
+   - If the plan specifically relies on a project-customized instruction file and it's missing → flag as a plan-authoring defect and substitute the closest available instruction file
 
 3. **Consult category-appropriate alternatives.** If Step 1 showed the named agent exists but it's the wrong fit for the task (e.g., `backend-developer` for a DB-heavy query, when `database-optimizer` is in the catalog), swap before spawning. The catalog is broad; defaulting to the first name that came to mind narrows the choice.
 
-**Hard rule:** only create instruction-file stubs for agents that exist in the available agent list — never invent agent names. This gate exists because sim-001 exposed two failure classes: plans naming uninstalled agents (`node-specialist`) and rituals referencing agents before their instruction files were authored (`trend-analyst`). Catalog-first verification catches both.
+**Hard rule:** only create instruction-file stubs for agents that exist in the available agent list — never invent agent names.
 
 **Observations are Stage 9/10 pipeline only — NOT read at spawn time.** Observation files (`command-center/Sub-agent Observations/<agent>-observations.md`) are written at Stage 9 by `knowledge-synthesizer` + `technical-writer`, read at Stage 10 by `karen` (converter), and never touched during Stages 1-8. All prompt-shaping intelligence lives in instruction files after Stage 10 promotes load-bearing observations into them. Do not read observations when preparing a spawn; do not inject them into any spawn prompt.
 

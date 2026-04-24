@@ -23,7 +23,7 @@ Do NOT let implementers improvise designs — inconsistency is the #1 drift vect
 ## Actions
 
 0. Mark the task in-progress: `npx task-master set-status --id=<task-id> --status=in-progress`
-1. Pick the best-fit expert(s) from the capability sheet (`Planning/.capability-sheet.md` — "Agents at ~/.claude/agents/"). No default roster. If the plan names an agent not in the sheet, halt per always-on rule #12.
+1. Pick the best-fit expert(s) from the capability sheet (`Planning/.capability-sheet.md` — "Agents at ~/.claude/agents/"). No default roster. If the plan names an agent not in the sheet, pick the one that resembles it the most and note the swap in the spawn context.
 2. Spawn in parallel when file scopes don't overlap
 3. Each sub-agent receives its instruction file as FIRST directive in the prompt
 4. Apply `/simplify` after implementation on touched files

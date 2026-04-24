@@ -34,23 +34,37 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
-## v0.13.0 — 2026-04-24
+## v0.13.1 — 2026-04-24
 
-Enforces agent-catalog verification before every sub-agent spawn. Adds always-on rule #12 (headline) + pre-spawn checklist (procedure) to close a two-class silent-fail vector surfaced in sim-001: plans naming uninstalled agents and rituals referencing agents before their instruction files exist.
-
-### Added
-- **Always-on rule #12 in `CLAUDE.md`** — "Before spawning any sub-agent, verify it exists in the catalog." Mandates a check against `Planning/.capability-sheet.md` (section "Agents at ~/.claude/agents/") before every spawn; if absent → install, substitute, or halt. Points at the procedural checklist for execution detail.
-- **"Before every sub-agent spawn" 3-step gate in `rules/sub-agent-workflow.md`** — (1) consult capability sheet, (2) read instruction file as FIRST directive, (3) consult alternatives. Replaces the prior "Before every spawn" stub with the full catalog-first procedure. Calls out the sim-001 failure classes (`node-specialist` uninstalled, `trend-analyst` file missing) as the motivating evidence.
+Tone + behavior cleanup on v0.13.0. Removes war-story provenance (sim-001 failure names) from rules themselves — the CHANGELOG is the place for that history, not the always-on rule text. Also softens the "halt" directive to "substitute with the closest match" so the gate never blocks forward motion.
 
 ### Changed
-- `rules/build-iterations/stages/stage-4-execute.md` — Action 1 now explicitly names the capability sheet as the roster source, with a halt directive per rule #12 if the plan names an agent not in the sheet. Prevents Stage 4 from silently spawning a phantom agent after passing Stage 3 gate.
+- `CLAUDE.md` rule #12 — dropped the sim-001 anecdote ("already observed in sim-001 where the plan named `node-specialist`..."); dropped the "halt and surface to founder" option. The gate is now install-or-substitute, no halt branch.
+- `rules/sub-agent-workflow.md` § "Before every sub-agent spawn" — dropped the sim-001 failure-class paragraph; softened "STOP" language in Steps 1-2 to "substitute" / "flag as defect and substitute". The gate informs but does not block.
+- `rules/build-iterations/stages/stage-4-execute.md` Action 1 — "halt per rule #12" → "pick the one that resembles it the most and note the swap in the spawn context."
 
 ### Rationale
-Sim-001 simulation exposed that both the plan (Stage 2) and execution (Stage 4) could reference agents by name without any verification step. The failure surface is two-dimensional:
-- **Plan-authoring time:** author cites an agent name that sounds right but isn't installed.
-- **Execution time:** ritual or stage file references an agent before its instruction file has been authored.
+War-story citations in rule text age poorly — they turn into trivia once the originating incident fades from memory. CHANGELOG entries carry history; rule text carries the current behavior. And "halt" as a default branch on a gate that fires at every spawn creates a new failure mode (stuck waves) for the sake of a rare case — substitution is the correct default.
 
-A single rule couldn't cover both — the first wants a catalog lookup at plan authorship, the second wants a pre-spawn gate regardless of how the name arrived. Option C (headline rule + procedural checklist) covers both surfaces with minimal redundancy: the rule is the always-on intent, the workflow file is the executable steps.
+### Consumer sync
+- **Breaking:** no. Softens v0.13.0 behavior; no rule added or removed.
+- **Changed files (safe-overwrite):** `CLAUDE.md`, `command-center/rules/sub-agent-workflow.md`, `command-center/rules/build-iterations/stages/stage-4-execute.md`.
+
+---
+
+## v0.13.0 — 2026-04-24
+
+Enforces agent-catalog verification before every sub-agent spawn. Adds always-on rule #12 (headline) + pre-spawn checklist (procedure) so plans and rituals can't reference agents that aren't actually callable on the machine.
+
+### Added
+- **Always-on rule #12 in `CLAUDE.md`** — "Before spawning any sub-agent, verify it exists in the catalog." Mandates a check against `Planning/.capability-sheet.md` (section "Agents at ~/.claude/agents/") before every spawn; if absent → install or substitute with the closest catalog match. Points at the procedural checklist for execution detail.
+- **"Before every sub-agent spawn" 3-step gate in `rules/sub-agent-workflow.md`** — (1) consult capability sheet, (2) read instruction file as FIRST directive, (3) consult alternatives. Replaces the prior "Before every spawn" stub with the full catalog-first procedure.
+
+### Changed
+- `rules/build-iterations/stages/stage-4-execute.md` — Action 1 now explicitly names the capability sheet as the roster source. If the plan names an agent not in the sheet, pick the closest resemblance and note the swap in spawn context.
+
+### Rationale
+Both plan-authoring (Stage 2) and execution (Stage 4) could previously reference agents by name without any verification step. A single rule couldn't cover both — plan time wants a catalog lookup at authorship, execution time wants a pre-spawn gate regardless of how the name arrived. Option C (headline rule + procedural checklist) covers both surfaces with minimal redundancy: the rule is the always-on intent, the workflow file is the executable steps.
 
 ### Consumer sync
 - **Breaking:** no. Adds a pre-spawn step; does not invalidate any existing spawn — existing spawns still work if the named agent is in the catalog. Projects without `Planning/.capability-sheet.md` generate it on first turn per rule #11.
