@@ -34,6 +34,29 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.12.1 — 2026-04-24
+
+Fixes a stale v0.9.0 rename leftover caught by the sim-001 simulation run.
+
+### Fixed
+- `CLAUDE.md:64` trigger-table row for `danger-builder` mode had four stale Resend references that were missed during the v0.9.0 Resend→AgentMail rename. The row pointed at deleted `notifications/resend.md`, said "Resend notifications," said "Resend env vars set," and described email delivery with Resend-era single-direction semantics.
+
+All four corrected:
+- `per-decision Resend notifications` → `per-decision AgentMail notifications`
+- `notifications/resend.md` (deleted file) → `notifications/agentmail.md`
+- `Resend env vars set` → `AgentMail env vars set (AGENTMAIL_API_KEY + CEO_INBOX_ID + CEO_NOTIFY_EMAIL_TO)`
+- Added `founder replies in-thread` to reflect the two-way-flow semantics that were missing
+- Email-spec description updated to `(per-decision email spec with two-way flow)`
+
+### Provenance
+Security-engineer agent caught this during Stage 4 of wave-loop simulation sim-001. See `Planning/sim-001-report.md` § Stage 4 for the detection trail. A real consumer running `danger-builder` mode would have hit a broken file reference at mode-entry prerequisite check.
+
+### Consumer sync
+- **Breaking:** no. Pure doc fix.
+- **Migration action:** none. Consumers syncing to v0.12.1 get the corrected CLAUDE.md trigger row.
+
+---
+
 ## v0.12.0 — 2026-04-24
 
 Adds an **Author behavior** section at the top of `dev-principles.md`. Six rules covering the pre-commit author moment: how to approach work, what to write, what to leave alone. Adapted from Karpathy's CLAUDE.md guidelines with auto-claude-specific additions.
