@@ -1,137 +1,128 @@
 # Development Principles
 
-Engineering principles and cross-wave lessons applied at Stage 4 (execution) and beyond. Complemented by `planning-principles.md` for plan-authoring discipline.
+Engineering principles applied at Stage 4 (execute) and every stage that writes code. Complemented by `planning-principles.md` for plan-authoring discipline.
 
-## Author behavior (pre-commit)
-
-<!-- Rules 1-4 adapted from https://github.com/forrestchang/andrej-karpathy-skills/blob/main/CLAUDE.md -->
-
-Behavioral guidelines for the author moment — how to approach the work, what to write, what to leave alone. Apply in every stage that writes code (Stage 4 execute, Stage 6 test, fast-fix handlers, anywhere else code is authored).
-
-### 1. Think Before Coding (Karpathy)
-
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
-
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them — don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
-
-### 2. Simplicity First (Karpathy)
-
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-
-### 3. Surgical Changes (Karpathy)
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it — don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
-
-### 4. Verify Before Claiming Done (Karpathy, adapted for wave-loop)
-
-**Know what "done" looks like before you declare it. Trust nothing you can't check.**
-
-Within any single stage (not across stages — the wave loop owns that):
-- Before editing, identify the concrete check that tells you the edit worked. "Tests pass" / "page renders" / "flag flips" — specific, runnable.
-- After editing, actually run the check. Don't trust the compiler's silence; run the test.
-- For non-trivial changes, write the check first if one doesn't exist. A test that fails before your change and passes after is worth more than the diff.
-
-Weak criteria ("should work now", "pushed to staging") → vulnerable to regressions the wave loop can't catch until Stage 5b/6. Strong criteria ("added 3 tests covering edge X/Y/Z, all pass") → verifiable, rollback-able, explicit.
-
-**Does not override `wave-loop.md` stage structure.** The wave loop defines *when* work flows through plan → gate → execute → review → QA → test. This rule is about the discipline within any one stage — specifically Stage 4 (execute) and Stage 6 (test). Don't use this rule to justify skipping Stage 3 gate or Stage 5b QA; the loop owns cross-stage verification.
-
-### 5. No Silent Error Handling
-
-**Every caught error must be named, rethrown, or explicitly documented as safe to swallow.**
-
-- Every `try/catch` must: rethrow, log to an observable surface (monitoring, Sentry, structured log, user feedback), or include a one-line comment explaining why it's safe to swallow this specific error class.
-- Bare `except:` / `catch (e)` without handling is a code smell — name the error class explicitly (`ConnectionTimeoutError`, `ValidationError`, `AuthExpired`, etc.).
-- Logging to a surface nobody reads is silent handling with extra steps. Real surface = something someone or something monitors.
-- "Handle errors gracefully" means nothing. Name the specific exception.
-
-### 6. Prefer Deletion
-
-**If a change removes more code than it adds, prefer that framing. Bugs hide in lines that exist.**
-
-- Before adding a helper, check if the operation is used fewer than 3 times. If 2 or fewer, inline it.
-- Zombie code created by your change (unreachable branches, unused exports, dead imports) goes in the same commit as the change that stranded it.
-- When a simpler smaller implementation works, it beats a bigger one — even if the bigger one is "more general" or "more flexible."
+Populated by `/retro` output and user approval. New rules enter as numbered imperatives — one sentence of rule, one sentence of why. No war stories, no wave citations.
 
 ---
 
-## How this file is maintained
+## Authoring discipline
 
-- **Populated by:** `/retro` skill output — orchestrator routes execution/deployment lessons to this file (plan-authoring lessons go to `planning-principles.md`).
-- **Not a dumping ground:** only principles that apply across multiple waves belong here. Wave-specific lessons live in `Planning/wave-<N>-closeout.md`. CLAUDE.md stays lean — new always-on rules require explicit user approval, not automatic addition from `/retro` output.
-- **Maintenance:** prune stale principles during periodic reviews. If a principle hasn't fired in 10+ waves, it's either absorbed into another rule or no longer relevant.
+### 1. Ask: "would a senior engineer say this is overcomplicated?" If yes, simplify.
+Why: this single question catches more over-engineering than any other check.
 
-## Entry format
+### 2. State assumptions explicitly; if uncertain, ask.
+Why: silent assumptions become silent bugs.
 
-```
-### <Short imperative rule>
-**Context:** What situation surfaced this lesson.
-**Rule:** The actionable principle.
-**Why:** The reasoning (1-2 sentences).
-**Cross-ref:** `Planning/wave-<N>-closeout.md` where first observed (optional).
-```
+### 3. When multiple interpretations exist, present them — don't pick silently.
+Why: the user knows which reading matches intent; you're guessing.
 
----
+### 4. If a simpler approach exists, say so before implementing the complex one.
+Why: cheap pushback now is cheaper than a rewrite later.
 
-## Principles
+### 5. When something is unclear, stop and name what's confusing.
+Why: confusion hidden at authoring time surfaces as a bug at gate time.
 
-### Railway deploy is not guaranteed to fire on merge — always verify uptime < 300s post-merge
-**Context:** Wave g25 — PR merged, CI green, code correct on disk, but Railway was still serving a 9-day-old build. Karen's Stage 7 check caught it via uptime timestamp comparison.
-**Rule:** At Stage 5b, confirm Railway uptime is < 300s AND that a deploy-marker endpoint (or health check) returns a response consistent with the merged commit. If uptime > 300s post-merge, manually trigger a redeploy before proceeding to Stage 6.
-**Why:** Railway auto-deploy can silently fail or stall. Verification without this check produces false "PASS" verdicts against stale code, causing Stage 7 BLOCK and wasted tester cycles.
-**Cross-ref:** `Planning/wave-g25-closeout.md` — first observed.
+## Simplicity
 
-### Dynadot DNS `set` is destructive — always resend the complete record set
-**Context:** Wave g25 — Dynadot's DNS `set` operation wipes all existing records for the domain and replaces them with only what is submitted. Resending only the new CNAME without the full prior record set deletes all existing A/MX/TXT records.
-**Rule:** Before any Dynadot DNS write, read the current full record set via `GET` and include all existing records plus the new record in the `set` payload. Never send a partial update.
-**Why:** Partial `set` is indistinguishable from a full replacement at the API level. Any records omitted from the payload are silently deleted. Email (MX), root A, and SPF (TXT) are all at risk.
-**Cross-ref:** `Planning/wave-g25-closeout.md` — first observed.
+### 6. Ship the minimum code that solves the stated problem.
+Why: speculative features are debt before they're used.
 
-### Dynadot DNS record types are lowercase and case-sensitive
-**Context:** Wave g25 — the Dynadot API rejected record types submitted in uppercase (`A`, `CNAME`, `TXT`). Lowercase values (`a`, `cname`, `txt`, `mx`) are required.
-**Rule:** Always use lowercase record type strings when calling the Dynadot DNS API. Verify the exact string the API accepts before submitting.
-**Why:** Unlike most DNS APIs that normalize case, Dynadot's API is case-sensitive on the `type` field. Uppercase submissions fail silently or with opaque errors.
-**Cross-ref:** `Planning/wave-g25-closeout.md` — first observed.
+### 7. No abstractions for single-use code.
+Why: one caller doesn't need an interface.
 
-### Railway serviceInstance config can silently override railway.json — verify via GraphQL before declaring Stage 5 confirmed
-**Context:** Two consecutive waves (g56, g59) hit Railway silently replacing Dockerfile config with RAILPACK between deploys, ignoring `railway.json`. In both cases the deploy appeared to succeed at the CI level but Railway was building with the wrong config.
-**Rule:** At Stage 5b (post-deploy QA), before declaring the deploy confirmed, query `serviceInstance.dockerfilePath` via the Railway GraphQL API. If the value is `null` or set to a RAILPACK path instead of the expected Dockerfile, apply the mutation recipe at `~/.gstack/railway-graphql-recipe.md` to restore the correct config. Do NOT proceed to Stage 6 with an unverified service config.
-**Why:** Railway's service-level GraphQL config is authoritative over `railway.json`. Config drift is silent — the Railway dashboard may show the service as "deployed" while actually building with a different builder. Two occurrences in one session confirms this is a recurring infrastructure hazard, not a one-off.
-**Cross-ref:** `Planning/wave-g59-closeout.md` — second occurrence; recipe logged at `~/.gstack/railway-graphql-recipe.md`.
+### 8. No flexibility or configurability that wasn't requested.
+Why: every knob is a failure mode waiting for a user.
 
-### Follow-up PRs must state "why the previous attempt failed"
-**Context:** When a fix requires more than one PR to land, the reasons for the prior attempt's failure often don't make it into the diff or commit — they live only in the conversation.
-**Rule:** Each follow-up PR description must include a one-sentence diagnosis of why the prior attempt didn't work (e.g., "dep-array fix didn't work because the actual cause was engine.io transport ordering").
-**Why:** Makes the learning searchable in git history. Future agents or humans debugging similar failures find the breadcrumb instead of re-discovering the same root cause.
+### 9. No error handling for scenarios that can't occur.
+Why: unreachable branches rot silently and mislead readers.
+
+### 10. If 200 lines could be 50, rewrite it.
+Why: size is the cheapest proxy for complexity.
+
+## Surgical changes
+
+### 11. Don't improve adjacent code, comments, or formatting.
+Why: scope creep dilutes review and hides the real change.
+
+### 12. Don't refactor things that aren't broken.
+Why: "while I'm here" is how regressions enter a shipping diff.
+
+### 13. Match existing style, even if you'd do it differently.
+Why: style inconsistency costs more than any local improvement buys.
+
+### 14. Mention unrelated dead code; don't delete it.
+Why: the user may have plans you can't see from here.
+
+### 15. Remove imports, variables, and functions that your change stranded.
+Why: orphans YOUR change created are YOUR mess to clean up.
+
+### 16. Every changed line traces to the user's request.
+Why: if you can't name the ask a line serves, it doesn't belong in the diff.
+
+## Verify done
+
+### 17. Before editing, identify the concrete check that tells you the edit worked.
+Why: "should work now" is not a completion criterion.
+
+### 18. After editing, actually run the check — don't trust the compiler's silence.
+Why: type checks verify code correctness, not feature correctness.
+
+### 19. For non-trivial changes, write the check first if one doesn't exist.
+Why: a test that fails before your change and passes after is worth more than the diff.
+
+## Error handling
+
+### 20. Every caught error either rethrows, logs to an observable surface, or carries a one-line comment explaining why it's safe to swallow.
+Why: silent catches are the #1 source of mystery bugs in production.
+
+### 21. No bare `except:` or `catch (e)` — name the exception class.
+Why: catching everything catches things you didn't mean to.
+
+### 22. Logging to a surface nobody reads is silent handling with extra steps.
+Why: "we have logs" only counts if someone or something monitors them.
+
+### 23. "Handle errors gracefully" means nothing — name the specific exception and the specific response.
+Why: vague intent produces vague code.
+
+## Deletion bias
+
+### 24. Prefer diffs that remove more code than they add.
+Why: bugs hide in lines that exist.
+
+### 25. Inline any helper used fewer than 3 times.
+Why: one or two callers don't justify the indirection cost.
+
+### 26. Zombie code created by your change ships in the same commit.
+Why: leaving it for "later" means never.
+
+### 27. A smaller simpler implementation beats a bigger "more general" one.
+Why: generality has a cost; pay it only when a second caller actually shows up.
+
+## Infrastructure gotchas
+
+### 28. Confirm Railway uptime < 300s post-merge before declaring the deploy done.
+Why: Railway auto-deploy can silently stall — a stale build passes CI but fails reality.
+
+### 29. At Stage 5b, query `serviceInstance.dockerfilePath` via the Railway GraphQL API — don't trust `railway.json`.
+Why: Railway's service-level config silently overrides the repo file; drift is invisible from the dashboard.
+
+### 30. Before any Dynadot DNS write, GET the full record set and resend everything plus the new record.
+Why: Dynadot `set` is a full replacement — omitted records are silently deleted.
+
+### 31. Dynadot record type strings are lowercase (`a`, `cname`, `txt`, `mx`).
+Why: the API rejects uppercase with opaque errors.
+
+## Git discipline
+
+### 32. Every follow-up PR description names why the previous attempt failed.
+Why: without it the root cause lives only in the conversation and gets re-discovered every time.
 
 ---
 
 ## Code conventions
 
-Baseline project rules applied at Stage 4 execution and post-build review. These are not retro-driven — they are the stable engineering contract for the codebase. Violation of any convention is a Stage 4b review blocker.
+Baseline project rules applied at Stage 4 execution and post-build review. Project-specific engineering contract — violation of any convention is a Stage 4b review blocker. Not retro-driven; edit these per project.
 
 ### TypeScript
 - Strict mode everywhere. No `any` unless absolutely necessary.

@@ -34,6 +34,29 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.14.0 — 2026-04-24
+
+`dev-principles.md` rewritten as a flat numbered rulebook. 32 imperative rules, each a single line of action + a single line of why. War-story framing ("Context:", "Cross-ref: Planning/wave-g25-closeout.md") stripped — CHANGELOG entries and closeouts carry history, rule text carries current behavior.
+
+### Changed
+- `rules/dev-principles.md` — full structural rewrite:
+  - 171 lines → 171 lines (similar length, ~2x rules, ~1/3 the prose).
+  - Karpathy sub-section (4 clustered rules with bullet lists) → 19 atomic imperatives across "Authoring discipline / Simplicity / Surgical changes / Verify done".
+  - "Principles" section (5 entries with 4-field `Context/Rule/Why/Cross-ref` blocks) → 5 one-liner rules under "Error handling / Infrastructure gotchas / Git discipline".
+  - Senior-engineer test ("would a senior engineer say this is overcomplicated?") promoted to rule #1.
+  - "How this file is maintained" + "Entry format" meta-sections collapsed to a single line at top.
+  - "Code conventions" section kept inline (per-project contract) with a one-line explanatory intro.
+
+### Rationale
+A principles file that sub-agents have to skim in the first 30 seconds of a Stage 4 spawn can't carry narrative about wave g25 or quote a full paragraph on why Dynadot partial-set is destructive. Rule text should answer "what must I do?" in one sentence; rule rationale should answer "why?" in one more. Anything longer belongs in CHANGELOG or closeout files.
+
+### Consumer sync
+- **Breaking:** no. Content is behaviorally equivalent; only format changed. No rule dropped, no new rule added.
+- **Changed files (review recommended):** `command-center/rules/dev-principles.md`.
+- **Migration action:** none. Projects that reference specific rules by heading (e.g., "per dev-principles § 'Simplicity First'") need to update references to rule numbers (e.g., "dev-principles #6-10"). Grep your consumer repo for `dev-principles` references.
+
+---
+
 ## v0.13.1 — 2026-04-24
 
 Tone + behavior cleanup on v0.13.0. Removes war-story provenance (sim-001 failure names) from rules themselves — the CHANGELOG is the place for that history, not the always-on rule text. Also softens the "halt" directive to "substitute with the closest match" so the gate never blocks forward motion.
