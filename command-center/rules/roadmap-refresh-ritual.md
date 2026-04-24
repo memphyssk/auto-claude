@@ -55,7 +55,7 @@ Scope covers: (a) every active milestone's feature area, (b) candidate themes in
 
 **Output:** refreshed `command-center/artifacts/competitive-benchmarks/<feature>.md` files + updated `command-center/artifacts/competitive-benchmarks/INDEX.md` freshness timestamps.
 
-**1b. Trend-forward scan (`trend-analyst`, single agent).** Scope: gaming marketplace sector, ~60–90 day window. Surface emerging patterns, regulatory shifts, technology changes (crypto regulations, payment provider moves, platform trust trends). Output: `Planning/trend-scan-<YYYY-MM-DD>.md`.
+**1b. Trend-forward scan (`trend-analyst`, single agent).** Scope: project's sector as inferred from `command-center/product/FOUNDER-BETS.md` + active ROADMAP.md milestone themes, ~60–90 day window. Surface emerging patterns, regulatory shifts, platform moves, technology changes, and category consolidation relevant to that sector. READ `command-center/Sub-agent Instructions/trend-analyst-instructions.md` before spawning — the file defines methodology, source-selection rules, and output format. Output: `Planning/trend-scan-<YYYY-MM-DD>.md`.
 
 **1c. Founder review of `FOUNDER-BETS.md`.** Founder updates the file with any new strategic bets they want on the table. This is the forward-thinking channel. Agents never edit this file — the orchestrator reads it and cites bets as milestone bet-source.
 

@@ -34,6 +34,29 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.12.2 — 2026-04-24
+
+Two fixes from sim-001 findings to `roadmap-refresh-ritual.md`.
+
+### Fixed
+- **Missing instruction file:** `command-center/Sub-agent Instructions/trend-analyst-instructions.md` created. Was referenced by `roadmap-refresh-ritual.md` Step 1b + the "READ before spawning" line but never authored. First-run consumer projects would have hit a file-not-found on the mandated READ. Now authored with scope, methodology, output format, failure modes, and reading list — matching the style of other brain agent instruction files.
+
+- **Hardcoded sector scope:** Step 1b "Trend-forward scan" previously said `Scope: gaming marketplace sector, ~60–90 day window` — a kvik/eldorado source-project assumption that broke for any non-marketplace project. Generalized to "project's sector as inferred from FOUNDER-BETS.md + active ROADMAP.md milestone themes." The trend-analyst's instruction file's reading list formalizes how sector inference works.
+
+### Unchanged (deliberately)
+- Step 1a Playwright-swarm mandate (`ui-comprehensive-tester` × 3 on Playwright instances) — founder decision to keep as-is even for non-web projects. Trade-off accepted: consumers with non-browsable competitors will need to adapt Step 1a inline rather than relying on spec branching.
+
+### Provenance
+Both findings surfaced during sim-001 Pre-wave A run. See `Planning/sim-001-report.md` § Pre-wave A.
+
+### Consumer sync
+- **Breaking:** no.
+- **New files:** `Sub-agent Instructions/trend-analyst-instructions.md` — safe to pull
+- **Changed files:** `roadmap-refresh-ritual.md` Step 1b scope sentence, VERSION
+- **Migration action:** none.
+
+---
+
 ## v0.12.1 — 2026-04-24
 
 Fixes a stale v0.9.0 rename leftover caught by the sim-001 simulation run.
