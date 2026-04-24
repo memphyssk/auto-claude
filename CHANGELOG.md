@@ -34,6 +34,50 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.17.0 — 2026-04-24
+
+Phase 1 of the `test-writing-principles.md` cleanup: strips project-specific content (Eldorado marketplace domain) so the file reads as a project-agnostic tester guide. Format (RFC 2119 priority terms, §14 append-only protocol, Section 0 Pre-Flight Checklist, Quick Reference at bottom) stays as-is — Phase 2 (Contract block + format alignment) is a separate future release.
+
+### Changed
+- `test-writing-principles.md` — front-matter, intro, and 15 body sections genericized:
+  - Front-matter dropped project-name-bound description, `last_updated`, `version`, `schema_version`, `pattern_count`, `antipattern_count` (all Eldorado-specific metadata). Description now names the default brain stack (Vitest, NestJS, React, Zod, Prisma) and flags `<placeholder>` tokens.
+  - Intro replaced with project-agnostic framing; placeholder-token convention documented.
+  - §2 Decision Tree: "If financial (orders/disputes)" → "If financial (payments/ledgers/any decimal-money path)".
+  - §2 Mocks table: "Stripe/S3/External API" → "Payment provider / S3 / external API".
+  - §6 Risk-Based Test Prioritization: 3 tables rewritten from Eldorado module names (orders, disputes, kyc, auth, payments, listings, reviews, notifications, uploads, games, users) to pattern-based framing (`state-machine money flows`, `authorization / dispute resolution`, `identity verification`, `public query filters`, `unique-constraint + ownership`, `multi-tenant isolation`, etc.) with explicit `<tier-N-module>` replacement guidance.
+  - §7.5 `createListingSchema` example → generic `createItemSchema` (strips `Gold Pack`, `gameId`, `deliveryTimeHours`, `imageUrls`).
+  - §8 Mocking Rules: `External APIs (Stripe, S3, Sumsub)` → generic; `sendOrderCreatedEmail` → `sendWelcomeEmail`.
+  - §9 Integration Tests user table: `seller@example.test`/`buyer@example.test` → `<role-a>@example.test`/`<role-b>@example.test`. `role: 'BUYER'` → `role: 'USER'`.
+  - §9 `truncateAll` table list: Eldorado Prisma models (`DeliveryProof`, `OrderEvent`, `Dispute`, `Listing`, `SellerBalance`, `Game`, etc.) → placeholder-driven pattern with topological-sort guidance.
+  - §10 intro: "marketplace handling real money and personal KYC data" → generic Tier 1 framing applicable to marketplace / SaaS / multi-tenant systems.
+  - §10.1 RBAC: `buyerToken` → `nonAdminToken`.
+  - §10.2 IDOR: `buyer A cannot view buyer B order` → `user A cannot view user B resource` with `<resources>` placeholder.
+  - §10.3 Webhook signature: `Stripe webhook` → generic `/webhooks/<vendor>` with `<vendor>-signature` header, plus vendor-header-naming guidance listing `stripe-signature`, `x-hub-signature-256` as examples among others.
+  - §11 State Machine Testing: three subsections fully rewritten from Order/Dispute specifics (10-state OrderStatus, 6-state DisputeStatus, `PARTIAL_REFUND`, `KycStatus.NONE`) to generic `<EntityStatus>`/`<TERMINAL_STATE>` state-machine framing. §11.3 adversarial scenarios reworded for any domain.
+  - §12 Coverage: "Tier 1 modules (orders, disputes, kyc, auth)" → "Tier 1 modules".
+  - §14 Entries: removed the two dated Eldorado entries (2026-04-08 E2E principles wave-5a, 2026-04-09 PresenceDot hasData pattern). Replaced with a "No entries yet" placeholder. Entry Template preserved.
+  - §15.6 Persona discipline: "buyer, seller, admin" → "every authenticated role in the project's role enum".
+  - §15.10 Prod fixture source of truth: Eldorado specifics (`g124 KYC VERIFIED`, `g91`, `Auth0 user_ids`, `Prisma User.ids`, `ROPG scripts`, `SUPER_ADMIN`) → generic `<ROLE_A>`/`<ROLE_B>` pattern with identity-provider-agnostic language.
+
+### Not changed (preserved)
+- Section numbering (§0-§16 + Quick Reference) — consumer projects and agent prompts cite section numbers.
+- RFC 2119 terminology (MUST / SHOULD / MAY) — Phase 2 territory.
+- §7 code examples that use generic names (UsersService, UsersController, LoginForm) — already project-agnostic.
+- §13 Anti-patterns 1-5 and §16.7 Anti-patterns 6-10 — generic testing anti-patterns with load-bearing code examples.
+- §16 Production E2E Methodology (WebSocket instrumentation, React synthetic event verification, ES-module-vs-window-global discipline, status taxonomy, tester swarm pattern, deliverable format) — all framework-generic.
+- Quick Reference at bottom — 20 rules, already project-agnostic in wording.
+- `pnpm` commands and stack assumptions — brain-wide default stack.
+
+### Phase 2 (not in this release)
+Applying the Contract block + flat-numbered rules format (per v0.14.0/v0.15.0 pattern) is deferred. Would touch the Quick Reference, §1 Critical Rules (likely removed as redundant), §15.1-15.10 MUST/SHOULD principles, and the §14 entry template. Separate minor release when prioritized.
+
+### Consumer sync
+- **Breaking:** no new behavior, but placeholders were introduced. Consumer projects (Eldorado) that relied on Eldorado-specific module names in this file should keep their own fork of §6 tiers / §11 state machines / §15.10 prod fixtures — or replace placeholders with their actual values on sync.
+- **Changed files (review recommended):** `command-center/test-writing-principles.md`.
+- **Migration action for existing consumer projects:** on sync, review §6, §7.5, §9, §10, §11, §15.10 and either (a) overwrite placeholders with project-specific content, or (b) keep brain version as a template and maintain a project-specific derivative. Eldorado's existing content that used to live here should move to Eldorado's private docs (not this file).
+
+---
+
 ## v0.16.1 — 2026-04-24
 
 Trims monitor-principles Contract bullet 4 to just "Compact inline." — the v0.16.0 wording carried explanatory text ("never extract platform-specific detail to separate files, even if CLI names push word count") that restated the rule rather than adding it.

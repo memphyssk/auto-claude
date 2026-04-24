@@ -1,20 +1,17 @@
 ---
 name: Tester Guide
-description: Master testing reference for agents and subagents working on <your project> (<your-project>). Defines testing philosophy, patterns, tools, and auto-updated rules. Covers BOTH code-level testing (Vitest, NestJS, React) and live production testing (Playwright MCP, prod crawls).
+description: Master testing reference for agents and subagents. Defines testing philosophy, patterns, tools, and auto-updated rules for the default brain stack (Vitest, NestJS, React, Zod, Prisma). Covers BOTH code-level testing and live production testing (Playwright MCP, prod crawls). Project-specific modules, roles, and fixtures are marked `<placeholder>` — fill in per project.
 audience: [backend-developer, frontend-developer, test-automator, code-reviewer, ui-comprehensive-tester, qa-expert, accessibility-tester]
 auto_update: true
-last_updated: 2026-04-08
-version: 3.0
-schema_version: 1
-pattern_count: 5
-antipattern_count: 10
 related_documents: [CLAUDE.md, design/DESIGN-SYSTEM.md, command-center/artifacts/user-journey-map.md]
 tags: [testing, vitest, nestjs, react, zod, monorepo, security, playwright, e2e, production]
 ---
 
-# Tester Guide — <your project>
+# Tester Guide
 
-This document is the single source of truth for how testing should be approached across the <your project> monorepo. It is read by agents and subagents before writing or reviewing tests, and is auto-updated as new patterns and rules are discovered.
+Single source of truth for how testing is approached across the project. Read by agents and subagents before writing or reviewing tests; auto-updated as new patterns and rules are discovered.
+
+Project-specific placeholders in this file (`<your-project>`, `<tier-1-module>`, `<role-a>`, `<state-machine>`, `<payment-vendor>`, etc.) should be replaced per consumer project. The framework — tiers, patterns, anti-patterns, RFC 2119 discipline — is project-agnostic.
 
 ---
 
@@ -81,7 +78,7 @@ Are you writing a test for...?
 ├── API Service method?
 │   ├── Mock Prisma (unit) OR use real DB (integration)
 │   ├── Test happy-path + error-path (throw, validation fail)
-│   └── If financial (orders/disputes): test decimal arithmetic boundaries
+│   └── If financial (payments/ledgers/any decimal-money path): test decimal arithmetic boundaries
 ├── API Controller endpoint?
 │   ├── Use TestingModule + Supertest
 │   ├── Mock services/guards
@@ -105,7 +102,7 @@ Are you writing a test for...?
 |----------|-------|---------|
 | Prisma in unit test | YES | `const mockPrisma = { user: { findUnique: vi.fn() } }` |
 | Prisma in integration test | NO | Use real DB with transaction rollback |
-| Stripe/S3/External API | ALWAYS | `vi.mock('@/services/stripe.service')` |
+| Payment provider / S3 / external API | ALWAYS | `vi.mock('@/services/<vendor>.service')` |
 | Redis/Cache | YES | `const mockRedis = { get: vi.fn(), set: vi.fn() }` |
 | Auth/JWT (non-auth tests) | YES | Override guard: `{ canActivate: () => true }` |
 | Zod schemas | NEVER | Always use real schemas |
@@ -166,33 +163,35 @@ CI runs the same checks. **Failure in any step blocks merge.**
 
 ## 6. Risk-Based Test Prioritization
 
-Test in this priority sequence. If time is limited, stop at the highest-priority items.
+Test in this priority sequence. If time is limited, stop at the highest-priority items. Tier assignments are project-specific — replace `<tier-N-module>` with the actual modules in the consumer project.
 
 ### Tier 1 — Test Immediately (Financial + Legal Risk)
 
-| Module | Why | Key Tests |
-|--------|-----|-----------|
-| **orders** | 10-state machine, escrow, Stripe charges, seller balance mutations, fee calculations | State transitions, decimal arithmetic, concurrent purchase race conditions |
-| **disputes** | 6-state machine, partial refunds, evidence handling | Transition matrix, resolution authorization (ADMIN only), amount splitting |
-| **kyc** | Gates seller capabilities, identity documents | Webhook signature verification, level-gated feature enforcement |
-| **auth** | JWT lifecycle, session security | Token rotation (old refresh token rejection), guard stacking order (401 before 403), malformed JWT rejection |
+Modules handling money, legal commitments, identity, or session security. Canonical patterns:
+
+| Pattern | Why | Key Tests |
+|---------|-----|-----------|
+| **State-machine money flows** | Multi-state entities with side-effects (charges, payouts, refunds) | State transitions, decimal arithmetic boundaries, concurrent-write race conditions |
+| **Authorization / dispute resolution** | Role-scoped authoritative actions | Transition matrix, resolution authorization, actor-to-transition mapping |
+| **Identity verification** | Gates privileged capabilities | Webhook signature verification, level-gated feature enforcement |
+| **Auth / session** | JWT lifecycle, session security | Token rotation, guard stacking order (401 before 403), malformed JWT rejection |
 
 ### Tier 2 — Test Before Beta
 
-| Module | Why | Key Tests |
-|--------|-----|-----------|
-| **payments** | Stripe/NowPayments webhook handling | Signature verification, idempotency (duplicate webhook), rollback on failure |
-| **listings** | Price validation, status filtering | Inverted price range rejection, DRAFT/REMOVED not exposed to public queries |
-| **admin** | Privileged actions, audit logging | Role escalation prevention (no SUPER_ADMIN via API), audit log writes |
+| Pattern | Why | Key Tests |
+|---------|-----|-----------|
+| **Payment provider webhooks** | External event ingestion | Signature verification, idempotency on duplicate webhook, rollback on failure |
+| **Public query filters** | Visibility rules | Boundary validation, draft/removed states not exposed to public queries |
+| **Admin / privileged actions** | Audit trail, role escalation prevention | Role-escalation prevention, audit log writes |
 
 ### Tier 3 — Normal Priority
 
-| Module | Why | Key Tests |
-|--------|-----|-----------|
-| **reviews** | Unique constraint, ownership | Duplicate review rejection, reviewer must be order buyer |
-| **notifications** | Delivery isolation | Fan-out: buyer A must not see buyer B's notifications |
-| **uploads** | File type validation | Reject non-image MIME types, path traversal filenames |
-| **games**, **users** | Lower financial risk | Standard CRUD + validation |
+| Pattern | Why | Key Tests |
+|---------|-----|-----------|
+| **Unique-constraint + ownership** | Duplicate prevention, reviewer authorization | Duplicate rejection, actor-must-own-related-entity |
+| **Multi-tenant isolation** | Per-user data boundaries | Fan-out: user A must not see user B's private data |
+| **File uploads** | MIME validation | Reject non-allowed types, reject path-traversal filenames |
+| **Standard CRUD modules** | Lower financial risk | Standard CRUD + validation |
 
 ---
 
@@ -369,20 +368,17 @@ describe('LoginForm', () => {
 ### 7.5 Shared — Schema Testing
 
 ```typescript
-describe('createListingSchema', () => {
+describe('createItemSchema', () => {
   const validData = {
-    title: 'Gold Pack',
+    title: 'Example Item',
     price: 49.99,
     currency: 'USD',
-    deliveryMethod: 'MANUAL',
-    deliveryTimeHours: 24,
-    gameId: 'game-uuid',
-    categoryId: 'cat-uuid',
+    quantity: 1,
   };
 
-  it('should accept valid listing data', () => {
+  it('should accept valid data', () => {
     // Act
-    const result = createListingSchema.safeParse(validData);
+    const result = createItemSchema.safeParse(validData);
 
     // Assert
     expect(result.success).toBe(true);
@@ -390,24 +386,24 @@ describe('createListingSchema', () => {
 
   it('should reject negative price', () => {
     // Act
-    const result = createListingSchema.safeParse({ ...validData, price: -1 });
+    const result = createItemSchema.safeParse({ ...validData, price: -1 });
 
     // Assert
     expect(result.success).toBe(false);
   });
 
-  it('should reject deliveryTimeHours above 168', () => {
+  it('should reject quantity above max', () => {
     // Act
-    const result = createListingSchema.safeParse({ ...validData, deliveryTimeHours: 169 });
+    const result = createItemSchema.safeParse({ ...validData, quantity: 10_001 });
 
     // Assert
     expect(result.success).toBe(false);
   });
 
-  it('should reject more than 10 imageUrls', () => {
+  it('should reject array fields exceeding max length', () => {
     // Act
-    const urls = Array.from({ length: 11 }, (_, i) => `https://img.test/${i}.jpg`);
-    const result = createListingSchema.safeParse({ ...validData, imageUrls: urls });
+    const tags = Array.from({ length: 11 }, (_, i) => `tag-${i}`);
+    const result = createItemSchema.safeParse({ ...validData, tags });
 
     // Assert
     expect(result.success).toBe(false);
@@ -422,12 +418,12 @@ describe('createListingSchema', () => {
 | What | Mock? | How |
 |------|-------|-----|
 | Database (Prisma) | Yes (unit), No (integration) | `vi.mock()` or manual mock object |
-| External APIs (Stripe, S3, Sumsub) | Always | `vi.mock()` the service wrapper |
+| External APIs (payment provider, storage, KYC vendor, etc.) | Always | `vi.mock()` the service wrapper |
 | Redis/Cache | Yes | In-memory mock |
 | Auth/JWT | Yes for non-auth tests | Provide mock user via guard override |
 | Zod schemas | **Never** | Test with real schemas |
 | Internal services | Only across module boundaries | Use `TestingModule` providers |
-| EmailService | Always in unit tests | `{ sendOrderCreatedEmail: vi.fn().mockResolvedValue(undefined) }` |
+| EmailService | Always in unit tests | `{ sendWelcomeEmail: vi.fn().mockResolvedValue(undefined) }` |
 | NotificationsService | Always in unit tests | `{ create: vi.fn().mockResolvedValue(undefined) }` |
 
 ---
@@ -436,15 +432,17 @@ describe('createListingSchema', () => {
 
 ### Integration Tests
 
-Use `pnpm db:seed` to create test users in your database:
+Use `pnpm db:seed` to create test users in your database. Seed users cover every role in the project's role enum:
 
 | Email | Password | Role |
 |-------|----------|------|
 | `admin@example.test` | `Test1234!` | ADMIN |
-| `seller@example.test` | `Test1234!` | SELLER |
-| `buyer@example.test` | `Test1234!` | BUYER |
+| `<role-a>@example.test` | `Test1234!` | `<ROLE_A>` |
+| `<role-b>@example.test` | `Test1234!` | `<ROLE_B>` |
 
-**MUST NOT** mutate seed data in tests. If a test needs to ban a user, create a separate test user.
+Consumer projects replace `<role-a>` / `<role-b>` with their actual role names (e.g. USER, EDITOR, AGENT, CUSTOMER). Always include at least one row per role; never test with fewer personas than the project defines.
+
+**MUST NOT** mutate seed data in tests. If a test needs to ban or alter a user, create a separate test user.
 
 ### Unit Tests
 
@@ -462,7 +460,7 @@ function makeUser(overrides?: Partial<User>): User {
     id: `test-${id}`,
     email: `user-${id}@example.test`,
     username: `user${id}`,
-    role: 'BUYER',
+    role: 'USER',
     status: 'ACTIVE',
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
@@ -480,11 +478,12 @@ For HTTP e2e specs, truncate all tables after each test file:
 
 ```typescript
 async function truncateAll(prisma: PrismaClient): Promise<void> {
+  // Order matters: truncate child tables before their parents to avoid FK errors
+  // even with CASCADE, since some platforms disable CASCADE in strict mode.
   const tables = [
-    'DeliveryProof', 'OrderEvent', 'OrderMessage',
-    'Dispute', 'Order', 'Review', 'Notification',
-    'Listing', 'SellerBalance', 'SellerProfile', 'Profile',
-    'User', 'GameCategory', 'Game',
+    // <child-table-1>, <child-table-2>, ...
+    // <parent-table-1>, <parent-table-2>, ...
+    'User',
   ];
   for (const table of tables) {
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE`);
@@ -492,11 +491,13 @@ async function truncateAll(prisma: PrismaClient): Promise<void> {
 }
 ```
 
+Consumer projects list their Prisma model names in dependency order (children before parents). Generate the list with `grep '^model' prisma/schema.prisma` and topologically sort by foreign-key dependencies.
+
 ---
 
 ## 10. Security Testing
 
-This is a marketplace handling real money and personal KYC data. Security tests are **Tier 1 priority**.
+Any project handling real money, identity, or private user data treats security tests as **Tier 1 priority**. The patterns below apply whether the project is a marketplace, a SaaS platform, or any multi-tenant system.
 
 ### 10.1 RBAC / Authorization
 
@@ -510,10 +511,10 @@ describe('Admin endpoints RBAC', () => {
       .expect(401);
   });
 
-  it('returns 403 for BUYER role', async () => {
+  it('returns 403 for non-admin role', async () => {
     await request(app.getHttpServer())
       .get('/api/v1/admin/users')
-      .set('Authorization', `Bearer ${buyerToken}`)
+      .set('Authorization', `Bearer ${nonAdminToken}`)
       .expect(403);
   });
 
@@ -531,10 +532,10 @@ describe('Admin endpoints RBAC', () => {
 **MUST** test that User A cannot access User B's resources:
 
 ```typescript
-it('buyer A cannot view buyer B order', async () => {
+it('user A cannot view user B resource', async () => {
   await request(app.getHttpServer())
-    .get(`/api/v1/orders/${buyerBOrderId}`)
-    .set('Authorization', `Bearer ${buyerAToken}`)
+    .get(`/api/v1/<resources>/${userBResourceId}`)
+    .set('Authorization', `Bearer ${userAToken}`)
     .expect(404); // 404 not 403 — prevents enumeration
 });
 ```
@@ -544,14 +545,16 @@ it('buyer A cannot view buyer B order', async () => {
 **MUST** test that unsigned or wrongly signed webhooks are rejected:
 
 ```typescript
-it('rejects Stripe webhook with invalid signature', async () => {
+it('rejects webhook with invalid signature', async () => {
   await request(app.getHttpServer())
-    .post('/api/v1/webhooks/stripe')
-    .set('stripe-signature', 'invalid')
+    .post('/api/v1/webhooks/<vendor>')
+    .set('<vendor>-signature', 'invalid')
     .send(payload)
     .expect(401);
 });
 ```
+
+Use the vendor's own signature header name (`stripe-signature`, `x-hub-signature-256`, etc.). Verify BOTH the reject path for bad signatures AND the accept path for known-good signatures.
 
 ### 10.4 Rate Limiting
 
@@ -582,49 +585,53 @@ it('blocks after N failed login attempts', async () => {
 
 ## 11. State Machine Testing
 
-### 11.1 Order State Transitions
+For every state-machine entity in the project (orders, subscriptions, disputes, approval workflows, etc.), the tests below are **MUST** for Tier 1 modules.
 
-The `OrderStatus` enum has 10 states. **MUST** test:
+### 11.1 Legal and illegal transitions
 
-- Every **legal** transition updates the `OrderEvent` log.
-- Every **illegal** transition returns 400/422.
-- Only the correct actor can trigger each transition (buyer vs seller vs admin vs system).
+For any `<EntityStatus>` enum with N states:
 
-Example illegal transition test:
+- Every **legal** transition updates the audit/event log.
+- Every **illegal** transition returns 400/422 — never silently no-ops.
+- Only the correct actor role can trigger each transition (enforced at the controller or service layer).
+
+Example illegal-transition test:
 
 ```typescript
-it('rejects transition from COMPLETED to DISPUTED', async () => {
-  // Arrange — order in COMPLETED status
-  const order = await createOrder(buyerId, sellerId, listingId, { status: 'COMPLETED' });
+it('rejects transition from <TERMINAL_STATE> to <NON_REACHABLE_STATE>', async () => {
+  // Arrange — entity in terminal state
+  const entity = await createEntity({ status: '<TERMINAL_STATE>' });
 
   // Act
   const res = await request(app.getHttpServer())
-    .post(`/api/v1/orders/${order.id}/dispute`)
-    .set('Authorization', `Bearer ${buyerToken}`)
-    .send({ reason: 'late' });
+    .post(`/api/v1/<entities>/${entity.id}/<transition>`)
+    .set('Authorization', `Bearer ${actorToken}`)
+    .send({ reason: 'example' });
 
   // Assert
   expect(res.status).toBe(400);
 });
 ```
 
-### 11.2 Dispute State Transitions
+### 11.2 Actor authorization + idempotency
 
-The `DisputeStatus` enum has 6 states. **MUST** test:
+For every state-machine entity, **MUST** test:
 
-- Only ADMIN can resolve disputes.
-- A dispute cannot be resolved twice.
-- `PARTIAL_REFUND` amount splitting is correct (decimal arithmetic).
-- Opening a dispute freezes seller payout.
+- Only the authorized role can trigger each transition (e.g. only ADMIN can resolve, only owner can cancel).
+- A transition cannot be applied twice (idempotent or rejects on second attempt).
+- Any monetary amount splitting involved in the transition uses decimal arithmetic (no floats) and the sum equals the original.
+- Side-effects on related entities fire atomically with the transition (e.g. opening a dispute freezes payout in the same DB transaction).
 
-### 11.3 Fraud / Abuse Scenarios
+### 11.3 Adversarial scenarios
 
-**SHOULD** test adversarial user behavior:
+**SHOULD** test user-side abuse:
 
-- Seller marks order DELIVERED without delivery proof → blocked.
-- Buyer purchases own listing → blocked.
-- User submits review for an order they're not the buyer on → blocked.
-- Seller with `KycStatus.NONE` requests payout → blocked.
+- Actor claims an action they have no permission for → blocked.
+- User purchases / acts on their own resource when disallowed → blocked.
+- User submits a review / rating / endorsement for a resource they don't own the relationship to → blocked.
+- User in an unverified state attempts a verified-only action → blocked.
+
+Replace "purchases", "review", "verified" with the project's actual domain equivalents.
 
 ---
 
@@ -632,7 +639,7 @@ The `DisputeStatus` enum has 6 states. **MUST** test:
 
 - **MUST:** Every new service method and API endpoint has at least one happy-path and one error-path test.
 - **MUST:** Every bug fix includes a regression test that would have caught the bug.
-- **SHOULD:** Tier 1 modules (orders, disputes, kyc, auth) target 80% branch coverage.
+- **SHOULD:** Tier 1 modules target 80% branch coverage.
 - Other modules: quality over quantity, no enforced thresholds yet.
 - Do not interpret the absence of thresholds as permission to skip tests.
 
@@ -727,28 +734,7 @@ await expect(service.findById('bad')).rejects.toThrow(NotFoundException);
 
 ### Entries
 
-### [2026-04-08] [Package: web/e2e] — Production E2E testing principles + methodology added
-
-**Context:** Wave 5a hotfix loop surfaced recurring tester false positives (layout-only verification, single-user real-time claims) and false negatives (`window.io === undefined`, `el.onclick === null`). Sections 15 and 16 were appended to capture these as principles.
-**Rule:** Any agent doing UI/UX or functional verification on production builds **MUST** read Sections 15 and 16 in addition to Sections 0-13. The principles in Section 15 are non-negotiable; the methodology in Section 16 is the prescribed implementation.
-**Discovered by:** Wave 5a hotfix loop reality checks (Karen + Jenny).
-
-### [2026-04-09] [Package: web] — hasData discriminator anti-pattern for fallback sentinels
-
-**Context:** Wave C PresenceDot shipped with a null-guard `if (status === 'offline' && lastSeenAt === null) return null`. The intent was to hide the dot for anonymous visitors whose 401 produced `OFFLINE_SENTINEL`. But the same shape `{ status: 'offline', lastSeenAt: null }` is ALSO a legitimate server response for known-offline-never-disconnected users, so those users had no dot either. Tester 1 reported "PresenceDot missing everywhere" which was the symptom of conflating the sentinel with real data.
-**Rule:** When a fallback sentinel has the same field-shape as a valid data point, add an explicit `hasData: boolean` discriminator to the type. Set `hasData: true` only on successful server response or socket event; set `false` on initial/undefined/401 paths. Guards should check `!hasData`, not the content of `status`/`lastSeenAt`. This applies to any React hook that returns a union of "fetched data" and "default/fallback sentinel" where the shapes overlap.
-**Example:**
-```ts
-interface PresenceState {
-  status: 'online' | 'offline';
-  lastSeenAt: string | null;
-  hasData: boolean; // true iff server confirmed
-}
-// PresenceDot:
-if (!hasData) return null; // correct
-// if (status === 'offline' && lastSeenAt === null) return null; // WRONG — catches real offline users
-```
-**Discovered by:** Wave C Stage 5 tester swarm + PR #45 same-wave fast-fix.
+_No entries yet. Append new rules below this line using the Entry Template above. Do not delete existing entries once added._
 
 ---
 
@@ -786,7 +772,7 @@ For every fix verified, **MUST** test at least one edge case: invalid IDs, expir
 
 ### 15.6 Persona discipline
 
-When verifying authorization logic, **MUST** test with EVERY relevant persona: unauthenticated visitor, buyer, seller, admin. A "redirects to login when unauthenticated" test is incomplete without the corresponding "renders content when authenticated as the right role" test, and vice versa.
+When verifying authorization logic, **MUST** test with EVERY relevant persona in the project's role enum: at minimum `unauthenticated visitor` + every authenticated role. A "redirects to login when unauthenticated" test is incomplete without the corresponding "renders content when authenticated as the right role" test, and vice versa.
 
 ### 15.7 Cross-client real-time verification
 
@@ -802,13 +788,15 @@ When the orchestrator asks for a markdown report at a specific path, **MUST** wr
 
 ### 15.10 Prod fixture source of truth
 
-For live production E2E testing, the canonical test-account registry is `Planning/test-accounts.md` (gitignored — contains passwords, Auth0 user_ids, Prisma User.ids, ROPG scripts). Testers must use prod fixtures documented there, not local-dev `*@example.test` emails:
+For live production E2E testing, the canonical test-account registry lives at `Planning/test-accounts.md` (gitignored — contains passwords, identity-provider user ids, database row ids, and any auth rituals required to provision/refresh the accounts). Testers must use prod fixtures documented there, not local-dev `*@example.test` emails.
 
-- **Prod BUYER**: `<test-account>` (g124, KYC VERIFIED)
-- **Prod SELLER**: `<test-account>` (g91, KYC VERIFIED)
-- **Prod ADMIN / SUPER_ADMIN**: unprovisioned — provision only when a wave is actually blocked on that persona (requires Auth0 CLI + Prisma SQL ritual per `Planning/test-accounts.md`)
+Per-role prod fixtures declared in `Planning/test-accounts.md`:
 
-`*@example.test` credentials only exist in the local dev seed (see CLAUDE.md §Test Users §Local dev). Using them against prod Auth0 will produce silent auth failures and a false BLOCKED outcome. If a tester prompt passes a `*@example.test` email for prod testing, flag it as a prompt bug and ask the orchestrator to reference `Planning/test-accounts.md` instead.
+- **Prod `<ROLE_A>`** — provisioned
+- **Prod `<ROLE_B>`** — provisioned
+- **Prod `ADMIN`** — typically unprovisioned; provision only when a wave is actually blocked on that persona (follow the identity-provider CLI + DB ritual documented in `Planning/test-accounts.md`)
+
+`*@example.test` credentials only exist in the local dev seed (see CLAUDE.md §Test Users §Local dev). Using them against prod auth will produce silent auth failures and a false BLOCKED outcome. If a tester prompt passes a `*@example.test` email for prod testing, flag it as a prompt bug and ask the orchestrator to reference `Planning/test-accounts.md` instead.
 
 ---
 
