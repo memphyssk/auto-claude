@@ -15,6 +15,24 @@ Project-specific placeholders in this file (`<your-project>`, `<tier-1-module>`,
 
 ---
 
+## Contract for new rules
+
+Applies to both append targets in this file: § 14 (auto-updated patterns log) and § Rules (master non-negotiable list at the bottom).
+
+Template:
+### N. Imperative rule ending in a period.
+Why: one declarative sentence.
+
+- Before adding: grep for the concept — if a similar rule exists, do not add a near-dup.
+- One sentence per line, short, commanding, cut to the chase.
+- No war stories, wave refs, `Context:`, `Cross-ref:`, or project/stack names.
+- Project-domain detail (business modules, user roles, entity names) → `<placeholder>` tokens, not the numbered list.
+- Number sequentially within the target section; renumber on insert.
+- Group under an existing H3 unless ≥3 new rules share a theme.
+- Wave-specific ("broke once") stays in the closeout until a second wave confirms.
+
+---
+
 ## Priority Levels
 
 This document uses RFC 2119 priority terms:
@@ -56,16 +74,9 @@ When an agent or subagent is asked to write or review tests:
 5. **UPDATE SECTION 14** if you discover a new pattern, rule, or gotcha that future agents should know.
 6. **PRESERVE DOCUMENT STRUCTURE.** **MUST NOT** rewrite, reorder, or summarize existing sections. **MUST NOT** change section numbers. Only append to Section 14. If you believe an existing rule is wrong, add a Note to Section 14 flagging the conflict — do not edit the original rule.
 
-### Critical Rules (Never Violate)
+### Non-negotiable rules
 
-- **MUST** co-locate test files next to source files.
-- **MUST** use AAA (Arrange/Act/Assert) with comments in every test body.
-- **MUST** mock PrismaService in unit tests. **MUST NOT** import AppModule.
-- **MUST** query Web components by role, label, or text — not by testId.
-- **MUST** write at minimum one happy-path and one error-path per new method.
-- **MUST** run `pnpm test` and confirm passing before committing.
-- **MUST** append to Section 14 using the exact template if a new rule is discovered.
-- **MUST NOT** edit existing Section 14 entries or reorder any section.
+See **§ Rules** at the bottom of this file for the master list (20 non-negotiable rules with rationale). Every rule is enforceable; deviation requires an inline comment naming why.
 
 ---
 
@@ -717,19 +728,15 @@ await expect(service.findById('bad')).rejects.toThrow(NotFoundException);
 
 ## 14. Auto-Updated Rules and Patterns
 
-> Agents **MUST** append to this section when they discover a pattern, edge case,
-> or rule not covered above. **MUST NOT** edit existing entries.
-> Use EXACTLY the template below. No other format is accepted.
+Agents append to this section when they discover a pattern, edge case, or rule not covered above. Do not edit existing entries. Follow the Contract at the top of this file for entry format.
 
 ### Entry Template
 
 ```
-### [YYYY-MM-DD] [Package: api|web|shared] — Short Rule Title
+### N. Imperative rule ending in a period.
+Why: one declarative sentence.
 
-**Context:** One sentence describing what task surfaced this rule.
-**Rule:** The enforceable rule in imperative form. One to three sentences max.
-**Example:** (optional) Inline code snippet of 3-8 lines demonstrating the rule.
-**Discovered by:** Agent type or PR link.
+(optional) Inline code snippet of 3-8 lines demonstrating the rule.
 ```
 
 ### Entries
@@ -931,28 +938,70 @@ RIGHT: ALWAYS write the markdown report at the explicit path. The "no other
 
 ---
 
-## Quick Reference — Non-Negotiable Rules
+## Rules
 
-### Code-level testing (Sections 0-13)
-1. **MUST** co-locate test files next to source files.
-2. **MUST** use AAA (Arrange/Act/Assert) with comments in every test body.
-3. **MUST** mock PrismaService in unit tests. **MUST NOT** import AppModule.
-4. **MUST** query Web components by role, label, or text — not by testId.
-5. **MUST** write at minimum one happy-path and one error-path per new method.
-6. **MUST** run `pnpm test` and confirm passing before committing.
-7. **MUST** append to Section 14 using the exact template if a new rule is discovered.
-8. **MUST NOT** edit existing Section 14 entries or reorder any section.
-9. **MUST** test RBAC on every role-guarded endpoint.
-10. **MUST** test that User A cannot access User B's resources (IDOR prevention).
+Master non-negotiable rules. Every rule is enforceable; deviation requires an inline comment naming why. Format per Contract at the top of this file.
 
-### Production E2E testing (Sections 15-16)
-11. **MUST** read this entire file (especially Sections 15-16) AND `command-center/artifacts/user-journey-map.md` before any UI/UX or functional test on production.
-12. **MUST** test the actual content (stat values, row counts, entity fields) — never accept layout-only verification.
-13. **MUST** install async instrumentation (WebSocket constructor hooks, fetch interceptors) BEFORE navigating to the page that triggers them.
-14. **MUST** verify async behaviors via the network panel, not via DOM observation alone.
-15. **MUST** test at least one edge case (invalid IDs, expired tokens, missing data) per fix verified.
-16. **MUST** use ONE dedicated Playwright MCP instance per parallel tester — never call other instances.
-17. **MUST** write the report file at the explicit path provided in the prompt.
-18. **MUST NOT** check `window.io === undefined` to verify socket.io state — io is an ES module import.
-19. **MUST NOT** check `el.onclick === null` to verify React handlers — React synthetic events don't appear as DOM properties.
-20. **SHOULD** use cross-client verification for real-time behaviors when feasible; otherwise rely on network-layer evidence.
+### Code-level testing (§§ 0-13)
+
+### 1. Co-locate test files next to source files.
+Why: adjacency enables `pnpm test --filter=<package>` discovery and keeps tests from drifting away from the code they cover.
+
+### 2. Use AAA (Arrange / Act / Assert) with comments in every test body.
+Why: the three-block structure makes test intent readable at a glance.
+
+### 3. Mock PrismaService in unit tests; never import AppModule.
+Why: AppModule pulls the full application into a unit test — slow, brittle, and masks the unit under test.
+
+### 4. Query web components by role, label, or text — never by testId.
+Why: role/label queries double as accessibility checks; testId queries pass even when the component is unusable by keyboard or screen reader.
+
+### 5. Write at minimum one happy-path and one error-path per new method.
+Why: a method that only passes the happy test is one null away from a 500 in production.
+
+### 6. Run `pnpm test` and confirm passing before committing.
+Why: local is cheaper than waiting for CI and never blocks the merge queue.
+
+### 7. Append new rules to § 14 using the Contract format.
+Why: § 14 is the append-only log of wave-discovered patterns; a shared format keeps it searchable.
+
+### 8. Do not edit existing § 14 entries or reorder any section.
+Why: edits destroy searchable history; reorder breaks external references to section numbers.
+
+### 9. Test RBAC on every role-guarded endpoint.
+Why: guards drift when routes are added without role annotations — tests catch the miss.
+
+### 10. Test that user A cannot access user B's resources (IDOR prevention).
+Why: cross-tenant authorization leaks are the most expensive class of security bug.
+
+### Production E2E testing (§§ 15-16)
+
+### 11. Before any UI/UX or functional test on production, read this file (especially §§ 15-16) and `command-center/artifacts/user-journey-map.md`.
+Why: the journey map is the source of truth for what counts as a passing flow; skipping it produces false positives.
+
+### 12. Test actual content (stat values, row counts, entity fields); never accept layout-only verification.
+Why: "page renders" passes hide contract mismatches one layer deeper.
+
+### 13. Install async instrumentation (WebSocket hooks, fetch interceptors) before navigating to the page that triggers them.
+Why: instrumentation added after mount misses the very events you're trying to capture.
+
+### 14. Verify async behaviors via the network panel, not via DOM observation alone.
+Why: DOM state is necessary but not sufficient evidence for socket, WebSocket, or long-poll correctness.
+
+### 15. Test at least one edge case (invalid IDs, expired tokens, missing data) per fix verified.
+Why: happy-path passes that crash on the empty case have not actually been verified.
+
+### 16. Use one dedicated Playwright MCP instance per parallel tester; never call other instances.
+Why: cross-contamination between parallel testers corrupts results and confuses synthesis.
+
+### 17. Write the report file at the explicit path provided in the prompt.
+Why: when N testers run in parallel, the orchestrator needs the file artifacts to synthesize across the swarm.
+
+### 18. Never check `window.io === undefined` to verify socket.io state.
+Why: `io` is an ES-module import, not a window global — the check is meaningless.
+
+### 19. Never check `el.onclick === null` to verify React handlers.
+Why: React synthetic event handlers never appear as DOM properties; the check is meaningless for any React-rendered UI.
+
+### 20. Use cross-client verification for real-time behaviors when feasible; otherwise rely on network-layer evidence.
+Why: single-client tests can't distinguish socket delivery from REST refetch.

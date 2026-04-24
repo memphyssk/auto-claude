@@ -34,6 +34,35 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.18.0 — 2026-04-24
+
+Phase 2 of the `test-writing-principles.md` cleanup: aligns the file's rule-accumulating portions with the Contract format used across the rest of the principles files. Tutorial/reference sections (§§ 2-13, 15-16 methodology, Priority Levels) stay untouched — they're not rulebook material.
+
+### Added
+- **Contract block at the top** — same 7-bullet spec as dev/planning/testing/monitor. Governs both append targets in this file: § 14 (wave-discovered patterns log) and § Rules (master list at the bottom). Bullet 4 scoped to project-domain placeholders: "Project-domain detail (business modules, user roles, entity names) → `<placeholder>` tokens, not the numbered list."
+
+### Changed
+- **§ 1 Critical Rules (Never Violate)** — deleted. The 8 bolded MUST bullets duplicated the Quick Reference at the bottom. Replaced with a 2-line pointer: "See **§ Rules** at the bottom of this file for the master list." Under-§1 subheading renamed "Non-negotiable rules."
+- **§ 14 Auto-Updated Rules Entry Template** — rewritten to Contract format. Old template (Context / Rule / Example / Discovered by) replaced with `### N. Imperative rule ending in a period.\nWhy: one declarative sentence.\n\n(optional) code snippet`. Old § 14 header blurb (RFC 2119 MUST/MUST NOT about appending) softened to plain imperative. The "Entries" placeholder stays as Phase 1 left it.
+- **"Quick Reference — Non-Negotiable Rules" section** — renamed to `## Rules`. 20 bolded MUST/MUST NOT bullets → 20 Contract-format entries (rule + Why). Preserves the Code-level / Production-E2E H3 split. Rules 3, 8, 17, 18, 19 rephrased into natural imperative voice (no leading MUST/MUST NOT). Rules now number identically to before (1-20) so external references by number keep working.
+
+### Not changed (intentional)
+- **Priority Levels section** — kept at top. Body sections (§§ 5, 7, 8, 9, 10, 11, 12, 15) still use MUST/SHOULD as tutorial emphasis; the Contract doesn't ban them from tutorial prose.
+- **§§ 15.1-15.10 Production E2E Principles** — kept as prose subsections with MUST/SHOULD emphasis. These have load-bearing detail (lists of what to test per entity type, multi-paragraph rationale) that wouldn't survive conversion to one-line imperatives. The master Rules at the bottom summarize them; §§ 15.1-15.10 is the detailed spec.
+- Section numbering § 0 through § 16 — consumer projects and agent prompts cite section numbers; renumbering would break external references.
+- **§ 13 Anti-Patterns** and **§ 16.7 Anti-Patterns** — the WRONG/WHY/RIGHT code examples are load-bearing teaching material, not rule material.
+- **§ 2 Decision Tree, § 3 Testing Stack, § 4 commands, § 5 conventions, § 6 tier tables, § 7 patterns, § 8 mocking rules, §§ 9-12 data/security/state/coverage** — reference and tutorial material.
+
+### Rationale
+Phase 1 (v0.17.0) made the file project-agnostic. Phase 2 aligns its rule sections with the brain-wide Contract so `/retro` and future authors can append new test rules in the same shape as dev/planning/testing/monitor. The file now has two valid append targets (§ 14 for wave-specific patterns; § Rules for cross-cutting non-negotiables) — both Contract-governed.
+
+### Consumer sync
+- **Breaking:** no. Rule numbers (1-20) preserved. Section numbers (§ 0-§ 16 + § Rules) preserved. External references by `§N` or Rule number keep working.
+- **Changed files (review recommended):** `command-center/test-writing-principles.md`.
+- **Migration action:** none for projects that reference rule numbers. Projects that referenced `§ 1 Critical Rules` sub-bullets should update to `§ Rules #N`. Projects appending to § 14 should follow the new Contract-format entry template.
+
+---
+
 ## v0.17.0 — 2026-04-24
 
 Phase 1 of the `test-writing-principles.md` cleanup: strips project-specific content (Eldorado marketplace domain) so the file reads as a project-agnostic tester guide. Format (RFC 2119 priority terms, §14 append-only protocol, Section 0 Pre-Flight Checklist, Quick Reference at bottom) stays as-is — Phase 2 (Contract block + format alignment) is a separate future release.
