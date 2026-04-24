@@ -34,6 +34,29 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.12.0 — 2026-04-24
+
+Adds an **Author behavior** section at the top of `dev-principles.md`. Six rules covering the pre-commit author moment: how to approach work, what to write, what to leave alone. Adapted from Karpathy's CLAUDE.md guidelines with auto-claude-specific additions.
+
+### Added
+- `command-center/rules/dev-principles.md` § Author behavior — new section placed at the top of the file (before "How this file is maintained"). Six rules:
+  1. **Think Before Coding** (Karpathy) — surface assumptions and tradeoffs; don't pick silently; ask when unclear
+  2. **Simplicity First** (Karpathy) — minimum code that solves the problem; nothing speculative; no premature abstractions
+  3. **Surgical Changes** (Karpathy) — touch only what you must; every changed line traces to the request
+  4. **Verify Before Claiming Done** (Karpathy, adapted) — runnable check before declaring done; explicitly scoped to within-stage discipline, not cross-stage (wave-loop owns that)
+  5. **No Silent Error Handling** (auto-claude) — every caught error named, rethrown, or documented as safe to swallow; named exception classes; no bare `catch (e)`
+  6. **Prefer Deletion** (auto-claude) — smaller-change framing; inline helpers used <3 times; zombie code dies in the commit that created it
+
+### Adapted Karpathy rule #4 for wave-loop compatibility
+The original Karpathy rule 4 ("Goal-Driven Execution") prescribed "state a brief plan" and "loop independently" — both of which conflict with the wave-loop's Stage 2 (plan authoring) and the orchestrator's control of when to loop. The rewrite keeps the essential insight ("verify before claiming done", "know what done looks like") while explicitly scoping to within-stage discipline and noting "does not override wave-loop.md stage structure."
+
+### Consumer sync
+- **Breaking:** no. Additive section at the top of dev-principles.md.
+- **Sync mode:** dev-principles.md is already `interactive:` in `.brainignore`, so consumer projects see this as a hunk-by-hunk review on next sync. Accept to adopt; skip to keep your current file.
+- **Migration:** none required. The new section complements existing retro-promoted Principles + Code conventions sections — they stay untouched.
+
+---
+
 ## v0.11.0 — 2026-04-24
 
 Fixes a chronic agent failure: forgetting that installed tools (MCPs, CLIs, skills) exist mid-conversation and deferring to the founder on tasks the agent could do itself. Adds always-on rule #11 enforcing enumeration-before-deferral + a session-start capability sheet that makes enumeration nearly free.
