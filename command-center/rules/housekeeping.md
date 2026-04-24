@@ -6,12 +6,10 @@ Stage 8 updates + master plan hygiene.
 
 ## Master plan housekeeping
 
-At the close of every wave, update the master plan to mark shipped items as complete. Stale scope entries cause re-implementation risk and confuse subsequent planning passes.
+Update the master plan at wave close to mark shipped items complete. Stale entries cause re-implementation risk and confuse next-wave planning.
 
 - **Orchestrator owns the edit.** Jenny flags stale entries; she does not commit them.
-- **Verify before applying "mark as shipped" recommendations.** Sub-agents (especially Jenny) propose housekeeping based on the plan's status column, which may not reflect reality. A 30-second grep for the endpoint prevents the worst silent failure mode:
-
-> A never-shipped fix gets marked shipped, disappears from the backlog, and remains broken in production while the next wave's planning treats it as done.
+- **Verify before applying "mark as shipped".** Sub-agent recommendations are based on the plan's status column, not reality. A 30-second grep for the endpoint prevents the worst failure mode: a never-shipped fix marked shipped, disappearing from the backlog, staying broken in production while the next wave's planning treats it as done.
 
 ---
 

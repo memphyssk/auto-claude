@@ -34,6 +34,33 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.22.0 — 2026-04-24
+
+Start of md-optimise Group A1 (rules/*.md flat-rules rollout). Pilot trio: `sub-agent-workflow.md`, `triage-routing-table.md`, `housekeeping.md`. Applies the rule+why discipline proven across principles files in v0.14.0-v0.20.1.
+
+### Changed
+
+- **`rules/sub-agent-workflow.md`**: intro tightened; "Before every sub-agent spawn" 3-step gate prose trimmed. "Sub-agent limitations" bullet list → 3 numbered rules (Scope, Parallel, Descriptive names). "Cross-cutting rules" section: 5 multi-paragraph rules → 5 Contract-format rules (rule + Why). Six-constraint exec brief kept as a sub-list under its own rule — it's a template, not multiple rules.
+
+- **`rules/triage-routing-table.md`**: "Rules" section's 6 prose rules → 6 Contract-format rules (rule + Why). Classification Table, Decision flow ASCII, and Common misroutes table unchanged — they're reference data, not rule accumulation.
+
+- **`rules/housekeeping.md`**: Master plan housekeeping section prose tightened (2 sentences). Procedural content (Stage 8 checklist, closeout template) unchanged — these are structured templates, not rules.
+
+### Scope of Group A1 remaining
+
+Files still to be processed in v0.23.0+ (per `md-optimise.md`): `skill-use.md`, `backlog-planning.md`, `daily-checkpoint.md`, `external-sdks.md`, `security-waves.md`, `roadmap-lifecycle.md`, `roadmap-refresh-ritual.md`, `product-mega-testing/product-mega-testing.md`.
+
+### Not changed (intentional)
+- No Contract block added. These are procedural rules references, not retro-accumulating principles files. The flat-rules format discipline is applied where it fits; scaffolding (tables, decision flows, templates) stays as-is.
+- Section structure, cross-references, and external pointers preserved.
+
+### Consumer sync
+- **Breaking:** no. Content is behaviorally equivalent; prose-to-rule reformatting only.
+- **Changed files (review recommended):** the three files above.
+- **Migration action:** none. Projects referencing rules by heading ("per sub-agent-workflow § Cross-cutting rule 4") should update if the heading text changed.
+
+---
+
 ## v0.21.0 — 2026-04-24
 
 First token-optimizer-informed release. Trims `CLAUDE.md` based on audit findings: inline skills list (runtime-injected, pure duplicate), TaskMaster command table (duplicates `--help`), and always-on rules 11-13 (4-11 line prose blocks compressed to 1-2 line directives).

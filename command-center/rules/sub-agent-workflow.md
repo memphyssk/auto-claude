@@ -1,62 +1,60 @@
 # Sub-Agent Workflow
 
-~140 specialized sub-agents are available. This file is about **how to utilize them most efficiently**. Plan-authoring and code-execution rules live in `planning-principles.md` and `dev-principles.md` respectively — not here.
+How to utilize ~140 specialized sub-agents efficiently. Plan-authoring and code-execution rules live in `planning-principles.md` and `dev-principles.md`.
 
 ---
 
 ## Before every sub-agent spawn
 
-Three-step gate. Run in order; do not skip Step 1 even for "obviously installed" agents — silent-fail is the failure mode this gate prevents.
+Three-step gate, in order. Do not skip Step 1 — silent-fail is the failure mode this gate prevents.
 
-1. **Consult the capability sheet.** Open `Planning/.capability-sheet.md` (section "Agents at ~/.claude/agents/") and confirm the target agent name appears. If absent, either (a) install the agent per `setup-tools/install.md` and regenerate the sheet, or (b) pick the closest substitute from the catalog and record the swap in the spawn context. Do not proceed on faith that the name is correct — "I used it last wave" is not verification.
+1. **Consult the capability sheet.** Open `Planning/.capability-sheet.md` (§ "Agents at ~/.claude/agents/") and confirm the target name appears. If absent: (a) install per `setup-tools/install.md` and regenerate, or (b) pick the closest substitute and record the swap in the spawn context.
 
-2. **Read the agent's instruction file** at `command-center/Sub-agent Instructions/<agent-name>-instructions.md` and inject the contents as the FIRST directive in the spawn prompt.
-   - If present → inject verbatim
-   - If absent but the agent is installed → the agent's global system card is the first directive (documented fallback); create an empty stub file for future overrides
-   - If the plan specifically relies on a project-customized instruction file and it's missing → flag as a plan-authoring defect and substitute the closest available instruction file
+2. **Read the agent's instruction file** at `command-center/Sub-agent Instructions/<agent>-instructions.md` and inject as the FIRST directive in the spawn prompt. If the file is absent but the agent is installed → the agent's global system card is the first directive; create an empty stub. If a project-customized file is expected but missing → flag as plan-authoring defect, substitute the closest available instruction file.
 
-3. **Consult category-appropriate alternatives.** If Step 1 showed the named agent exists but it's the wrong fit for the task (e.g., `backend-developer` for a DB-heavy query, when `database-optimizer` is in the catalog), swap before spawning. The catalog is broad; defaulting to the first name that came to mind narrows the choice.
+3. **Pick the best category fit.** If Step 1 shows the agent exists but is wrong for the task (e.g., `backend-developer` for a DB-heavy query when `database-optimizer` is available), swap before spawning.
 
-**Hard rule:** only create instruction-file stubs for agents that exist in the available agent list — never invent agent names.
+**Hard rule:** only stub instruction files for agents that exist in the available agent list. Never invent agent names.
 
-**Observations are Stage 9/10 pipeline only — NOT read at spawn time.** Observation files (`command-center/Sub-agent Observations/<agent>-observations.md`) are written at Stage 9 by `knowledge-synthesizer` + `technical-writer`, read at Stage 10 by `karen` (converter), and never touched during Stages 1-8. All prompt-shaping intelligence lives in instruction files after Stage 10 promotes load-bearing observations into them. Do not read observations when preparing a spawn; do not inject them into any spawn prompt.
+**Observations are Stage 9/10 only.** `Sub-agent Observations/<agent>-observations.md` files are written at Stage 9 (knowledge-synthesizer + technical-writer), read at Stage 10 (karen), never touched during Stages 1-8. Do not read or inject observations at spawn time — all prompt-shaping intelligence lives in instruction files after Stage 10 promotion.
 
-## Sub-agent limitations
+## Spawn discipline
 
-- Sub-agents have **limited context windows** and are **bad at generalising**. Never offload broad, open-ended work.
-- Always give sub-agents:
-  - A **specific, well-scoped task** (not "review everything")
-  - **Explicit file paths** to read or work on
-  - A **clear deliverable format** (report, code changes, checklist, etc.)
-- Prefer **parallel execution** — launch independent agents simultaneously.
-- Never duplicate work between agents — each owns a distinct scope.
-- Name agents descriptively so the user can track what each one does.
+### 1. Scope every spawn to a specific well-bounded task with explicit file paths and a clear deliverable format.
+Why: sub-agents have limited context and generalize poorly — broad "review everything" asks waste tokens and produce noise.
+
+### 2. Launch independent agents in parallel; never let two agents own overlapping scope.
+Why: parallel execution finishes faster and prevents conflicting edits; overlap means one agent's output will contradict or overwrite the other's.
+
+### 3. Name each spawn descriptively so the user can track what each is doing.
+Why: "general-purpose" or "Task 1" gives no signal when multiple agents run concurrently.
 
 ## Cross-cutting rules
 
-### 1. Root-cause before escalation
-**Iron Law: no fixes without root cause.** After 2 failed fix attempts, immediately spawn a domain-specialist (`websocket-engineer`, `react-specialist`, `security-engineer`, `database-administrator`, `ultrathink-debugger`) rather than iterating with debug-by-deploy `console.log` PRs. Domain experts diagnose in seconds what self-iteration takes hours to find.
+### 4. After 2 failed fix attempts, immediately escalate to a domain specialist.
+Why: domain experts (`websocket-engineer`, `react-specialist`, `security-engineer`, `database-administrator`, `ultrathink-debugger`) diagnose in seconds what self-iteration with `console.log` takes hours to find.
 
-### 2. architect-reviewer + security-engineer are a complementary pair
-For any wave involving auth, middleware, security-critical module wiring, cookies, CSRF, rate limiting, or session management: spawn `architect-reviewer` first to produce the ADR, then `security-engineer` to validate the ADR's wiring assumptions against the actual codebase. architect-reviewer reasons about what SHOULD exist; security-engineer reads what DOES exist. Do not use architect-reviewer as the sole pre-impl gate for security-critical work — always pair.
+### 5. Pair `architect-reviewer` with `security-engineer` on every auth / middleware / session / CSRF / rate-limit wave.
+Why: architect-reviewer reasons about what SHOULD exist; security-engineer reads what DOES exist — either alone misses the gap between spec and codebase.
 
-### 3. Pre-impl gate prompt specificity correlates with catch rate
-Both Karen and Jenny produce their highest-value catches when the prompt gives them specific source claims to verify (line numbers, method names, field shapes, exact spec text) rather than open-ended "review the plan" asks. When authoring Karen/Jenny prompts, extract the 5-8 most load-bearing factual claims from the plan and enumerate them explicitly as verification targets. For Jenny: when a spec involves boolean logic or comparison directions, paste the exact spec text into the prompt — her highest-value catches are inverted-logic findings.
+### 6. Give Karen and Jenny specific source claims to verify (line numbers, method names, field shapes, exact spec text) — not open-ended "review the plan" asks.
+Why: catch rate scales with prompt specificity; for boolean-logic or comparison-direction specs, paste the exact spec text to catch inverted logic.
 
-### 4. Generate secrets yourself — do not wait for the user
-When a wave needs a new pepper, API secret, encryption key, or any random value, generate it directly: `openssl rand -base64 32`, `crypto.randomBytes(32).toString('base64')`, `uuidgen`. Then set it via the appropriate MCP (Railway `set-variables`, Netlify, etc.). Do NOT block the wave asking the user — routine mechanical action that should never gate the autonomous loop. Exception: credentials issued to the user's account (API keys, OAuth client secrets from provider consoles) must be requested.
+### 7. Generate secrets yourself — `openssl rand -base64 32`, `crypto.randomBytes(32).toString('base64')`, `uuidgen` — and set via the platform MCP. Never block on the user.
+Why: routine mechanical action; waiting on the user here gates the autonomous loop. Exception: account-issued credentials (API keys, OAuth client secrets from provider consoles) must be requested.
 
-### 5. Six-constraint exec brief is the cross-agent canonical brief format for implementer spawns
-Across three successive waves (g66 technical-writer, g67/g68 react-specialist, g78 backend-developer) the six-constraint exec brief has produced clean one-pass zero-round-trip implementer delivery. Treat it as the default brief shape for any implementer agent spawn. The six categories, in order:
+### 8. Default every implementer spawn to the six-constraint exec brief.
+Why: file paths + section count + platform facts + LOC/non-goals + placement + test-gate commands together produce one-pass zero-round-trip delivery; removing any single category predictably triggers clarification loops.
 
-1. **Template/target file paths** with absolute paths and line/symbol anchors — never abstract descriptions of structure
-2. **Section count + exact pattern to mirror** — enumerated change targets in intended order plus a before→after snippet or in-repo reference
-3. **Platform-specific facts to inject verbatim** — schema enums, Zod constraints, brand names, contract fields, guard/role module paths, and anything the agent cannot infer from the codebase
-4. **LOC target range OR explicit non-goals list** — a bounded scope expressed as either a LOC ceiling (content waves) or a prohibition list (code waves)
-5. **Placement directive for fixed UI elements / import scope directive for code** — ordering for any framing UI or explicit add/remove/consolidate rules for imports, not left to inference
-6. **Negative constraint / test+build gate commands** — explicit antipattern prohibitions (content waves) or exit-criteria commands like `pnpm biome check --write` + typecheck + build (code waves)
+**Six-constraint exec brief (use in this order):**
+1. **Template/target file paths** with absolute paths and line/symbol anchors — never abstract structure descriptions.
+2. **Section count + exact pattern to mirror** — enumerated change targets plus a before→after snippet or in-repo reference.
+3. **Platform-specific facts to inject verbatim** — schema enums, Zod constraints, brand names, contract fields, guard/role module paths.
+4. **LOC target range OR explicit non-goals list** — LOC ceiling (content waves) or prohibition list (code waves).
+5. **Placement directive** — ordering for framing UI or explicit add/remove/consolidate rules for imports.
+6. **Negative constraint / test+build gate commands** — antipattern prohibitions (content) or `pnpm biome check --write` + typecheck + build (code).
 
-Each of the six is independently load-bearing: remove any single one and clarification round-trips become predictable. Per-agent authoritative definitions live at `command-center/Sub-agent Instructions/technical-writer-instructions.md` (copy-heavy content waves), `command-center/Sub-agent Instructions/react-specialist-instructions.md` (single-file UI change waves), and `command-center/Sub-agent Instructions/backend-developer-instructions.md` (backend implementation waves). When onboarding a new implementer agent type (e.g., `nestjs-backend-expert`, `typescript-pro`, `database-administrator`), default the first exec brief to this format rather than waiting for three validation waves.
+Per-agent authoritative briefs live in `Sub-agent Instructions/technical-writer-instructions.md` (content waves), `react-specialist-instructions.md` (single-file UI), `backend-developer-instructions.md` (backend). New implementer agent types default to this format.
 
 ## After each build iteration
 

@@ -46,17 +46,23 @@ expert  first, then
 
 ## Rules
 
-1. **The orchestrator is a router, not a fixer.** It reads error messages, classifies, and spawns. It does not edit code, add console.logs, or attempt patches.
+### 1. The orchestrator is a router, not a fixer.
+Why: reading error messages and classifying is cheap; editing code directly or adding `console.log` patches burns context without finding root cause.
 
-2. **`/investigate` is the default for uncertainty.** If you hesitate about which category an issue falls into, spawn `/investigate`. The 4-phase protocol (investigate → analyze → hypothesize → implement) will find the root cause and either fix it or hand off to the right expert.
+### 2. When uncertain which category an issue falls into, spawn `/investigate`.
+Why: the 4-phase protocol (investigate → analyze → hypothesize → implement) finds the root cause or hands off to the right expert; guessing routes the wrong way.
 
-3. **State/Data and Integration issues ALWAYS get `/investigate` first.** These categories have the highest rate of "looks simple, isn't" — the visible symptom is almost never the root cause.
+### 3. State/Data and Integration issues always get `/investigate` first.
+Why: these categories have the highest "looks simple, isn't" rate — the visible symptom is almost never the root cause.
 
-4. **Evidence required from every fix.** The fixing agent must provide one of: screenshot, test output, curl response, or before/after diff. "I fixed it" is not evidence.
+### 4. Every fix ships with evidence: screenshot, test output, curl response, or before/after diff.
+Why: "I fixed it" is not evidence, and un-evidenced fixes regress on the next wave.
 
-5. **Escalation chain.** If the first expert fails → `/investigate` with their findings → if that fails → `ultrathink-debugger` → if that fails → escalate to user with full root-cause analysis.
+### 5. Escalation chain: first expert fails → `/investigate` with their findings → `ultrathink-debugger` → escalate to user with full RCA.
+Why: each tier has different diagnostic leverage; skipping tiers loses the context the next agent needs.
 
-6. **Never re-attempt the same fix.** If a fix was tried and failed, the next agent must try a DIFFERENT approach. Pass the failure context to the next agent so they don't repeat.
+### 6. Never re-attempt the same fix. Pass failure context to the next agent.
+Why: repeating a failed approach wastes turns; the next agent needs the failure context to try a different angle.
 
 ## Common misroutes to avoid
 
