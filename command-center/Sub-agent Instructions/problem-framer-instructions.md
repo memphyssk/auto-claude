@@ -57,7 +57,7 @@ Read `stage-1-problem-reframing.md` antipatterns. Match proposed solution agains
 
 ### 5. Design-gap flag (MANDATORY emit — true or false, never absent)
 
-Every reframing output MUST include `design_gap_flag: true|false` with rationale. This is load-bearing for Stage 3b's skip/fire contract — absent flag forces Stage 3b to fire defensively (~60-100K wasted tokens) AND logs a plan-authoring defect.
+Every reframing output MUST include `design_gap_flag: true|false` with rationale. This is load-bearing for Stage 3b's skip/fire contract — absent flag forces Stage 3b to fire defensively AND logs a plan-authoring defect.
 
 Set `design_gap_flag: true` if the task scope requires UI/icons/pages/components/flows NOT already present in `design/*.html`. List the missing surfaces.
 

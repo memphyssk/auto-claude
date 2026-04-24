@@ -40,7 +40,7 @@ If even the first slice trips a threshold (unbreakable monolith), escalate to us
 
 ## Design-gap flag (MANDATORY — never absent)
 
-Every reframing output MUST include `design_gap_flag: true|false`. This is load-bearing for Stage 3b's skip contract — an absent flag forces Stage 3b to fire defensively (~60-100K wasted) AND logs a plan-authoring defect. See `Sub-agent Instructions/problem-framer-instructions.md` § 5 for the full emission contract.
+Every reframing output MUST include `design_gap_flag: true|false`. This is load-bearing for Stage 3b's skip contract — an absent flag forces Stage 3b to fire defensively AND logs a plan-authoring defect. See `Sub-agent Instructions/problem-framer-instructions.md` § 5 for the full emission contract.
 
 Set `true` if the task scope requires UI/icons/pages/components/flows NOT present in `design/*.html`. List the missing surfaces.
 

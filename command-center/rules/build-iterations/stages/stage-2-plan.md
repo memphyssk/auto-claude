@@ -78,7 +78,7 @@ After writing or revising the plan, run a self-consistency sweep before proceedi
 1. For each **task-message scope bullet**, confirm the plan body (targets table, stage execution order, non-goals) contains a matching treatment. Any bullet with no plan-body counterpart, or with contradicting language, must be reconciled.
 2. Check for version-boundary leakage: prior-draft sections that restrict scope (e.g., "no route edits this wave") must be removed or updated when the revision expands scope.
 3. If the plan defers a spec-mandated item to a future wave, add an inline annotation at that spec item's location naming the deferral wave — do not rely on the wave plan alone to carry the rationale.
-4. **Verify `design_gap_flag` is present and explicitly set** (`true` or `false`, never absent). Stage 3b's skip contract treats an absent flag as `true` + logs a plan-authoring defect. If the flag is missing, emit it before Stage 3 gate — it's cheaper to set it correctly than to trigger a defensive Stage 3b fire (~60-100K tokens wasted) or a defect log that carries into the next retro.
+4. **Verify `design_gap_flag` is present and explicitly set** (`true` or `false`, never absent). Stage 3b's skip contract treats an absent flag as `true` + logs a plan-authoring defect. If the flag is missing, emit it before Stage 3 gate — it's cheaper to set it correctly than to trigger a defensive Stage 3b fire or a defect log that carries into the next retro.
 
 This sweep takes <5 minutes and prevents internal contradictions from reaching Stage 3 reviewers, which costs a full review cycle to unwind.
 

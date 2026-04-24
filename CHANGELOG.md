@@ -34,6 +34,20 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.12.4 — 2026-04-24
+
+Cleanup. Removes speculative cost-awareness notes (`~60-100K wasted tokens`) from the v0.12.3 design-gap-flag contract edits. The rule stands on its own merit (fail-loud > fail-silent); the synthetic cost numbers from sim-001 estimates shouldn't propagate into production specs.
+
+### Changed
+- `Sub-agent Instructions/problem-framer-instructions.md` — dropped "~60-100K wasted tokens" from § 5 rationale
+- `rules/build-iterations/stages/stage-1-problem-reframing.md` — dropped "~60-100K wasted" from Design-gap flag section
+- `rules/build-iterations/stages/stage-2-plan.md` — dropped "~60-100K tokens wasted" from consistency-check item 4
+
+### Consumer sync
+- **Breaking:** no. Text-only cleanup.
+
+---
+
 ## v0.12.3 — 2026-04-24
 
 Closes the `design_gap_flag` contract gap surfaced by sim-001. Four coordinated edits make the flag mandatory at authorship + fail-loud on absence.
