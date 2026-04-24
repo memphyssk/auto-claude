@@ -34,6 +34,39 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.11.0 — 2026-04-24
+
+Fixes a chronic agent failure: forgetting that installed tools (MCPs, CLIs, skills) exist mid-conversation and deferring to the founder on tasks the agent could do itself. Adds always-on rule #11 enforcing enumeration-before-deferral + a session-start capability sheet that makes enumeration nearly free.
+
+### Added
+- `bin/auto-claude-capabilities` — new subcommand that enumerates runtime-callable tools: global CLIs (via `command -v`), skills (via `ls ~/.claude/skills/`), agents (via `ls ~/.claude/agents/`), MCP servers (via parsing `~/.mcp.json` + `~/.claude.json`). Output is ~100 lines of dense markdown meant for `Planning/.capability-sheet.md`. Script is dispatcher-routed, so callable as `auto-claude capabilities`.
+- `bin/auto-claude` dispatcher — adds `capabilities` subcommand to route table + help text.
+
+### Changed
+- `CLAUDE.md` — new always-on rule #11: "Before deferring to founder on any operational task, enumerate available tools." Documents the session-start capability-sheet generation + the consult-before-deferral contract. Explicitly notes the rule does NOT override consent gates, hard-stops, or charter restrictions.
+
+### Why this release
+This is a behavioral fix for a real pattern:
+- "Please add a CNAME record for X" (when domain-mcp is available)
+- "Paste this JSON into ~/.mcp.json" (when a CLI could do the config edit)
+- "Check if Railway deploy succeeded" (when `railway` CLI is on PATH)
+- "Send this email yourself" (when agentmail is wired + has the right inbox)
+
+The failure isn't lack of knowledge — it's lack of *recall at the moment of deferring*. Rule #11 turns that recall into a cheap pre-action gate: a 100-line sheet is fast to read; re-reading `setup-tools/install.md`'s 500 lines of installation docs is not. The sheet is authoritative about what IS callable; install.md documents what SHOULD be installed.
+
+### Policy highlights
+- **The sheet is runtime truth, install.md is documentation.** Agent reads the sheet to decide what it can do; reads install.md only if a needed tool is missing and needs installing.
+- **Enumeration is one-shot per session.** Sheet caches to `Planning/.capability-sheet.md` at session start. Regeneration happens only if session spans >1 hour OR after `/update-tools` runs.
+- **Rule #11 doesn't override consent.** Destructive operations, charter-restriction bumps, and money commitments still route through existing approval paths. The rule only prevents needless deferral on things the founder would just approve.
+
+### Consumer sync
+- **Breaking:** no. Purely additive — adds a rule + a subcommand; existing workflow unchanged unless the agent was explicitly deferring on tool-available tasks (in which case behavior becomes "use the tool autonomously").
+- **New files:** `bin/auto-claude-capabilities` — installed via symlink or git pull of the auto-claude repo; no per-project install.
+- **Changed files:** `CLAUDE.md`, `bin/auto-claude`, `VERSION`
+- **Migration action for consumers:** sync to v0.11.0, pull the updated `bin/auto-claude-capabilities` in your auto-claude source, and at the start of every Claude Code session run `auto-claude capabilities > Planning/.capability-sheet.md` (or let the agent do it per rule #11). Existing `Planning/` gitignore convention keeps the sheet out of history.
+
+---
+
 ## v0.10.2 — 2026-04-23
 
 Two changes in one release:

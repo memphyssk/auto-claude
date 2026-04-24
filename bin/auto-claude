@@ -5,12 +5,13 @@
 #   auto-claude <subcommand> [args...]
 #
 # Subcommands:
-#   init     — bootstrap a new consumer project
-#   diff     — show what sync would do (read-only)
-#   sync     — pull brain updates per .brainignore policy
-#   status   — one-line pinned-version report
-#   help     — show this help
-#   version  — print tool version
+#   init          — bootstrap a new consumer project
+#   diff          — show what sync would do (read-only)
+#   sync          — pull brain updates per .brainignore policy
+#   status        — one-line pinned-version report
+#   capabilities  — enumerate runtime-callable tools (for Planning/.capability-sheet.md)
+#   help          — show this help
+#   version       — print tool version
 
 set -o errexit
 set -o nounset
@@ -42,6 +43,11 @@ Subcommands:
   status
       One-line summary: pinned version, commits behind upstream.
 
+  capabilities
+      Enumerate runtime-callable tools (CLIs, skills, agents, MCPs) on this
+      machine. Output is a capability sheet for CLAUDE.md always-on rule #11.
+      Redirect to Planning/.capability-sheet.md at session start.
+
   version
       Print tool version.
 
@@ -56,7 +62,7 @@ EOF
 
 sub="$1"; shift
 case "$sub" in
-  init|diff|sync|status)
+  init|diff|sync|status|capabilities)
     exec "$SCRIPT_DIR/auto-claude-$sub" "$@"
     ;;
   version|--version|-v)

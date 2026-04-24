@@ -100,6 +100,18 @@ These apply in every turn regardless of which trigger fires.
 
 10. **Respect the mode flag.** Before routing any would-be user-ask, check `Planning/.autonomous-session` per `command-center/management/mode-switching.md`. Four modes: **founder-review** (no flag — every user-ask to founder); **semi-assisted** (skip nice-to-haves, strategic + hard-stops to founder); **full-autonomy** (BOARD resolves 4+/7 default / 6+/7 Tier 3 strict; splits + hard-stops to founder); **danger-builder** (BOARD resolves same thresholds; BOARD splits + HARD-STOP vetoes + all former-founder-asks route to **ceo-agent** within `ceo-bound.md` charter; founder reached only via kill-switch / session message / daily Resend digest). Hard-stops (destructive actions, money commitments, BOARD member veto) route to founder under the first three modes, and to ceo-agent under `danger-builder` — ceo-agent weighs them, respects any charter restriction, and records engagement in the digest. Founder charter amendments are the only founder-involvement path under danger-builder beyond the kill-switch.
 
+11. **Before deferring to founder on any operational task, enumerate available tools.** Whenever you're about to ask the founder to do something operational — edit a file outside the project scope, run a CLI, modify DNS, send email, create an account, edit config files, paste values into a dashboard — you MUST first confirm the task can't be done autonomously using installed tooling.
+
+    **At session start** (first turn in a new session), generate the capability sheet and save it to `Planning/.capability-sheet.md`:
+    ```bash
+    mkdir -p Planning && /path/to/auto-claude/bin/auto-claude capabilities > Planning/.capability-sheet.md
+    ```
+    The sheet lists what CLIs, skills, agents, and MCP servers are callable on this machine right now. It's authoritative; `setup-tools/install.md` is documentation of what SHOULD be installed, not what IS. Regenerate the sheet if the session spans >1 hour OR after `/update-tools` runs.
+
+    **Before every deferral**, consult the sheet. If it names a tool that can perform the task, use it. Example: "I need to add a CNAME record" + sheet shows `domain-mcp` registered → invoke `mcp__domain-mcp__dns` rather than asking the founder to edit Dynadot. Example: "I need to send an email" + sheet shows `agentmail` on PATH → run the CLI rather than asking the founder to send it.
+
+    **This rule does NOT override consent gates.** If the action is destructive, crosses a charter restriction, commits money beyond a declared cap, or is otherwise something the founder would reasonably want a say in — ask. The rule prevents needless deferral on things where the founder's answer would just be "yes, do it." Hard-stops, always-on rules, and charter bindings all still apply.
+
 ---
 
 # Directory Structure
