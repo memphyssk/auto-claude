@@ -34,6 +34,15 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.16.1 — 2026-04-24
+
+Trims monitor-principles Contract bullet 4 to just "Compact inline." — the v0.16.0 wording carried explanatory text ("never extract platform-specific detail to separate files, even if CLI names push word count") that restated the rule rather than adding it.
+
+### Changed
+- `rules/monitors/monitor-principles.md` Contract bullet 4 → "Compact inline."
+
+---
+
 ## v0.16.0 — 2026-04-24
 
 Extends the Contract pattern to `monitor-principles.md`, scoped to the rulebook portion of the file (anti-patterns section) only. State machine, three-condition spec, poll log format, self-audit, and platform template pointers stay as-is — those are protocol reference, not rule accumulation.
