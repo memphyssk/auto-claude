@@ -2,8 +2,6 @@
 
 Plan-authoring discipline applied at Stage 2 (plan authoring) and Stage 3 (gate verification). Complemented by `dev-principles.md` for execution and code-convention rules.
 
-New rules enter via the Contract below — `/retro`, Stage 8/10 promotions, and manual edits all follow it (see CLAUDE.md always-on rule #13).
-
 ## Contract for new rules
 
 Template:

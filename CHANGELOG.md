@@ -34,6 +34,19 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.20.1 — 2026-04-24
+
+Removes the per-file redundant pointer lines added in v0.20.0. The always-on rule #13 in CLAUDE.md + housekeeping.md paragraph already cover every write path; the five "New rules enter via the Contract below..." lines in each principles file were noise.
+
+### Changed
+- `rules/dev-principles.md`, `rules/planning-principles.md`, `rules/testing-principles.md`, `rules/monitors/monitor-principles.md`, `test-writing-principles.md` — removed the one-line pointer below each intro.
+
+### Kept
+- CLAUDE.md rule #13 (the actual enforcement).
+- `rules/housekeeping.md` Stage 8 paragraph (Stage-8-specific reinforcement).
+
+---
+
 ## v0.20.0 — 2026-04-24
 
 Enforces Contract compliance on every write to `*-principles.md` files. Two-layer approach: an always-on rule in CLAUDE.md (catches all write paths) + per-file pointers that cite the rule. No new infrastructure, no validation scripts — just systematic reminders at every plausible write site.

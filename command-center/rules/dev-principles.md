@@ -2,8 +2,6 @@
 
 Engineering principles applied at Stage 4 (execute) and every stage that writes code. Complemented by `planning-principles.md` for plan-authoring discipline.
 
-New rules enter via the Contract below — `/retro`, Stage 8/10 promotions, and manual edits all follow it (see CLAUDE.md always-on rule #13).
-
 ## Contract for new rules
 
 Template:

@@ -2,8 +2,6 @@
 
 Pointers to the canonical testing docs plus orchestrator-side discipline applied when specifying test work.
 
-New rules enter via the Contract below — `/retro`, Stage 8/10 promotions, and manual edits all follow it (see CLAUDE.md always-on rule #13).
-
 ---
 
 ## Canonical docs (mandatory reading)
