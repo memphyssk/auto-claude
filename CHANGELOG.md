@@ -34,6 +34,32 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.15.0 — 2026-04-24
+
+Propagates the v0.14.0 flat-numbered-rule format across the remaining retro-target principles files. Adds a "Contract for new rules" block at the top of every rulebook-shaped principles file — single source of truth for anyone (retro, Stage 10, orchestrator, human) writing new rules.
+
+### Added
+- **"Contract for new rules" block** added at the top of `dev-principles.md`, `planning-principles.md`, and `testing-principles.md`. Identical 7-bullet spec: template + hard rules about one-sentence discipline, no war stories, no wave refs, no stack leakage, sequential numbering, no near-duplicates, and a wave-specific-stays-in-closeout gate.
+
+### Changed
+- `rules/planning-principles.md` — rewritten from 5 × 4-field `Context/Rule/Why/Cross-ref` blocks into 8 numbered imperatives grouped under Verification / Plan style / Pre-flight. 66 lines → 44 lines.
+- `rules/testing-principles.md` — 7 numbered bullets tightened from multi-sentence prose to one-line action + one-line why. Canonical-docs pointer section preserved at top as-is.
+- `rules/dev-principles.md` — intro prose replaced with the condensed Contract block (file body unchanged since v0.14.0).
+
+### Not changed (intentional)
+- `rules/monitors/monitor-principles.md` — protocol doc with a state machine and platform templates, not a retro target. Flat-rules rewrite would destroy the procedural semantics.
+- `test-writing-principles.md` — master reference guide with RFC 2119 priority terms, versioned schema, and its own append-only protocol (`append to Section 14 using the entry template; do not edit existing sections`). Different doc type.
+
+### Rationale
+The v0.14.0 rewrite proved the rulebook format works for `dev-principles.md`. Extending the same format to the two other retro-written principles files (`planning-`, `testing-`) is additive — no lessons dropped, just narrative stripped. The Contract block makes the format self-policing: the next retro write has to read the spec to add a rule, and format violations stand out visually against the surrounding one-liners.
+
+### Consumer sync
+- **Breaking:** no. Content is behaviorally equivalent; only format changed. Rules that were nested under multi-sentence whys are now numbered individually — consumers that cited rules by heading ("per planning-principles § 'Plans writing new keys to attributes[]'") must update to rule numbers.
+- **Changed files (review recommended):** `command-center/rules/dev-principles.md`, `command-center/rules/planning-principles.md`, `command-center/rules/testing-principles.md`.
+- **Migration action:** grep consumer repos for `dev-principles §`, `planning-principles §`, `testing-principles §` and update to `#N` form.
+
+---
+
 ## v0.14.0 — 2026-04-24
 
 `dev-principles.md` rewritten as a flat numbered rulebook. 32 imperative rules, each a single line of action + a single line of why. War-story framing ("Context:", "Cross-ref: Planning/wave-g25-closeout.md") stripped — CHANGELOG entries and closeouts carry history, rule text carries current behavior.

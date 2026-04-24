@@ -2,7 +2,19 @@
 
 Engineering principles applied at Stage 4 (execute) and every stage that writes code. Complemented by `planning-principles.md` for plan-authoring discipline.
 
-Populated by `/retro` output and user approval. New rules enter as numbered imperatives — one sentence of rule, one sentence of why. No war stories, no wave citations.
+## Contract for new rules
+
+Template:
+### N. Imperative rule ending in a period.
+Why: one declarative sentence.
+
+- Before adding: grep for the concept — if a similar rule exists, do not add a near-dup.
+- One sentence per line, short, commanding, cut to the chase.
+- No war stories, wave refs, `Context:`, `Cross-ref:`, or project/stack names.
+- Stack-specific detail → § Code conventions, not the numbered list.
+- Number sequentially; renumber on insert.
+- Group under an existing H2 unless ≥3 new rules share a theme.
+- Wave-specific ("broke once") stays in the closeout until a second wave confirms.
 
 ---
 
