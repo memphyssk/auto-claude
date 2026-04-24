@@ -184,10 +184,23 @@ Written at ritual close:
 
 ## Anti-patterns
 
-1. **Do not skip the competitive sweep.** Milestones without fresh evidence drift toward vanity. If competitive sweep finds nothing new (e.g., scanned last week), reference the existing benchmarks at Step 1a but still validate staleness.
-2. **Do not skip the integrity check.** Silent drift between ROADMAP.md and TaskMaster compounds across refreshes.
-3. **Do not auto-apply CEO recommendations.** Founder checkpoint at Step 4 is non-negotiable. CEO review produces proposals, not commitments.
-4. **Do not commit piecemeal.** Atomic refresh. Partial commits leave the system in inconsistent state.
-5. **Do not inline material scope changes into an active milestone mid-refresh.** Even inside this ritual, material changes go through the Step 3 CEO challenge + Step 4 founder checkpoint.
-6. **Do not let new milestones enter with `_TBD_` success metrics.** Metrics must be finalized before a milestone transitions `planned → active` (per `roadmap-lifecycle.md`). Refresh is the right moment to finalize.
-7. **Do not promote a `competitive-analyst` proposal to `active` in one refresh.** New milestones enter `planned` state. At least one subsequent wave (via backlog-planning + Stage 0b) must bring them live.
+### 1. Never skip the competitive sweep.
+Why: milestones without fresh evidence drift toward vanity. If nothing new surfaces (scanned last week), reference existing benchmarks at Step 1a — but still validate staleness.
+
+### 2. Never skip the integrity check.
+Why: silent drift between ROADMAP.md and TaskMaster compounds across refreshes until the whole surface is untrustworthy.
+
+### 3. Never auto-apply CEO recommendations.
+Why: the Step 4 founder checkpoint is non-negotiable. CEO review produces proposals, not commitments.
+
+### 4. Never commit piecemeal.
+Why: atomic refresh. Partial commits leave ROADMAP.md + TaskMaster in inconsistent state.
+
+### 5. Never inline material scope changes into an active milestone mid-refresh.
+Why: even inside this ritual, material changes go through the Step 3 CEO challenge + Step 4 founder checkpoint — no bypass.
+
+### 6. Never let new milestones enter with `_TBD_` success metrics.
+Why: metrics must be finalized before `planned → active`. Refresh is the moment to finalize.
+
+### 7. Never promote a competitive-analyst proposal to `active` in one refresh.
+Why: new milestones enter `planned`. At least one subsequent wave (backlog-planning + Stage 0b) must bring them live before they're actionable.

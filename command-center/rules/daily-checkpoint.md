@@ -168,9 +168,20 @@ chore(pm): daily checkpoint <YYYY-MM-DD>
 
 ## Anti-patterns
 
-1. **Do not surface a task twice in one checkpoint.** `checkpointSurfacedAt` is the guard; if a task appears again, state changed materially.
-2. **Do not Tier-3-escalate mid-wave.** Stage 0b classifies and queues; this ritual resolves. Waves do not block waiting for Tier 3.
-3. **Do not auto-apply founder silence.** If the founder skips the checkpoint or any bucket, tasks stay in their buckets. Zero answers = zero writes.
-4. **Do not author milestones at the checkpoint.** New milestones come from the refresh ritual. At the checkpoint the founder overrides *assignments* (where a task lands), not the milestone set itself.
-5. **Do not batch-apply material Tier 3 answers without individual `product-decisions.md` entries.** Each material Tier 3 answer gets its own decision-log entry for audit.
-6. **Do not skip the TaskMaster metadata fields.** Stage 0b MUST write `assignedAt`, `stage0bReviewed`, and the product-decision fields. Without them the checkpoint cannot filter and becomes manual diffing.
+### 1. Never surface the same task twice in one checkpoint.
+Why: `checkpointSurfacedAt` is the guard; if a task re-appears, state changed materially and the re-surfacing is intentional.
+
+### 2. Never Tier-3-escalate mid-wave.
+Why: Stage 0b classifies and queues; this ritual resolves. Waves don't block waiting for Tier 3 — they ship on the recommendation.
+
+### 3. Never auto-apply founder silence.
+Why: skipped buckets stay in their buckets. Zero answers = zero writes. Applying defaults on silence destroys the audit chain.
+
+### 4. Never author milestones at the checkpoint.
+Why: new milestones come from the refresh ritual. The checkpoint overrides *assignments* (where a task lands), not the milestone set itself.
+
+### 5. Never batch-apply material Tier 3 answers without individual `product-decisions.md` entries.
+Why: each material Tier 3 answer gets its own decision-log entry for audit; batch writes destroy traceability.
+
+### 6. Never skip the TaskMaster metadata fields.
+Why: Stage 0b MUST write `assignedAt`, `stage0bReviewed`, and product-decision fields — without them the checkpoint cannot filter and becomes manual diffing.

@@ -34,6 +34,37 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.24.0 — 2026-04-24
+
+md-optimise Group A1 final batch — the 4 largest rules files. Anti-patterns sections converted to rule+why Contract format. **Group A1 rollout complete**: all 11 `rules/*.md` files now share the rule+why discipline where it fits.
+
+### Changed
+
+- **`rules/daily-checkpoint.md`** (176 → 187): 6 prose anti-patterns → 6 Contract-format rules with Why lines. Procedural 4-step ritual, bucket-gathering logic, and mode-aware routing preserved.
+- **`rules/roadmap-lifecycle.md`** (249 → 266): 9 prose anti-patterns → 9 Contract-format rules with Why lines. Milestone schema tables, state diagram, transition rules, edit permissions, and companion file hierarchy all preserved.
+- **`rules/roadmap-refresh-ritual.md`** (193 → 206): 7 prose anti-patterns → 7 Contract-format rules with Why lines. 6-step ritual, cross-references, and deliverables preserved.
+- **`rules/product-mega-testing/product-mega-testing.md`** (238 → 238): removed "(this has been a recurring issue)" parenthetical per Contract's war-story rule. Otherwise untouched — the file is a runbook, not a rule-accumulator, and its 5-phase workflow, agent assignments, and scenario templates are all procedural reference content.
+
+### Group A1 status: COMPLETE
+
+All 11 files in Group A1 touched across v0.22-v0.24 (pilot trio + middle batch + final batch):
+
+- v0.22: `sub-agent-workflow.md`, `triage-routing-table.md`, `housekeeping.md`
+- v0.23: `skill-use.md`, `backlog-planning.md`, `external-sdks.md`, `security-waves.md`
+- v0.24: `daily-checkpoint.md`, `roadmap-lifecycle.md`, `roadmap-refresh-ritual.md`, `product-mega-testing.md`
+
+Rule+why format applied wherever the file had numbered-rule content. Procedural runbooks (stage files, state machines, templates) kept as-is. War-story wave references stripped from security-waves.md.
+
+### Next per `md-optimise.md`
+
+v0.25.0 = Group A2 pilot (3-5 Sub-agent Instructions + karen-instruction update to drive Stage 10 output in Contract format). v0.26.0 = Group A2 full rollout. v0.27.0 = Group B1 stage files. v0.28.0 = Group B2 management. Later: `install.md` audit.
+
+### Consumer sync
+- **Breaking:** no. Rule content preserved; prose-to-rule reformatting only.
+- **Changed files (review recommended):** the four files above.
+
+---
+
 ## v0.23.0 — 2026-04-24
 
 md-optimise Group A1 batch 2: 4 files — `skill-use.md`, `backlog-planning.md`, `external-sdks.md`, `security-waves.md`. 428 → 357 lines (-71 lines, -17%).

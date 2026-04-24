@@ -78,7 +78,7 @@ A dedicated design-consistency agent reviews the LIVE site (not code) looking fo
 | **Typography** | Font sizes, weights, or families that deviate from the design system |
 | **Color** | Colors that don't match the token palette (especially grays, greens, status colors) |
 | **Component consistency** | Same component (button, card, badge, input) looking different on different pages |
-| **Navigation** | Nav bar rendering differently across pages (this has been a recurring issue) |
+| **Navigation** | Nav bar rendering differently across pages |
 | **Status indicators** | Status pills using different colors/shapes for the same status on different pages |
 | **Empty states** | Missing or inconsistent empty-state designs |
 | **Loading states** | Missing or inconsistent loading indicators |

@@ -205,15 +205,32 @@ All cross-file references MUST resolve. Refresh ritual validates bi-directional 
 
 ## Anti-patterns
 
-1. **Do not list unassigned tasks in ROADMAP.md.** TaskMaster owns the queue surface.
-2. **Do not inline material scope changes** into an active milestone. Use the refresh ritual.
-3. **Do not create a milestone without a TaskMaster tag.** Every milestone needs the execution bridge.
-4. **Do not partially rename.** If you rename the theme, update tag slug AND anchor AND every affected task's metadata in one pass.
-5. **Do not mix themes.** One theme per milestone. If scope grows cross-theme, split (M3 → M3 + M3.1) at refresh.
-6. **Do not edit `shipped` or archived milestones.** Preserve history; author a new milestone instead.
-7. **Do not promote a `competitive-analyst` proposal straight to `active`.** Must pass through `planned` with `/plan-ceo-review` via refresh ritual.
-8. **Do not skip `roadmapAnchor` updates on task metadata.** Stale anchors break the daily-checkpoint view.
-9. **Do not treat `unassigned` as a backlog.** It's a queue staged for the next Stage 0b walk. The real backlog (planned milestones) lives in ROADMAP.md.
+### 1. Never list unassigned tasks in ROADMAP.md.
+Why: TaskMaster owns the queue surface; listing them in ROADMAP.md drags strategy-file weight proportional to backlog size.
+
+### 2. Never inline material scope changes into an active milestone.
+Why: all scope changes go through the refresh ritual — inline edits skip the `/plan-ceo-review` gate and compound into untracked scope creep.
+
+### 3. Never create a milestone without a TaskMaster tag.
+Why: the tag is the execution bridge between strategy (ROADMAP.md) and tasks; without it, tasks can't reference the milestone.
+
+### 4. Never partially rename a milestone.
+Why: rename requires updating theme slug + anchor + every affected task's metadata in one pass. Partial renames break anchor resolution across the system.
+
+### 5. Never mix themes in one milestone.
+Why: cross-theme scope prevents clean status tracking; if scope grows cross-theme, split (M3 → M3 + M3.1) at the next refresh.
+
+### 6. Never edit `shipped` or archived milestones.
+Why: preserve history. Author a new milestone instead — editing shipped ones rewrites the historical record.
+
+### 7. Never promote a competitive-analyst proposal straight to `active`.
+Why: it must pass through `planned` with `/plan-ceo-review` via refresh ritual — otherwise you blind-copy competitors without strategic challenge.
+
+### 8. Never skip `roadmapAnchor` updates on task metadata.
+Why: stale anchors break the daily-checkpoint view and every Stage 0b walk that follows.
+
+### 9. Never treat `unassigned` as a backlog.
+Why: unassigned is a queue staged for the next Stage 0b walk — the real backlog (planned milestones) lives in ROADMAP.md.
 
 ---
 
