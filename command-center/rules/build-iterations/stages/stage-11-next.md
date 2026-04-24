@@ -31,7 +31,7 @@ Close the current wave and pick the next task. This is the loop point — after 
    - If `<3` planned milestones: append a `proposal:refresh-ritual` entry to `Planning/pending.md` with the current planned count. Next daily checkpoint surfaces it. **Do NOT auto-fire the refresh ritual — propose only.**
    - Select the task as the next wave scope and proceed to Stage 0 regardless of health-check outcome
 
-## STATUS handling (full-autonomy + danger-builder)
+### STATUS handling (full-autonomy + danger-builder)
 
 Stage 11 is the only stage that writes `command-center/management/STATUS` across a wave boundary. Stages 8–10 leave STATUS=`RUNNING`. Perform these steps in order at the end of Stage 11:
 

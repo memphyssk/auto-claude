@@ -95,12 +95,23 @@ Write to `Planning/trend-scan-<YYYY-MM-DD>.md`:
 
 ## Common failure modes (avoid)
 
-- **Over-broad sector framing.** "AI coding tooling" is too broad; "AI coding tools competing with Cursor on brownfield refactors" is a workable scope.
-- **Missing the primary source.** If you cite a blog post that quotes a Stripe announcement, cite the Stripe announcement directly.
-- **Generic signals.** "AI is accelerating" is worthless; "Anthropic shipped 1M-context Claude Opus extended mode on <date>, enabling N token budgets per session vs prior 200K" is useful.
-- **No materiality filter.** Reporting every sector change loses the signal in noise.
-- **Forgetting the horizon.** A signal affecting the 2028 roadmap isn't actionable for a 2026 refresh cycle.
-- **Speculation dressed as signal.** If the primary source doesn't exist yet, mark as "rumor" and deprioritize.
+### 1. Narrow sector framing to a specific scope before scanning.
+Why: "AI coding tooling" is too broad to filter for materiality; "AI coding tools competing with Cursor on brownfield refactors" produces actionable signals.
+
+### 2. Always cite the primary source, not a secondary post that quotes it.
+Why: a blog quoting a Stripe announcement is one level removed — the announcement is the evidence, not the commentary.
+
+### 3. Make signals specific and dated.
+Why: "AI is accelerating" is not actionable; a named capability shipped on a named date with quantified impact is.
+
+### 4. Apply the materiality filter before including a signal.
+Why: reporting every sector change buries the load-bearing signals in noise.
+
+### 5. Verify every signal falls within the scan's horizon window.
+Why: a signal affecting the 2028 roadmap is context, not directive, for a 2026 refresh cycle.
+
+### 6. Mark unconfirmed signals as "rumor" and deprioritize them.
+Why: speculation dressed as signal corrupts the strategic input the scan is designed to provide.
 
 ## Proactive scan at wave start
 

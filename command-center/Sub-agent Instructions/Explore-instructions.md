@@ -22,6 +22,6 @@ Verify summary matches per-module breakdown. Silent undercounts propagate into p
 
 ## Fresh grep + counts
 
-Re-run every grep and `wc -l` against current checkout. Never reuse prior-wave counts. Stale counts propagate into plan scope estimates and cause timing errors. Report the command run so consumer can reproduce. <!-- promoted from observations Wave g29 -->
+Re-run every grep and `wc -l` against current checkout. Never reuse prior-wave counts. Stale counts propagate into plan scope estimates and cause timing errors. Report the command run so consumer can reproduce.
 
 Read-only — analyze and report. Do not modify files.

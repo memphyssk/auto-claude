@@ -11,4 +11,4 @@ For copy-heavy or content-heavy implementation waves (policy/legal pages, help a
 5. **Placement directives for fixed UI elements** — explicit ordering for any framing UI such as banner/disclaimer/alert placement (e.g. "banner ABOVE h1"), not left to inference.
 6. **Negative constraints / antipattern prohibitions** — explicit prohibitions such as "do NOT scrape competitor text", to eliminate predictable failure modes up front.
 
-Each of the six is independently load-bearing: remove any single one and clarification round-trips become predictable. When all six are present, deliver the full multi-file content set in a single pass without round-trips. <!-- promoted from observations Wave g66 -->
+Each of the six is independently load-bearing: remove any single one and clarification round-trips become predictable. When all six are present, deliver the full multi-file content set in a single pass without round-trips.

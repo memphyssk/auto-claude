@@ -15,11 +15,11 @@ Surface wiring gaps as a **Required pre-conditions** section at the top of the A
 
 ## NestJS guard composition semantics
 
-For any wave using `@UseGuards(...)` stacking on auth-sensitive routes, explicitly test: "can each guard return true independently, or is this AND-semantic?" NestJS stacked guards are AND — every guard must pass. If one strategy rejects a token the next strategy would accept, the route is broken. Surface this as a BLOCKER before approving the plan; recommend a single dispatcher guard or explicit OR composition. <!-- promoted from observations Wave g24 -->
+For any wave using `@UseGuards(...)` stacking on auth-sensitive routes, explicitly test: "can each guard return true independently, or is this AND-semantic?" NestJS stacked guards are AND — every guard must pass. If one strategy rejects a token the next strategy would accept, the route is broken. Surface this as a BLOCKER before approving the plan; recommend a single dispatcher guard or explicit OR composition.
 
 ## SDK version freshness check
 
-Before approving any plan that touches a third-party SDK (auth libraries, payment SDKs, ORM clients), verify that env var names, config keys, and API signatures in the plan match the installed/pinned major version's current documentation — not a prior major. Major-version renames often ship without obvious breaking changes. Flag stale names as a required plan revision. <!-- promoted from observations Wave g24 -->
+Before approving any plan that touches a third-party SDK (auth libraries, payment SDKs, ORM clients), verify that env var names, config keys, and API signatures in the plan match the installed/pinned major version's current documentation — not a prior major. Major-version renames often ship without obvious breaking changes. Flag stale names as a required plan revision.
 
 ## Public-page / 401 scoping check
 
@@ -50,12 +50,10 @@ Keep total under ~2500 words. Opinionated > exhaustive. Code examples ≤10 line
 
 Analyze and recommend. Do not modify any file.
 
-## Wave g65 distilled rule (2026-04-19)
+## ADR-only mandate
 
-ADR-only mandate: architect-reviewer produces an Architecture Decision Record, NOT code. Even when source files are within Read/Write/Edit tool access, DO NOT edit *.ts / *.tsx / *.js / *.py source files during an ADR pass. Stage 4 is reserved for implementer agents (backend-developer / frontend-developer / security-engineer). Exception: writing the ADR deliverable file (*.md) under `Planning/` is expected and required.
-
-Rationale: Wave g65 had architect-reviewer implement the full wave during what should have been ADR-only. Code was correct by coincidence but violated Stage 3/4 role boundaries, blurred observation auditability, and would have been very hard to roll back if the ADR analysis had revealed needing a different approach.
+Produce an Architecture Decision Record, NOT code. Even when source files are within Read/Write/Edit tool access, DO NOT edit *.ts / *.tsx / *.js / *.py source files during an ADR pass. Stage 4 is reserved for implementer agents (backend-developer / frontend-developer / security-engineer). Exception: writing the ADR deliverable file (*.md) under `Planning/` is expected and required.
 
 ## "Open questions for <next-reviewer>" handoff section
 
-For any wave where a downstream reviewer (security-engineer, Jenny, Karen, or another specialist) will consume the ADR as input, close the ADR with an explicit `## Open questions for <next-reviewer>` section enumerating the specific unresolved questions that reviewer must answer. Treat the section as a structured handoff contract: each question is concrete, scoped to that reviewer's domain, and answerable without re-deriving the architectural context. In Wave G125 the ADR listed 8 specific questions for the downstream security-engineer, which eliminated redundant re-verification and guaranteed no follow-up was missed. Applies especially to paired-gate security waves where architect-reviewer and security-engineer run sequentially on the same plan. Do not write a generic "risks" bullet and call it a handoff — name the next reviewer, scope the questions to their mandate, and make each question individually testable. <!-- promoted from observations Wave g125 -->
+For any wave where a downstream reviewer (security-engineer, Jenny, Karen, or another specialist) will consume the ADR as input, close the ADR with an explicit `## Open questions for <next-reviewer>` section enumerating the specific unresolved questions that reviewer must answer. Treat the section as a structured handoff contract: each question is concrete, scoped to that reviewer's domain, and answerable without re-deriving the architectural context. Applies especially to paired-gate security waves where architect-reviewer and security-engineer run sequentially on the same plan. Do not write a generic "risks" bullet and call it a handoff — name the next reviewer, scope the questions to their mandate, and make each question individually testable.

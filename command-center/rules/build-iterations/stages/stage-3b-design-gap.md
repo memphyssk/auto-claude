@@ -1,9 +1,7 @@
 # Stage 3b — Design-Gap Resolution (conditional)
 
 ## Purpose
-Resolve all design gaps BEFORE implementers spawn. Runs the Dx loop — brief → generate → dual-review → approve/iterate → canonicalize into `design/`. Stage 1 and Stage 2 flag gaps; Stage 3b consolidates and resolves them.
-
-This stage absorbed the pre-uplift `design-gap-loop.md` side-loop. Design gaps are no longer addressed by ad-hoc re-entry from multiple stages — they are gated here, once, after the plan is approved but before execution.
+Resolve all design gaps before implementers spawn. Runs the Dx loop — brief → generate → dual-review → approve/iterate → canonicalize into `design/`. Stage 1 and Stage 2 flag gaps; Stage 3b consolidates and resolves them once, after the plan is approved.
 
 ## Skip conditions
 
@@ -32,11 +30,9 @@ Alongside firing, log the missing-flag event as a Stage 1 or Stage 2 defect in `
 
 ## Design source of truth
 
-**<competitor-1>'s only canonical design source is `design/`:**
+Canonical source is `design/` only:
 - `design/DESIGN-SYSTEM.md` — tokens (colors, typography, spacing, shadows, clip-paths, iconography)
 - `design/*.html` — per-page mockups produced by `/aidesigner` and approved through this stage
-
-Figma is deprecated for this project (see `feedback_figma_drift_policy` memory). Do NOT treat Figma as source when resolving design gaps.
 
 ---
 
@@ -94,8 +90,6 @@ Two reviewers in parallel, fresh context, no awareness of each other's verdict:
 
 Each returns exactly one of: **APPROVE** / **REVISE** / **REJECT** + concrete concerns cited against brief + DESIGN-SYSTEM.md.
 
-_Note: if `/ckm:design` becomes available, swap in per `review-gate.md` — the dual-reviewer pattern is reviewer-agnostic._
-
 ### Step 6 — Decide (Dx.3, orchestrator)
 
 | Outcome | Action |
@@ -125,7 +119,7 @@ _Note: if `/ckm:design` becomes available, swap in per `review-gate.md` — the 
 
 ---
 
-## Deliverables
+## Deliverable
 
 - `Planning/wave-<N>-design-gap/*` artifacts for each gap (brief, both reviews, optional escalation)
 - Approved mockups canonicalized in `design/` (no longer in `design/staging/`)

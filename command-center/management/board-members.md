@@ -1,6 +1,6 @@
 # BOARD Members
 
-7 specialists that form the decision body. Same reviewer-independence pattern as Karen + Jenny — fresh contexts, parallel spawn, no cross-talk until votes land.
+7 specialists that form the decision body. Fresh contexts, parallel spawn, no cross-talk until votes land.
 
 ## Composition
 
@@ -14,29 +14,27 @@
 | **competitive-analyst** | competitive-analyst (VoltAgent) | `~/.claude/agents/competitive-analyst.md` | Benchmark-grounded "what would competitors do" |
 | **product-manager** | product-manager (VoltAgent) | `~/.claude/agents/product-manager.md` | Operational PM / MVP scope / feature priority |
 
-**ceo-reviewer vs product-manager** — both are product-ish; keep distinct:
-- ceo-reviewer answers: *"Is this the right bet? Does it advance our strategic direction?"*
-- product-manager answers: *"Given the bet, is this the right scope / MVP shape / feature priority?"*
+**ceo-reviewer vs product-manager:** ceo-reviewer answers "Is this the right bet?" — product-manager answers "Given the bet, is this the right scope / MVP shape?"
 
 ## Reading list per member
 
-Each member is spawned with explicit reading material so votes are grounded in project state, not general training.
+Each member is spawned with explicit reading material so votes are grounded in project state.
 
 ### ceo-reviewer
-- `command-center/product/FOUNDER-BETS.md` (strategic intent)
-- `command-center/product/product-decisions.md` (precedent)
-- `command-center/product/ROADMAP.md` (milestone context)
-- Decision context (plan / reframing / task details)
+- `command-center/product/FOUNDER-BETS.md`
+- `command-center/product/product-decisions.md`
+- `command-center/product/ROADMAP.md`
+- Decision context
 
 ### architect-reviewer
-- `command-center/dev/architecture/_library.md` (system shape)
-- `command-center/dev/module-list.md` (module inventory)
-- `command-center/rules/dev-principles.md` (conventions)
+- `command-center/dev/architecture/_library.md`
+- `command-center/dev/module-list.md`
+- `command-center/rules/dev-principles.md`
 - Relevant branch file (security/services/databases per topic)
 - Decision context
 
 ### ux-researcher
-- `command-center/artifacts/user-journey-map.md` (canonical flows)
+- `command-center/artifacts/user-journey-map.md`
 - Relevant `command-center/product/per-page-pd/<page>.md` files
 - `design/DESIGN-SYSTEM.md` + relevant mockups
 - Decision context
@@ -64,23 +62,18 @@ Each member is spawned with explicit reading material so votes are grounded in p
 - `command-center/product/feature-list.md`
 - `command-center/product/user-flows.md`
 - Relevant `command-center/product/per-page-pd/<page>.md` files
-- `command-center/product/product-decisions.md` (scoping precedent)
+- `command-center/product/product-decisions.md`
 - `command-center/artifacts/user-journey-map.md`
 - Decision context
 
 ## Spawn protocol (orchestrator)
 
 1. Identify decision class (Tier 3 / scope change / conflict / monolith / design-gap escalation / triage chain / daily-checkpoint).
-2. Construct decision packet:
-   - Decision-slug (kebab case, e.g. `tier3-payment-provider-choice`)
-   - Question / framing
-   - Context files (per decision class)
-   - Options (if enumerable) or "open question" framing
+2. Construct decision packet: decision-slug (kebab case), question/framing, context files, options or "open question" framing.
 3. Per member, build a spawn prompt:
-   - For VoltAgent members: use the `subagent_type` name directly (`architect-reviewer`, `ux-researcher`, `risk-manager`, `competitive-analyst`, `product-manager`) — Agent tool loads the agent definition
-   - For custom members (ceo-reviewer, founder-proxy): use `general-purpose` subagent_type + inject instruction file as FIRST directive
-   - Append reading list
-   - Append decision packet
+   - VoltAgent members: use the `subagent_type` name directly (`architect-reviewer`, `ux-researcher`, `risk-manager`, `competitive-analyst`, `product-manager`)
+   - Custom members (ceo-reviewer, founder-proxy): use `general-purpose` + inject instruction file as FIRST directive
+   - Append reading list + decision packet
    - Output contract: APPROVE / REJECT / ABSTAIN + rationale + hard-stop flag if any
 4. Spawn all 7 in parallel, single message.
 5. Collect votes. Apply `conflict-resolution.md` voting rules.
@@ -106,16 +99,10 @@ Each member is spawned with explicit reading material so votes are grounded in p
 
 ## founder-proxy — special role
 
-Only BOARD member that uses claude-mem. Invokes `claude-mem:mem-search` with decision-slug + recent context terms, reads top matches from memory, cross-references with last 10 `product-decisions.md` entries, then simulates founder's likely call.
+Only BOARD member that uses claude-mem. Invokes `claude-mem:mem-search` with decision-slug + recent context terms, reads top matches, cross-references with last 10 `product-decisions.md` entries, then simulates founder's likely call.
 
-If memory yields nothing relevant (no prior similar call, no recorded preference): founder-proxy MUST emit `HARD-STOP: must be human — no founder precedent in memory` rather than guess. Designed circuit breaker for genuinely novel calls that deserve founder attention.
+If memory yields nothing relevant: founder-proxy MUST emit `HARD-STOP: must be human — no founder precedent in memory` rather than guess. Circuit breaker for genuinely novel calls.
 
 ## ABSTAIN discipline
 
-ABSTAIN is not vote-against. Use ABSTAIN when the decision is genuinely outside your lens:
-
-- ux-researcher on a pure database-schema migration
-- architect-reviewer on a copy-change wave
-- competitive-analyst on an internal-tooling decision with no competitor parallel
-
-Don't ABSTAIN to avoid taking a stance — that weakens the signal. When the decision touches your lens, APPROVE or REJECT with rationale.
+ABSTAIN when the decision is genuinely outside your lens (e.g., ux-researcher on a pure DB-schema migration; architect-reviewer on a copy-change wave). Do not ABSTAIN to avoid taking a stance — when the decision touches your lens, APPROVE or REJECT with rationale.

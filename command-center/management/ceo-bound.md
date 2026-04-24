@@ -14,7 +14,7 @@ _(leave blank for no restriction)_
 
 - `(no restriction)`
 
-_Example entries (delete when filling):_
+_Example entries:_
 - `CEO must NOT authorize any single transaction ≥ $500 USD.`
 - `CEO must NOT exceed $2000/month aggregate spend.`
 - `CEO must NOT authorize any charge categorized as gambling, crypto, or wire transfer.`
@@ -39,14 +39,14 @@ _Example:_ `CEO must NOT invoke roadmap-refresh-ritual without proposing the ref
 ## § 5 — Disallowed novelty handling
 - `(no restriction)`
 
-_Example:_ `CEO must NOT act on legal demand letters (GDPR / DMCA / C&D / subpoena) without founder approval, regardless of financial threshold.`
+_Example:_ `CEO must NOT act on legal demand letters (GDPR / DMCA / C&D / subpoena) without founder approval.`
 _Example:_ `CEO must NOT execute security-incident response without surfacing the incident via the ⚠ CHARTER PROPOSAL path first.`
 
 ---
 
 ## Tool allowlist (ceo-owned tools with full read+write)
 
-CEO has full read+write authority over tools listed here. Silent here = tool follows default read-only-for-analysis rule in `Sub-agent Instructions/ceo-agent-instructions.md` § Tool invocation authority.
+CEO has full read+write authority over tools listed here. Silent = tool follows default read-only-for-analysis rule in `Sub-agent Instructions/ceo-agent-instructions.md` § Tool invocation authority.
 
 This allowlist does NOT override the "execution routes through specialists" rule for project-state writes.
 
@@ -73,7 +73,7 @@ Read by mode-entry. Not restrictions — infrastructure checks. Mode refuses to 
 
 1. Founder edits this file directly.
 2. Changes take effect on next `danger-builder` mode entry.
-3. When CEO hits a restriction in §§ 1-5, it writes an amendment proposal to `Planning/ceo-charter-proposals.md` and emails founder with subject prefix `⚠ CHARTER PROPOSAL`. **Decision does not execute** until founder amends or explicitly overrides by session message. This is the ONE exception to ceo-agent's act-first rule.
+3. When CEO hits a restriction in §§ 1-5, it writes an amendment proposal to `Planning/ceo-charter-proposals.md` and emails founder with subject prefix `⚠ CHARTER PROPOSAL`. Decision does not execute until founder amends or explicitly overrides by session message.
 
 ---
 

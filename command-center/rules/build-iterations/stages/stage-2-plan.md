@@ -100,7 +100,3 @@ These fire BEFORE Karen+Jenny. They catch architectural and UX problems that the
 
 ## Next
 → Return to `../wave-loop.md` → Stage 3
-
-## Plan-contradiction sweep
-
-On any plan revision (v2, v3...), grep the plan file for internal contradictions across task-message, §Targets, §Non-goals, and stage completion checklist. Specifically flag any wave that mixes "ships this wave" and "deferred to g<N+1>" semantics for the SAME deliverable. Such contradictions invalidate downstream Stage 4 execution because implementer agents cannot determine scope.

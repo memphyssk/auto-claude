@@ -40,7 +40,7 @@ EXPAND/REDUCE = recommendations for orchestrator/user to decide (never auto-appl
 
 ## Foundation-wave contract validation
 
-For Batch 1 (foundation wave) shipping shared components/tokens/APIs: require validation against ≥1 downstream batch's mockup before merge. Unvalidated APIs force rewrite pressure across all downstream batches. <!-- promoted from observations Wave g29 -->
+For Batch 1 (foundation wave) shipping shared components/tokens/APIs: require validation against ≥1 downstream batch's mockup before merge. Unvalidated APIs force rewrite pressure across all downstream batches.
 
 ## Output format
 

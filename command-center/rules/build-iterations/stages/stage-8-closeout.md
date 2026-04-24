@@ -11,9 +11,7 @@ Update canonical docs to reflect what shipped. Produce the wave closeout artifac
 
 ### 1. TaskMaster writeback sweep (MANDATORY — not optional)
 
-This is a full sweep of every TaskMaster row the wave touched, not a single-task update. Waves routinely modify 3-8 rows (primary + subtasks + same-wave fast-fixes + auto-split siblings + Stage 7b triage rows); missing any of these leaves the backlog in a stale state that poisons the next wave's Stage 0b queue walk.
-
-Before moving to step 2, complete every sub-step below:
+Full sweep of every TaskMaster row the wave touched. Before moving to step 2, complete every sub-step below:
 
 **1a. Primary wave task** — `npx task-master set-status --id=<primary-id> --status=done`. Append to task details (via `update-task`): shipped PR URL(s), final merge commit SHA, final LOC delta, any deviation from plan (what shipped differently from what was specified and why).
 
@@ -31,9 +29,9 @@ Sweep completion is a hard gate — every TaskMaster row touched by this wave mu
 
 ### 2. Doc updates
 
-2. Update `command-center/artifacts/user-journey-map.md` (status column, new routes, guard changes)
-3. Update `command-center/test-writing-principles.md` §14 (new patterns discovered)
-4. Master plan housekeeping (mark shipped items complete)
+1. Update `command-center/artifacts/user-journey-map.md` (status column, new routes, guard changes)
+2. Update `command-center/test-writing-principles.md` §14 (new patterns discovered)
+3. Master plan housekeeping (mark shipped items complete)
 4. Produce `Planning/wave-<N>-closeout.md`:
    - Verdict (SHIP / SHIP WITH CONCERNS / BLOCK)
    - Scope auto-split (if Stage 1 emitted `RESCOPE-AUTO-SPLIT`) — trigger threshold(s), original task, split slices, sibling TaskMaster IDs created

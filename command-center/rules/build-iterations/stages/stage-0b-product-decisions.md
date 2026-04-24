@@ -1,16 +1,7 @@
 # Stage 0b — Roadmap Alignment + Product Decisions
 
 ## Purpose
-Two linked objectives, in order:
-
-1. **Roadmap alignment** — walk the TaskMaster unassigned queue and assign tasks to `active` / `planned` milestones in `command-center/product/ROADMAP.md` where a clear match exists. Tasks that genuinely don't map stay `unassigned` — valid terminal state.
-2. **Product decisions** — resolve decisions required by ANY task type (bugs, features, ideas, backlog items) BEFORE implementation starts. Removes the founder from the loop for Tier 1-2 decisions via a research-then-decide pipeline. Tier 3 decisions (money, security, major UX) are queued for the daily checkpoint.
-
-## Applies to
-- **Bugs** needing a product call (e.g., "should logged-out Buy Now redirect or show guest checkout?")
-- **New features** needing scope/approach validation (e.g., "should seller analytics show real-time or daily aggregates?")
-- **Backlog ideas** needing competitive validation (e.g., "do competitors have this? Is it worth building?")
-- **Refactors** with UX implications (e.g., "should we change the order stepper to match backend states?")
+Walk the TaskMaster unassigned queue to assign tasks to milestones, and resolve product decisions required by wave tasks before implementation starts. Tier 1-2 decisions are auto-resolved via research; Tier 3 (money, security, major UX) are queued for the daily checkpoint.
 
 ## Prerequisites
 - Wave tasks identified (from Stage 0 or Task Master backlog, any tag: bugs, marketplace, master)
@@ -73,9 +64,7 @@ Filter the wave's tasks (across ALL tags) for `metadata.needsProductDecision ===
 - **Feature validation questions** → competitive browsing + user flow analysis needed
 
 ### Step 2 — Competitive research (Playwright live browsing, parallel)
-Spawn `ui-comprehensive-tester` agents (one per competitor) to LIVE BROWSE competitor websites using Playwright MCP. Do NOT use WebSearch-only research — text summaries miss actual UX behavior (e.g., WebSearch said "login required" but Playwright found guest checkout on <competitor-1>).
-
-**Why Playwright, not WebSearch:** Product decisions depend on observable UX behavior (button clicks, redirects, form validation, modals). Help articles and support docs describe intended behavior, not actual behavior. Only live browsing catches the real patterns.
+Spawn `ui-comprehensive-tester` agents (one per competitor) to LIVE BROWSE competitor websites using Playwright MCP. Do NOT use WebSearch-only research — live browsing observes actual UX behavior, not help-article descriptions.
 
 Spawn 3 agents in parallel (one per Playwright instance):
 - `ui-comprehensive-tester` on `playwright-3` → <competitor-1>

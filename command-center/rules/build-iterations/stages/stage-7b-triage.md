@@ -7,7 +7,9 @@ Classify every issue surfaced by the tester swarm and reality check, then route 
 - Stage 7 reality check complete
 - READ `command-center/rules/triage-routing-table.md` (mandatory — contains the classification table)
 
-## Phase 1 — Classify every finding
+## Actions
+
+### Phase 1 — Classify every finding
 
 Enumerate all Major/Medium/Minor findings from Stage 6 + Stage 7 that are NOT part of this wave's original targets.
 
@@ -37,7 +39,7 @@ Field recipe for `bug-design` tasks:
 - details: what surfaced it, which DESIGN-SYSTEM.md primitives apply, which prior-art mockup to match
 - priority: high if it blocks a downstream feature, medium if degrades UX, low if polish
 
-## Phase 2 — Route and fix (a) and (b) items
+### Phase 2 — Route and fix (a) and (b) items
 
 For each item classified as (a) blocks-this-wave or (b) fast-follow:
 
@@ -55,7 +57,7 @@ If the first routed expert fails to fix the issue:
   - **full-autonomy:** spawn BOARD (decision-slug `stage7b-investigate-exhausted-<finding-slug>`, default 4+/7 threshold per `command-center/management/conflict-resolution.md`). BOARD picks among: (i) accept the residual as an opportunistic finding for next wave (c/d classification), (ii) pause wave for founder review, (iii) route to a different specialist (architect-reviewer or ultrathink-debugger) with BOARD-provided context. Append to `Planning/board-digest-<YYYY-MM-DD>.md`.
   - **danger-builder:** spawn BOARD first (same options, same threshold). If BOARD falls short or any HARD-STOP fires: spawn **ceo-agent** with the BOARD file. ceo-agent decides using full cognitive pattern set (technical reversibility weighs heavily here), appends to `Planning/ceo-digest-YYYY-MM-DD.md`, returns resolution. CEO may invoke option (iii) — routing to a different specialist — which counts as a single CEO decision even though it starts another investigation.
 
-## Phase 3 — Log (c) and (d) items
+### Phase 3 — Log (c) and (d) items
 
 **Stage 7b classifies urgency only — never picks a wave letter or milestone.** Milestone assignment happens at Stage 0b of a future wave (see `command-center/rules/build-iterations/stages/stage-0b-product-decisions.md`). Stage 7b owns `urgency`; Stage 0b owns `roadmapMilestone`.
 

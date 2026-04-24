@@ -2,7 +2,7 @@
 
 Spec for ceo-agent ↔ founder email communication via AgentMail under `danger-builder` mode. One thread per CEO decision. Founder replies in-thread. Agent reads inbox every tick and acts on replies.
 
-**Why AgentMail, not Resend, for management emails.** Management involves back-and-forth: founder reviews a decision, replies "undo" or "do X instead" or "why this choice?". AgentMail is built around persistent inboxes, threads, and replies — the agent can read founder responses and act on them. Resend is stateless one-shot sends — right for product-facing transactional email (signup verification, password reset), wrong for a conversation. Keep the concerns separate: AgentMail for management, Resend (optional) for product.
+**Why AgentMail, not Resend.** Management involves back-and-forth: founder replies "undo" or "do X instead" or "why this choice?". AgentMail supports persistent inboxes, threads, and replies — the agent reads founder responses and acts on them. Resend is stateless one-shot sends — right for product transactional email, wrong for a conversation.
 
 ---
 
@@ -10,7 +10,7 @@ Spec for ceo-agent ↔ founder email communication via AgentMail under `danger-b
 
 - **AgentMail CLI installed:** `npm install -g agentmail-cli` (see `command-center/setup-tools/install.md` § 1)
 - **Env var set:** `export AGENTMAIL_API_KEY=am_us_xxxxxxxxxxxx` (at machine scope, e.g. `~/.bashrc`)
-- **Domain verified at AgentMail:** follow `command-center/setup-tools/install.md` § 1 "AgentMail — custom domain + ceo-agent inbox setup" before first activation. Without a verified custom domain, emails use `@agentmail.to` test sender — works for testing, not for long-term operation.
+- **Domain verified at AgentMail:** follow `command-center/setup-tools/install.md` § 1 before first activation. Without a verified custom domain, emails use `@agentmail.to` — works for testing, not production.
 - **ceo-agent inbox created:** `ceo@<your-domain>` — same install.md section walks through creation.
 
 ## Required env vars
@@ -18,35 +18,33 @@ Spec for ceo-agent ↔ founder email communication via AgentMail under `danger-b
 | Var | Purpose |
 |---|---|
 | `AGENTMAIL_API_KEY` | AgentMail API key (get from <https://agentmail.to>) |
-| `CEO_INBOX_ID` | AgentMail inbox ID for the ceo-agent mailbox (e.g. `inb_abc123`). Returned when you create the inbox via `agentmail inboxes create`. |
+| `CEO_INBOX_ID` | Inbox ID for the ceo-agent mailbox (e.g. `inb_abc123`). Returned on inbox creation. |
 | `CEO_NOTIFY_EMAIL_TO` | Founder's email address — the human who receives and replies |
 | `CEO_NOTIFY_PROJECT_NAME` | Optional. Shows in subject lines. Defaults to directory name. |
 
-Set at machine scope (`~/.bashrc`) for agent inheritance. `CEO_INBOX_ID` is opaque — treat as sensitive-ish (someone with it + the API key can read all threads). Don't commit.
+Set at machine scope (`~/.bashrc`). `CEO_INBOX_ID` is opaque — treat as sensitive; don't commit.
 
 ---
 
-## Tick-behavior integration (10-min polling — aligned with ceo-agent stall monitor cadence)
+## Tick-behavior integration (10-min polling)
 
-Every `/loop` tick under `danger-builder` now begins with **inbox read** before any decision work. See `danger-builder-mode.md` § Tick behavior for full flow. Condensed:
+Every `/loop` tick under `danger-builder` begins with inbox read before any decision work. See `danger-builder-mode.md` § Tick behavior for full flow.
 
 1. **Read inbox** — `agentmail inboxes:threads list --inbox-id "$CEO_INBOX_ID" --label unread --format json`
 2. For each unread thread:
    - Fetch thread messages: `agentmail inboxes:threads get --inbox-id "$CEO_INBOX_ID" --thread-id <id> --format json`
-   - Classify the founder reply (see § Reply classification below)
+   - Classify the founder reply (see § Reply classification)
    - Execute the classified action
-   - Mark thread read: update message label to remove `unread` (see CLI help for `inboxes:messages update`)
+   - Mark thread read: update message label to remove `unread`
 3. Continue to regular tick work (STATUS routing, decisions, etc.)
 
-**Idle-tick cadence is 600s (10 min)** — founder replies are checked every 10 minutes when STATUS=IDLE or BLOCKED. This cadence aligns with the ceo-agent stall monitor's 600s threshold (see `danger-builder-mode.md` § Tick behavior step 0 + `ceo-agent-instructions.md` § Stall-monitor procedure) so a single tick covers both inbox-read and stall-check. Active ticks (RUNNING/HANDOFF) still use 60s.
+Idle-tick cadence is 600s — aligns with the ceo-agent stall monitor's 600s threshold so a single tick covers both inbox-read and stall-check. Active ticks (RUNNING/HANDOFF) use 60s.
 
-**Failure on inbox read:** retry with exponential backoff (30s → 2min → 10min). After 3 failures for a single tick, skip inbox read *this tick* but continue with decisions; log to `Planning/agentmail-failures.log`. Cascade: 10 consecutive inbox-read failures in 1 hour = halt loop (STATUS=BLOCKED). Same principle as notification failures: if founder can't be reached, don't keep deciding.
+**Failure on inbox read:** retry with exponential backoff (30s → 2min → 10min). After 3 failures, skip inbox read this tick; log to `Planning/agentmail-failures.log`; continue with decisions. Cascade: 10 consecutive failures in 1 hour = halt loop (STATUS=BLOCKED).
 
 ---
 
 ## Send mechanics — new decision → new thread
-
-When ceo-agent completes a decision, send a fresh email (creates a new thread):
 
 ```bash
 agentmail inboxes:messages send \
@@ -57,13 +55,11 @@ agentmail inboxes:messages send \
   --format json
 ```
 
-Capture the response `message_id` + `thread_id` — record both in the audit entry (`Notification sent:` + `Thread:` fields). `thread_id` becomes the canonical handle for anything the founder replies to.
+Capture the response `message_id` + `thread_id` — record both in the audit entry. `thread_id` is the canonical handle for founder replies.
 
-**Subject-line gotcha:** subjects starting with `[` are parsed as YAML by the CLI and fail with "value is not allowed in this context". Either quote the subject (shell handles it) or prefix with a non-bracket character. The `[ceo-agent]` convention still works — shells quote correctly when the full string is in double quotes — but agents building the subject programmatically must ensure proper quoting before passing to the CLI.
+**Subject-line gotcha:** subjects starting with `[` are parsed as YAML by the CLI and fail. Ensure proper shell quoting — put the full subject string in double quotes.
 
 ## Send mechanics — follow-up in existing thread
-
-When ceo-agent needs to speak again on the same decision (e.g., founder asked a clarifying question and the agent answers), reply in-thread:
 
 ```bash
 agentmail inboxes:messages reply \
@@ -73,7 +69,7 @@ agentmail inboxes:messages reply \
   --format json
 ```
 
-`--message-id` is the founder's reply that the agent is answering. This keeps the thread coherent instead of spawning new threads.
+Use `--message-id` of the founder's reply to keep the thread coherent.
 
 ---
 
@@ -83,7 +79,7 @@ agentmail inboxes:messages reply \
 [ceo-agent] <project> — <decision-slug>
 ```
 
-Prefix variants (match Resend spec for familiarity):
+Prefix variants:
 - `[ceo-agent] <project> — ⚠ ONE-WAY — <decision-slug>` (irreversible)
 - `[ceo-agent] <project> — ⚠ CHARTER PROPOSAL — <decision-slug>` (restriction bump)
 - `[ceo-agent] <project> — ⚠ HARD-STOP OVERRIDDEN — <decision-slug>` (BOARD veto authorized)
@@ -92,7 +88,7 @@ Prefix variants (match Resend spec for familiarity):
 
 ## Body format — unified act-first template (~12 line cap)
 
-Every decision email uses past-tense phrasing. The action happened already; the email tells the founder what was done. Reply options are post-hoc override channels (REJECT / MODIFY), not approval gates.
+Every decision email uses past-tense phrasing. The action happened already; the email tells the founder what was done.
 
 ```
 ceo-agent acted. <ISO timestamp>
@@ -115,11 +111,11 @@ Override (post-hoc — work is already in motion):
   why? | clarify              → agent replies in-thread with fuller rationale
 ```
 
-**The approve/ack path is absent** — because the action happened already, approval is implicit in not-replying. The founder reads the email and chooses: silence (accept), REJECT (undo), MODIFY (redirect), or CLARIFY (ask). All four work for every decision class.
+The approve/ack path is absent — approval is implicit in not-replying.
 
 ### Exception — charter-proposal body
 
-When ceo-agent hits a `ceo-bound.md` §§ 1-5 restriction, the email reports a **proposal**, not an action. Subject prefix `⚠ CHARTER PROPOSAL`. Body template:
+When ceo-agent hits a `ceo-bound.md` §§ 1-5 restriction, the email reports a proposal, not an action. Subject prefix `⚠ CHARTER PROPOSAL`. Body:
 
 ```
 ceo-agent proposes a charter amendment. <ISO timestamp>
@@ -136,56 +132,49 @@ Action required — decision does NOT execute until you respond:
   1. Edit command-center/management/ceo-bound.md to apply the amendment
      (takes effect on next mode entry; CEO retries on next relevant tick)
   2. Reject: take no action — CEO continues respecting the restriction
-  3. Override one-off: reply to this thread with "override: <instruction>"
+  3. Override one-off: reply "override: <instruction>"
      (CEO executes the specific decision without amending charter)
 ```
 
-This is the ONE email class that gates on founder response. Every other class is fire-and-notify.
+This is the ONE email class that gates on founder response.
 
 ---
 
-## Reply classification — what founder replies mean
-
-When reading an unread reply in a thread, agent parses the first non-quoted line of the founder's message and classifies:
+## Reply classification
 
 | Founder reply pattern | Classification | Agent action |
 |---|---|---|
-| `approve` / `ack` / `ok` / `yes` / 👍 / empty reply / no reply at all | ACK | Tacit or explicit acceptance. Mark thread read. Log `founder ack'd` in audit entry (or nothing if no reply). Work already happened under act-first; ACK is confirmation. |
-| `reject` / `undo` / `no` / `revert` / `rollback` | REJECT | Roll back the action's artifacts (revert commits, restore task state, undo file writes, re-enter the stall that was nudged away). Log `founder rejected` in audit entry. Reply in-thread confirming rollback complete. |
-| `modify: <X>` / `change to X` / `do X instead` | MODIFY | Treat as new directive. Execute new instruction. Original action rolled back if conflicting. Reply in-thread with the new outcome. |
-| `override: <X>` (charter-proposal threads only) | OVERRIDE | Founder is granting a one-off permission for the specific blocked decision. Execute the original decision without amending charter. Reply in-thread confirming. Applies ONLY to threads with subject prefix `⚠ CHARTER PROPOSAL`. |
-| `why?` / `explain` / `why this?` | CLARIFY | Reply in-thread with expanded rationale (cite cognitive patterns, precedent, charter reasoning). No state change. |
-| Anything else (natural language, multi-sentence, unclassifiable) | AMBIGUOUS | Default to CLARIFY — reply in-thread asking for one of the classification verbs. Keep thread unread from agent's perspective until resolved. |
+| `approve` / `ack` / `ok` / `yes` / 👍 / empty / no reply | ACK | Tacit or explicit acceptance. Mark thread read. |
+| `reject` / `undo` / `no` / `revert` / `rollback` | REJECT | Roll back artifacts (revert commits, restore task state, undo file writes). Reply confirming rollback complete. |
+| `modify: <X>` / `change to X` / `do X instead` | MODIFY | Execute new instruction. Roll back original if conflicting. Reply with new outcome. |
+| `override: <X>` (charter-proposal threads only) | OVERRIDE | Execute the original blocked decision without amending charter. Reply confirming. |
+| `why?` / `explain` / `why this?` | CLARIFY | Reply in-thread with expanded rationale. No state change. |
+| Anything else (natural language, unclassifiable) | AMBIGUOUS | Reply asking for one of the classification verbs. Keep thread unread until resolved. |
 
-**Silence = ACK** under act-first semantics. Work already happened; no reply means the founder is fine with it. This is the key behavioral difference from approval-gate systems.
+**Silence = ACK** under act-first semantics. Ambiguous replies never default to ACK or REJECT.
 
-**Ambiguous replies never default to ACK or REJECT.** If the founder writes "hmm, I'm not sure about this" the agent asks "should I let it stand, roll it back, or modify?" — doesn't guess.
-
-Agent must re-read the charter before executing a MODIFY reply. If the modify instruction bumps a `ceo-bound.md` restriction, treat as a new charter proposal: agent cannot execute MODIFY blindly just because the founder asked.
+Agent must re-read the charter before executing a MODIFY reply. If MODIFY bumps a charter restriction, treat as a new charter proposal.
 
 ---
 
 ## Thread-label protocol
 
-AgentMail supports arbitrary labels. Use these to keep agent state coherent:
-
 | Label | Meaning |
 |---|---|
-| `unread` | Default on incoming replies from founder. Agent removes after classifying + acting. |
-| `ceo-decision` | Applied by agent to every decision thread it creates. Lets founder filter "CEO emails" from noise. |
-| `charter-proposal` | Applied to threads created for charter-restriction bumps. |
-| `halted` | Applied when the loop halted mid-thread. Founder knows the thread is paused. |
-| `rolled-back` | Applied after agent executes a REJECT. Thread is dormant but preserved for audit. |
+| `unread` | Default on incoming replies. Agent removes after classifying + acting. |
+| `ceo-decision` | Applied to every decision thread created. Lets founder filter CEO emails. |
+| `charter-proposal` | Applied to charter-restriction-bump threads. |
+| `halted` | Applied when loop halted mid-thread. |
+| `rolled-back` | Applied after REJECT execution. Thread dormant but preserved for audit. |
 
-Labels are set via `agentmail inboxes:messages update --label ...` after send. Read-side filtering via `--label unread` on `inboxes:threads list`.
+Labels set via `agentmail inboxes:messages update --label ...`. Read-side filtering via `--label unread`.
 
 ---
 
-## Activation email (sent on `danger-builder` mode entry)
+## Activation email
 
 Subject: `[ceo-agent] <project> — danger-builder ACTIVATED`
 
-Body:
 ```
 ceo-agent is now resolving all BOARD splits, HARD-STOPs, and former-founder-asks
 within ceo-bound.md.
@@ -208,7 +197,6 @@ Controls:
 
 Subject: `[ceo-agent] <project> — danger-builder DEACTIVATED`
 
-Body:
 ```
 Session ended at <ISO timestamp>.
 Reason: <kill-switch | founder-message | explicit-exit | charter-destroyed | inbox-unreachable-cascade>
@@ -227,7 +215,6 @@ All decisions logged: Planning/ceo-digest-<YYYY-MM-DD>.md through <end date>.
 
 Subject: `[ceo-agent] <project> — ⚠ LOOP HALTED — <cause>`
 
-Body:
 ```
 The danger-builder loop halted.
 
@@ -243,61 +230,39 @@ If inbox-unreachable: run `agentmail inboxes:get --inbox-id $CEO_INBOX_ID` to di
 
 ## Failure handling
 
-**Send failure** (agentmail exit non-zero on a decision-notification send):
+**Send failure:**
 1. Retry with exponential backoff: 30s → 2min → 10min (3 attempts)
-2. After 3 failures: log to `Planning/agentmail-failures.log`; append `**NOTIFICATION FAILED:** <error>` line to the decision's audit entry; do NOT halt the loop (decision stands)
-3. 10 consecutive send failures in 1 hour → halt loop with STATUS=BLOCKED (notification cascade)
+2. After 3 failures: log to `Planning/agentmail-failures.log`; append `**NOTIFICATION FAILED:** <error>` to audit entry; do NOT halt loop
+3. 10 consecutive send failures in 1 hour → halt loop with STATUS=BLOCKED
 
-**Inbox-read failure** (agentmail exit non-zero on `inboxes:threads list`):
+**Inbox-read failure:**
 1. Retry with exponential backoff same as above
-2. After 3 failures: skip inbox read this tick; log; continue with decisions (tick proceeds as if no new replies)
-3. 10 consecutive read failures in 1 hour → halt loop with STATUS=BLOCKED (inbox cascade)
+2. After 3 failures: skip inbox read this tick; log; continue with decisions
+3. 10 consecutive read failures in 1 hour → halt loop with STATUS=BLOCKED
 
-**Reply-parse failure** (can't classify founder reply even after CLARIFY back-and-forth):
+**Reply-parse failure:**
 - Do NOT act on ambiguous replies
-- Keep thread marked `unread` from agent's state
-- On next tick, agent sends one more CLARIFY reply
-- After 3 clarification attempts with no unambiguous response, escalate to founder kill-switch prompt in the next email: "I can't classify your intent — reply with one of: approve, reject, modify <X>, or run `touch /tmp/ceo-mode-stop` to halt"
+- Keep thread marked `unread`
+- On next tick, send one more CLARIFY reply
+- After 3 clarification attempts with no unambiguous response: send "I can't classify your intent — reply with one of: approve, reject, modify <X>, or run `touch /tmp/ceo-mode-stop` to halt"
 
 ---
 
 ## Verification before mode activation
 
-At `danger-builder` mode entry, run these checks (mode-entry prereqs):
-
 ```bash
 # CLI installed + key valid
 agentmail --version                                 # expect 0.7.x or higher
-agentmail --format json inboxes list | head -20    # expect a JSON array (possibly empty)
+agentmail --format json inboxes list | head -20    # expect a JSON array
 
 # Target inbox exists
 agentmail inboxes get --inbox-id "$CEO_INBOX_ID" --format json    # expect the inbox object
-
-# Send test works (skipped if founder doesn't want a test email on every activation)
-# agentmail inboxes:messages send --inbox-id "$CEO_INBOX_ID" --to "$CEO_NOTIFY_EMAIL_TO" \
-#   --subject "test" --text "activation test, ignore" --format json
 ```
 
-If any of the first three fail, mode activation aborts. The connectivity test ensures the mail pipeline works before the founder commits to a long-running session.
+If any of the first two checks fail, mode activation aborts.
 
 ---
 
 ## Why keep `Planning/ceo-digest-YYYY-MM-DD.md` alongside AgentMail threads?
 
-Same reasoning as with Resend: **AgentMail is the push + 2-way channel; the file is the audit log**.
-- Threads are the live conversation
-- File is append-only, committed to git history, survives AgentMail retention limits
-- Retro / post-mortem reads the file; real-time feedback happens in the thread
-
-Two separate roles; neither replaces the other.
-
----
-
-## Alternative future paths
-
-If you want richer interaction later:
-- **SMS via Twilio** — for halt-the-world escalations (charter proposal with financial impact > threshold)
-- **Slack integration** — AgentMail's webhooks can fire into a Slack channel for real-time visibility
-- **Phone call via Retell/Vapi** — for truly critical decisions (one-way doors with high magnitude)
-
-Not implementing now. AgentMail two-way email is the baseline.
+AgentMail is the push + 2-way channel; the file is the audit log. Threads are the live conversation; file is append-only, committed to git history, survives AgentMail retention limits. Retro / post-mortem reads the file; real-time feedback happens in the thread. Two separate roles; neither replaces the other.

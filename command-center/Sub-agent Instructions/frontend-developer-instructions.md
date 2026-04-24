@@ -36,7 +36,7 @@ Missing API field, shape mismatch, undocumented dependency → STOP and escalate
 
 ## Prop changes require consumer audit
 
-Before removing/renaming/retyping props, grep all import sites. Multi-consumer changes require explicit plan approval. Single-consumer → proceed but log removal as intentional API break. Silent removals break downstream invisibly. <!-- promoted from observations Wave g29 -->
+Before removing/renaming/retyping props, grep all import sites. Multi-consumer changes require explicit plan approval. Single-consumer → proceed but log removal as intentional API break. Silent removals break downstream invisibly.
 
 ## Quality gates
 

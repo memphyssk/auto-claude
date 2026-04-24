@@ -34,6 +34,95 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.25.0 — 2026-04-24
+
+**Megawave release.** Four groups executed in parallel (4 background agents) as one wave per founder request:
+
+- Group A2 — Sub-agent Instructions + karen Stage-10 directive
+- Group B1 — Stage files shape standardization
+- Group B2 — Management mode/protocol files
+- install.md audit (pulled forward from "Later")
+
+**Total: 38 files changed, -207 lines net.** War-story wave references (`<!-- promoted from observations Wave gNN -->` comments, "Wave g26 lesson" anecdotes, "we have confirmed they often don't on Netlify" prose, etc.) stripped per the Contract discipline established in v0.14.0-v0.20.1. Anti-pattern lists converted to `### N. Rule. / Why: sentence.` format. Procedural content (templates, tables, code examples, decision flows, kill-switch mechanisms) preserved.
+
+### Group A2 — Sub-agent Instructions (22 files, 17 substantive + 5 unchanged)
+
+17 files touched:
+
+- **`karen-instructions.md`** — added new Stage 10 rule: when promoting observations into any `*-principles.md` file, use the file's in-file Contract format (`### N. Imperative.` + `Why: sentence.`). No war stories, wave refs, `Context:` fields, or `Discovered by:` attribution. This closes the Stage-10 → principles-file writer path that v0.20.x opened via always-on rule #13. 8 `<!-- promoted from observations --><!---->` comments stripped. "Plan-contradiction sweep (Wave g26)" renamed without wave ref.
+- **`ceo-agent-instructions.md`** — "What you will NEVER do" 10-item prose list → Contract format (10 `### N. Rule.` + `Why:` entries).
+- **`knowledge-synthesizer-instructions.md`** — "Rules for entry content" 4 prose bullets → Contract format.
+- **`founder-proxy-instructions.md`** — "Do NOT" 5 prose bullets → Contract format.
+- **`trend-analyst-instructions.md`** — "Common failure modes" 6 prose bullets → Contract format.
+- **`architect-reviewer-instructions.md`** — "Wave g65 distilled rule" section renamed to "ADR-only mandate"; war-story rationale paragraph removed.
+- **`security-engineer-instructions.md`** — "Wave g26 promotions" block renamed to two standalone sections; war story from corrected-probe section removed.
+- **`ui-comprehensive-tester-instructions.md`** — 9 wave-ref comments + 2 inline war stories ("Wave G125 demonstrated this", "Wave g123's persona-discipline") stripped.
+- **`Explore-`, `Jenny-`, `backend-developer-`, `ceo-reviewer-`, `frontend-developer-`, `nextjs-developer-`, `problem-framer-`, `react-specialist-`, `technical-writer-instructions.md`** — stripped 1-8 wave-ref comments per file.
+
+5 files had no Contract-eligible sections (only Role/Reading/Output/Methodology) — unchanged: `competitive-analyst-`, `product-manager-`, `refactoring-specialist-`, `ui-designer-`, `websocket-engineer-instructions.md`.
+
+### Group B1 — Stage files (18 files, 1516 → 1484 lines, -32)
+
+11 files changed, 7 already matched target shape:
+
+- **`stage-0b-product-decisions.md`** (-11): Purpose condensed; Playwright-vs-WebSearch rationale dropped.
+- **`stage-1-problem-reframing.md`** (-9): Purpose condensed; extension-catalog section compressed.
+- **`stage-2-plan.md`** (-4): misplaced `## Plan-contradiction sweep` section after `## Next` removed (duplicated existing step).
+- **`stage-3b-design-gap.md`** (-6): Figma-deprecation war story stripped; speculative `_Note: if /ckm:design becomes available_` removed; `## Deliverables` → `## Deliverable` (singular per template).
+- **`stage-5-deploy.md`** — "which has caused multiple incidents" war story removed; failure-mode explanations tightened.
+- **`stage-5b-qa.md`** — "we have confirmed they often don't on Netlify" replaced with direct statement.
+- **`stage-6-test.md`** (-2): 5-line `**WHY:**` rationale block removed from Playwright end-user simulation rule.
+- **`stage-6b-layout.md`** — Figma-deprecation war story + legacy-node-ID note replaced with one line.
+- **`stage-7b-triage.md`** (+2): Phase 1/2/3 promoted from `##` to `###` sub-sections under new `## Actions` header (shape violation fixed).
+- **`stage-8-closeout.md`** (-2): TaskMaster sweep rationale dropped; sub-list numbering corrected.
+- **`stage-11-next.md`** — `## STATUS handling` demoted from `##` to `###` (shape violation fixed).
+
+### Group B2 — Management files (9 files, 1411 → 1267 lines, -144, ~10%)
+
+- **`danger-builder-mode.md`** (-54, biggest cut) — verbose preamble removed, tick-behavior rationale condensed, "What halts the loop" and deactivation collapsed into Exit conditions, latency/cost paragraph trimmed, anti-patterns → Contract format.
+- **`notifications/agentmail.md`** (-35) — "Alternative future paths" non-spec section removed; tick-behavior integration prose tightened; no template content removed.
+- **`mode-switching.md`** (-19) — "The modes" + trigger-phrase sections collapsed into two tables; Anti-patterns → Contract format.
+- **`full-autonomy-mode.md`** (-15) — reorganized into standard mode-file shape; 5 anti-patterns → Contract format.
+- **`board-members.md`** (-13) — composition table tightened (verbose backstory removed); spawn-protocol prose trimmed.
+- **`semi-assisted-mode.md`** (-11) — standardized to mode-file shape; competitive-intelligence prose trimmed.
+- **`board.md`** (+6) — Anti-patterns added in Contract format (net addition).
+- **`conflict-resolution.md`** (-3) — Anti-patterns → Contract format; retro-feedback-loop prose tightened.
+- **`ceo-bound.md`** (0) — template preserved; minor preamble trim.
+
+Standardized mode-file shape: `Flag / Entry conditions / Behavior / Routing thresholds / Anti-patterns / Exit conditions`.
+
+### install.md audit (716 → 635 lines, -81, ~11%)
+
+- Stale `/connect-chrome` skill reference replaced with `/open-gstack-browser`.
+- Section 7 bootstrap version reference bumped: `v0.6.0` → `v0.24.0`.
+- Section 8 verification checklist: removed `resend --version` / `resend doctor` (Resend is product-scope optional, not brain-required).
+- ~40 lines of "why this tool is useful" tutorial prose tightened.
+- One redundant `dig NS` check removed from DNS Step 3.
+- AgentMail domain setup preserved in full (operational runbook density floor).
+- All TaskMaster install instructions, MCP server setup (§§ 5a-5d), external URL references, agent-source sections preserved.
+
+### Also included
+
+**`md-optimise.md`** — the Group-classification strategy document previously untracked. Now committed alongside the release it closes out.
+
+### Total wave stats
+
+- **38 files changed**
+- **+705 insertions / -912 deletions** (net -207 lines)
+- **~53 files in scope** (some had no eligible sections)
+- **4 parallel agents** executed the work concurrently
+
+### md-optimise plan status
+
+All planned releases v0.21.0 through v0.28.0 are now complete (v0.25.0 absorbed v0.25-v0.28 as one megawave). `setup-tools/install.md` audit ("Later" in original plan) also landed. The md-optimise rollout is DONE.
+
+### Consumer sync
+
+- **Breaking:** no. Content is behaviorally equivalent across all 38 files. Wave-specific war stories removed per the Contract discipline; no rules dropped.
+- **Migration action:** none. The karen-instruction Stage 10 directive affects the automatic retro-routing path — ensures future promotions into `*-principles.md` files follow the in-file Contract. Active on next session.
+
+---
+
 ## v0.24.0 — 2026-04-24
 
 md-optimise Group A1 final batch — the 4 largest rules files. Anti-patterns sections converted to rule+why Contract format. **Group A1 rollout complete**: all 11 `rules/*.md` files now share the rule+why discipline where it fits.

@@ -30,15 +30,15 @@ Use this order of preference for monitoring each platform. CLI is always preferr
 
 ### Never push directly to main
 
-All code changes go through PRs so GitHub CI gates run. Direct pushes bypass CI entirely, which has caused multiple "code shipped but was never checked" incidents. The only exception: doc-only changes that don't affect build (Planning/*.md, CLAUDE.md).
+All code changes go through PRs. The only exception: doc-only changes that don't affect build (Planning/*.md, CLAUDE.md).
 
 ### Never skip CI/CD failures
 
-If ANY gate fails, the wave stops until it's fixed. Specific rules:
+If ANY gate fails, stop until fixed:
 - **GitHub CI fails** → fix and re-push. Do NOT merge with failed checks. Do NOT push to Railway or Netlify as a workaround.
-- **Netlify build fails** → check build logs via `netlify api listSiteDeploys`. Do NOT assume "it'll work next time." Common blockers: secrets scanner, missing env vars, stale ISR cache.
+- **Netlify build fails** → check build logs via `netlify api listSiteDeploys`. Common blockers: secrets scanner, missing env vars, stale ISR cache.
 - **Railway deploy fails/skips** → check via `mcp__Railway__list-deployments`. SKIPPED means Railway deprioritized the build (NOT that the code shipped). Verify with health endpoint uptime.
-- A green GitHub CI does NOT mean Netlify built or Railway deployed. Each platform has independent failure modes.
+- A green GitHub CI does NOT mean Netlify built or Railway deployed.
 
 ### Post-merge: verify ALL THREE deploy targets
 

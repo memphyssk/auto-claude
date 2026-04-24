@@ -3,7 +3,7 @@
 ## Purpose
 Verify UI changes match the canonical design spec. Skip for backend-only, infra-only, or doc-only waves.
 
-**Design source of truth:** `design/` (DESIGN-SYSTEM.md + per-page HTML mockups from /aidesigner). Figma is deprecated for <competitor-1> — see `feedback_figma_drift_policy` memory. Legacy Figma node IDs in `command-center/artifacts/user-journey-map.md` may reference the old dark theme; defer to `design/*.html`.
+**Design source of truth:** `design/` (DESIGN-SYSTEM.md + per-page HTML mockups from /aidesigner). Do not use Figma — defer to `design/*.html` for all layout comparisons.
 
 ## Prerequisites
 - Stage 6 test swarm complete

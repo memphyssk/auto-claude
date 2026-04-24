@@ -49,8 +49,6 @@ Playwright swarm tests simulate a real end-user. Testers must interact with the 
 - Typing URLs in the address bar to jump to pages — the user clicks links and buttons
 - `page.evaluate()` to read localStorage/sessionStorage as a substitute for checking the visible UI — if the user can't see it, the tester shouldn't rely on it for PASS/FAIL verdicts
 
-**WHY:** Playwright swarm testing catches what a real user hits. API calls and address-bar navigation bypass middleware, redirects, CSP rules, client-side routing, and auth flows — exactly the things that break in production. If a flow only works via API call but not via clicking, it's broken.
-
 **ONE EXCEPTION:** `browser_network_requests` and `page.context().cookies()` are allowed AFTER completing a user flow, purely for diagnostic evidence when something fails. They're for debugging, not for asserting PASS/FAIL.
 
 ### Same-wave fast-fix

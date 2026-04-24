@@ -1,11 +1,7 @@
 # Stage 1 — Problem Reframing
 
 ## Purpose
-Prevent "right code for wrong problem" failures. Two parallel agents apply different lenses to the task:
-- **problem-framer** — symptom-vs-cause, antipatterns, solution classes (technical lens)
-- **ceo-reviewer** — strategic value, scope, ambition, cognitive patterns (founder lens)
-
-Research basis: research-solution-problem.md (verification-generation gap, MetaGPT PM role, Allie Rays holistic-thinking interrupt, multi-agent debate with separate adversarial reviewers). LLMs "force solutions by making assumptions" — this stage inserts a deliberate pause for reframing from two angles.
+Prevent "right code for wrong problem" failures. Two parallel agents apply independent lenses: **problem-framer** (symptom-vs-cause, antipatterns, solution classes) and **ceo-reviewer** (strategic value, scope, ambition).
 
 ## Prerequisites
 - Stage 0 complete (prior work checked)
@@ -216,10 +212,5 @@ Fix makes the current PR smaller or faster to ship, but leaves the underlying pr
 
 ---
 
-## How to extend this catalog
-When a `/retro` wave surfaces a new antipattern, append to the catalog with:
-- Name (one short phrase)
-- Example (concrete, from an actual wave)
-- Smell test (one-question check)
-
-If the catalog grows past ~15 entries, extract to standalone `command-center/rules/solution-antipatterns.md` and reference from this stage file.
+## Extending this catalog
+Append via `/retro`: Name + Example + Smell test. If >15 entries, extract to `command-center/rules/solution-antipatterns.md` and reference from here.

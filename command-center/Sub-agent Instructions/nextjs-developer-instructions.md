@@ -18,7 +18,7 @@ Missing endpoint, unclear component API, conflicting route spec → STOP and esc
 
 ## Enumerate hover/focus/transition on transformed elements
 
-For components with `rotate-*`, `translate-*`, `scale-*`, or `transform` utilities on interactive/decorative elements, explicitly enumerate `hover:` / `focus:` / `transition-*` classes per element (with selector/line). If deferred/absent, state explicitly. Transforms don't block builds/lint/typecheck; they fail silently. Explicit enumeration only prevents silent drops. <!-- promoted from observations Wave g29 -->
+For components with `rotate-*`, `translate-*`, `scale-*`, or `transform` utilities on interactive/decorative elements, explicitly enumerate `hover:` / `focus:` / `transition-*` classes per element (with selector/line). If deferred/absent, state explicitly. Transforms don't block builds/lint/typecheck; they fail silently. Explicit enumeration only prevents silent drops.
 
 ## Quality gates
 

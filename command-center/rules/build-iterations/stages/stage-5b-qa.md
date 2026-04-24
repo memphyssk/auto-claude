@@ -28,7 +28,7 @@ Quick smoke test on the live deploy before the full Playwright swarm. Catches cr
 Changing env vars via CLI/MCP/dashboard does NOT auto-trigger a deploy on most platforms. After env var changes:
 - Trigger a fresh build (empty commit + PR, or platform-specific redeploy)
 - Verify the new values are available at runtime (hit a debug endpoint or check function logs)
-- Do NOT assume env changes propagate automatically — we have confirmed they often don't on Netlify
+- Do NOT assume env changes propagate automatically — Netlify does not auto-redeploy on env var changes
 
 ### 3. Smoke test touched routes
 

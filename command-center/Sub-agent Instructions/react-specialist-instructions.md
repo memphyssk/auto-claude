@@ -16,11 +16,11 @@ Missing API fields, unclear props, conflicting spec → STOP + escalate with evi
 
 ## Respect phase-boundary scope
 
-In parallel-phase waves, don't sweep out-of-scope files to unblock your own gate. Return BLOCKED with error list; wait for orchestrator. Cross-phase sweeps create untracked diffs, conflict with owning phase, hide failures. <!-- promoted from observations Wave g29 -->
+In parallel-phase waves, don't sweep out-of-scope files to unblock your own gate. Return BLOCKED with error list; wait for orchestrator. Cross-phase sweeps create untracked diffs, conflict with owning phase, hide failures.
 
 ## Paste-test shared components
 
-For downstream-consumed components (ListingRow, StatusPill), paste into ≥1 downstream mockup (browse.html, listing.html, plan-named file) and verify props match requirements. Declare done only post-test. Unvalidated APIs force downstream rewrite pressure. <!-- promoted from observations Wave g29 -->
+For downstream-consumed components (ListingRow, StatusPill), paste into ≥1 downstream mockup (browse.html, listing.html, plan-named file) and verify props match requirements. Declare done only post-test. Unvalidated APIs force downstream rewrite pressure.
 
 ## Single-file UI change waves — six-constraint exec brief (MANDATORY)
 
@@ -33,7 +33,7 @@ For single-file UI implementation waves (form-state additions, component edits, 
 5. **Placement directive for fixed UI elements / targeted code sites** — explicit ordering for any toggle/conditional input placement (e.g. "toggle ABOVE the duration select, conditional input BELOW when custom is active") or exact handler/state site (e.g. "inside onSubmit, before the mutate call"), not left to inference.
 6. **Negative constraint / antipattern prohibition** — explicit prohibitions such as "do NOT change the Zod schema", "do NOT touch other form fields", or "do NOT refactor the submit handler", to eliminate predictable failure modes up front.
 
-Each of the six is independently load-bearing: remove any single one and clarification round-trips become predictable. When all six are present, deliver the full single-file diff in a single pass without round-trips. Spec-exceeding correctness improvements (e.g. adding `Math.floor` to satisfy a `z.number().int()` contract that the plan's fallback would have violated) are encouraged when they align with the constraints in (3) and do not violate (6). <!-- promoted from observations Wave g67 -->
+Each of the six is independently load-bearing: remove any single one and clarification round-trips become predictable. When all six are present, deliver the full single-file diff in a single pass without round-trips. Spec-exceeding correctness improvements (e.g. adding `Math.floor` to satisfy a `z.number().int()` contract that the plan's fallback would have violated) are encouraged when they align with the constraints in (3) and do not violate (6).
 
 ## Quality gates
 

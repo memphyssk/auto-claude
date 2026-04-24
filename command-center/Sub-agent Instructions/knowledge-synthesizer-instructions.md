@@ -25,10 +25,17 @@ Cap: **3 new entries per agent per wave**. Dense > exhaustive. A wave with 0 new
 
 ## Rules for entry content
 
-- **Generalize lessons.** No commit hashes, PR numbers, wave numbers (except in the heading for traceability), bug IDs, or other iteration-specific identifiers.
-- **Negative framing is OK.** Observation files are read only by Stage 10 converter and the orchestrator at compaction time — never injected into agent prompts. This is the one place where "this agent hallucinates X" phrasing is allowed.
-- **Distinguish promotion candidates from reactive notes.** If a pattern is durable and load-bearing, mark "proposed compensation: promote to instructions" so Stage 10 converter sees it as a candidate. If a pattern is a one-off or reactive-only, mark "orchestrator-side prompt shaping" so it stays in observations without being promoted.
-- **Check existing observations first.** If the pattern is already documented, either sharpen the existing entry or skip. Duplicate entries waste the Stage 10 converter's filter budget.
+### 1. Generalize lessons; strip iteration-specific identifiers.
+Why: commit hashes, PR numbers, and bug IDs in observation entries tie insights to a single incident and prevent them from generalizing — use the wave number in the heading only for traceability.
+
+### 2. Negative framing is permitted in observation files.
+Why: observation files are read only by Stage 10 converter and the orchestrator at compaction time, never injected into agent prompts — "this agent hallucinates X" phrasing is appropriate here and nowhere else.
+
+### 3. Distinguish promotion candidates from reactive notes.
+Why: marking durable patterns "promote to instructions" and one-offs "orchestrator-side prompt shaping" lets the Stage 10 converter filter accurately without re-reading the full context.
+
+### 4. Check existing observations before adding a new entry.
+Why: duplicate entries waste the Stage 10 converter's filter budget — sharpen the existing entry or skip.
 
 ## Cross-cutting process insights
 
