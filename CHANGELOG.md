@@ -34,6 +34,21 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.15.1 — 2026-04-24
+
+Topic-scopes the Contract's spillover bullet per file. v0.15.0 propagated the dev-flavored "Stack-specific detail → § Code conventions" bullet unchanged to planning and testing, where it didn't map to the right spillover category.
+
+### Changed
+- `rules/planning-principles.md` Contract bullet 4 → "Plan-template mechanics (front-matter fields, section structure, TaskMaster metadata) → the plan template file, not the numbered list."
+- `rules/testing-principles.md` Contract bullet 4 → "Framework-specific patterns (Vitest mocks, Playwright selectors, assertion helpers) → `test-writing-principles.md`, not the numbered list."
+- `rules/dev-principles.md` — no change; the dev bullet was already correctly scoped.
+
+### Consumer sync
+- **Breaking:** no. One-bullet rescope per file.
+- **Changed files (safe-overwrite):** `command-center/rules/planning-principles.md`, `command-center/rules/testing-principles.md`.
+
+---
+
 ## v0.15.0 — 2026-04-24
 
 Propagates the v0.14.0 flat-numbered-rule format across the remaining retro-target principles files. Adds a "Contract for new rules" block at the top of every rulebook-shaped principles file — single source of truth for anyone (retro, Stage 10, orchestrator, human) writing new rules.

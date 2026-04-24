@@ -26,7 +26,7 @@ Why: one declarative sentence.
 - Before adding: grep for the concept — if a similar rule exists, do not add a near-dup.
 - One sentence per line, short, commanding, cut to the chase.
 - No war stories, wave refs, `Context:`, `Cross-ref:`, or project/stack names.
-- Stack-specific detail → § Code conventions, not the numbered list.
+- Framework-specific patterns (Vitest mocks, Playwright selectors, assertion helpers) → `test-writing-principles.md`, not the numbered list.
 - Number sequentially; renumber on insert.
 - Group under an existing H2 unless ≥3 new rules share a theme.
 - Wave-specific ("broke once") stays in the closeout until a second wave confirms.

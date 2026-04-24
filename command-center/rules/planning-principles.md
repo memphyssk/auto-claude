@@ -11,7 +11,7 @@ Why: one declarative sentence.
 - Before adding: grep for the concept — if a similar rule exists, do not add a near-dup.
 - One sentence per line, short, commanding, cut to the chase.
 - No war stories, wave refs, `Context:`, `Cross-ref:`, or project/stack names.
-- Stack-specific detail → § Code conventions, not the numbered list.
+- Plan-template mechanics (front-matter fields, section structure, TaskMaster metadata) → the plan template file, not the numbered list.
 - Number sequentially; renumber on insert.
 - Group under an existing H2 unless ≥3 new rules share a theme.
 - Wave-specific ("broke once") stays in the closeout until a second wave confirms.
