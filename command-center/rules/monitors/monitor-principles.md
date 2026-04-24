@@ -2,6 +2,22 @@
 
 Master doctrine for monitoring external events (deploys, CI runs, DNS propagation, tier activations, third-party provisioning). READ before creating any `MONITOR` task.
 
+## Contract for new rules
+
+Template:
+### N. Imperative rule ending in a period.
+Why: one declarative sentence.
+
+- Before adding: grep for the concept — if a similar rule exists, do not add a near-dup.
+- One sentence per line, short, commanding, cut to the chase.
+- No war stories, wave refs, `Context:`, `Cross-ref:`, or project/stack names.
+- Compact inline — never extract platform-specific detail to separate files, even if CLI names push word count.
+- Number sequentially; renumber on insert.
+- Group under an existing H2 unless ≥3 new rules share a theme.
+- Wave-specific ("broke once") stays in the closeout until a second wave confirms.
+
+---
+
 ## When a monitor is needed
 
 Any stage that must wait for an external event before proceeding. Examples:
@@ -60,13 +76,22 @@ At 50% of `timeout_budget` with no terminal condition reached, the monitor appen
 
 Does NOT escalate yet — just surfaces the anomaly early so the log shows a clear "something's off" marker before the full timeout fires.
 
-## Named anti-patterns (protocol violations)
+## Anti-patterns
 
-- **"Monitor with only success condition."** Every monitor MUST declare `success_condition` AND `failure_condition`. Missing failure check → protocol violation. This is the top failure mode — agents forget failure detection because the happy path is what they were asked to verify.
-- **"Check for HTTP 200 on health endpoint."** A health endpoint returning 200 does NOT mean the latest deploy shipped — it could be serving old code. Monitors MUST check the deploy/pipeline state endpoint (Railway `railway status --json`, Vercel `vercel inspect`, GH Actions `gh run list`), not `/healthz`. A health check is a supplement for Stage 5b verification, not a deploy-state signal.
-- **"Monitor without timeout."** Every monitor MUST declare a finite `timeout_budget`. Infinite-wait monitors are how sessions die unnoticed and the loop ticks forever on a stuck external.
-- **"Success-then-retry-on-failure."** If `failure_condition` returns 0, the monitor terminates with FAILURE — it does NOT retry. Retrying a failed deploy without human-in-loop triage is how bad code ships on the second try, or the same failure happens silently.
-- **"Commit-SHA check via deploy endpoint."** Some platforms lag on reporting the shipped commit. The `success_condition` should check the platform's own state flag (SUCCESS / ready / succeeded), NOT "does the deploy commit match HEAD" — that introduces a race between platform propagation and your poll.
+### 1. Every monitor declares both `success_condition` and `failure_condition`.
+Why: without a failure check the monitor sits forever on a failed deploy.
+
+### 2. `success_condition` checks the platform's deploy-state endpoint (`railway status --json`, `vercel inspect`, `gh run list`), not `/healthz`.
+Why: a health 200 can keep serving old code after the new deploy failed.
+
+### 3. Every monitor declares a finite `timeout_budget`.
+Why: infinite-wait monitors are how sessions die unnoticed and the loop ticks forever on a stuck external.
+
+### 4. On `failure_condition` exit 0 the monitor terminates FAIL — never retries.
+Why: automatic retry of a failed deploy ships bad code or hides the same failure silently.
+
+### 5. `success_condition` checks the platform's own state flag, not a commit-SHA match against HEAD.
+Why: platforms lag on reporting the shipped commit — the poll fires before propagation completes.
 
 ## Platform templates
 

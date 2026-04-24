@@ -34,6 +34,26 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.16.0 — 2026-04-24
+
+Extends the Contract pattern to `monitor-principles.md`, scoped to the rulebook portion of the file (anti-patterns section) only. State machine, three-condition spec, poll log format, self-audit, and platform template pointers stay as-is — those are protocol reference, not rule accumulation.
+
+### Added
+- **Contract block in `rules/monitors/monitor-principles.md`** — same 7-bullet pattern as dev/planning/testing. Bullet 4 rescoped to: "Compact inline — never extract platform-specific detail to separate files, even if CLI names push word count." CLI names and state endpoints stay with their rules; no extraction-to-template fallback.
+
+### Changed
+- `rules/monitors/monitor-principles.md` — "Named anti-patterns (protocol violations)" section (5 prose bullets of ~50 words each) → 5 flat-numbered rules with one-line action + one-line why. Heading renamed from "Named anti-patterns (protocol violations)" to "Anti-patterns" since the numbered rules carry the non-negotiable weight on their own.
+
+### Not changed (intentional)
+- `test-writing-principles.md` — master reference guide with its own internal discipline (RFC 2119 MUST/SHOULD/MAY terms, versioned front-matter schema, §14 append-only protocol with its own entry template). Imposing the Contract creates format-on-format drift inside one file. Left under its existing discipline; if a full port is wanted it's a separate minor release.
+
+### Consumer sync
+- **Breaking:** no. Content is behaviorally equivalent; 5 protocol violations are now 5 numbered rules with the same semantics.
+- **Changed files (review recommended):** `command-center/rules/monitors/monitor-principles.md`.
+- **Migration action:** consumers citing `monitor-principles § "Named anti-patterns"` should update to `monitor-principles § "Anti-patterns" #N`.
+
+---
+
 ## v0.15.1 — 2026-04-24
 
 Topic-scopes the Contract's spillover bullet per file. v0.15.0 propagated the dev-flavored "Stack-specific detail → § Code conventions" bullet unchanged to planning and testing, where it didn't map to the right spillover category.
