@@ -55,6 +55,19 @@ Prefer lower long-term complexity.
 ### 4. Red-team against antipatterns
 Read `stage-1-problem-reframing.md` antipatterns. Match proposed solution against each. Call out by name or state "no matches."
 
+### 5. Design-gap flag (MANDATORY emit — true or false, never absent)
+
+Every reframing output MUST include `design_gap_flag: true|false` with rationale. This is load-bearing for Stage 3b's skip/fire contract — absent flag forces Stage 3b to fire defensively (~60-100K wasted tokens) AND logs a plan-authoring defect.
+
+Set `design_gap_flag: true` if the task scope requires UI/icons/pages/components/flows NOT already present in `design/*.html`. List the missing surfaces.
+
+Set `design_gap_flag: false` if the task is backend-only, infra-only, doc-only, a pure bug-fix with no UI surface, OR if all UI surfaces it touches already have mockups in `design/`.
+
+**Rules:**
+- Never omit the flag. A non-UI task still emits `design_gap_flag: false` explicitly.
+- If uncertain whether a surface qualifies as "UI," err toward `true` + list the surface under review. Stage 3b's Step 1 audit will classify.
+- Do NOT enter a design loop here — that's Stage 3b's job. Just flag.
+
 ## Output format
 
 Write to `Planning/wave-<N>-reframing.md`:
@@ -89,6 +102,12 @@ Causes: [list + confidence + evidence]
 
 ## 4. Antipattern red-team
 ...
+
+## 5. Design gaps (MANDATORY)
+design_gap_flag: true|false
+missing_surfaces:
+  - <route-or-component>: <one-line purpose>   # only if flag=true
+rationale: <one line explaining why true or false>
 
 ## Verdict
 [PROCEED / RESCOPE-AUTO-SPLIT / RESCOPE / ESCALATE] + rationale

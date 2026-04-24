@@ -34,6 +34,39 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.12.3 — 2026-04-24
+
+Closes the `design_gap_flag` contract gap surfaced by sim-001. Four coordinated edits make the flag mandatory at authorship + fail-loud on absence.
+
+### Fixed
+- **problem-framer was never told to emit `design_gap_flag`.** Stage 1 spec expected it; Stage 2 plan assumed it; Stage 3b skip conditions required it — but `Sub-agent Instructions/problem-framer-instructions.md` had zero mentions. Agent could (and did, in sim-001) skip the flag entirely, leaving Stage 3b's skip logic ambiguous.
+
+### Changed
+- `Sub-agent Instructions/problem-framer-instructions.md` — new § 5 "Design-gap flag (MANDATORY emit — true or false, never absent)" with emission rules + uncertainty guidance + rationale field. Output format template gets an explicit `## 5. Design gaps` block.
+- `rules/build-iterations/stages/stage-1-problem-reframing.md` — "Design-gap flag" section rewritten with MANDATORY framing, cost-awareness note (~60-100K wasted if absent), explicit instruction to emit `false` for non-UI tasks rather than defaulting.
+- `rules/build-iterations/stages/stage-2-plan.md` — post-write consistency check gains item 4 verifying `design_gap_flag` is present and explicitly set.
+- `rules/build-iterations/stages/stage-3b-design-gap.md` — skip conditions clarified ("explicitly set, not absent") + new "Absent-flag rule" section: missing flag = treat as `true`, fire defensively, log plan-authoring defect for retro surfacing.
+
+### Semantic contract (the new rule)
+
+| State of flag at Stage 3b entry | Stage 3b action |
+|---|---|
+| Both Stage 1 + Stage 2 output have explicit `false` | SKIP (as before) |
+| Either output has explicit `true` | FIRE (as before) |
+| **Either output has flag absent** | **FIRE defensively + log plan-authoring defect** (new — was undefined) |
+
+Fail-loud preferred over fail-silent: a missing flag might hide genuine UI surface; ~60-100K defensive Stage 3b fire is cheaper than silently missing a required mockup and discovering it mid-Stage-4.
+
+### Provenance
+Finding surfaced during sim-001 Stage 3b analysis. See `Planning/sim-001-report.md` § Stage 3b for detection trail.
+
+### Consumer sync
+- **Breaking:** no for existing project state, BUT existing waves that relied on absent-flag-as-implicit-false will now see Stage 3b fire defensively until the flag is explicitly emitted.
+- **Changed files:** 1 instruction file + 3 stage specs + VERSION
+- **Migration action:** problem-framer agents on active projects will start emitting the flag on next spawn. Existing wave plans with absent flags should be patched with an explicit `design_gap_flag: false` (or `true`) entry; otherwise the next Stage 3b run fires defensively.
+
+---
+
 ## v0.12.2 — 2026-04-24
 
 Two fixes from sim-001 findings to `roadmap-refresh-ritual.md`.

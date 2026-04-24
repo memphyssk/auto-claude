@@ -9,14 +9,20 @@ This stage absorbed the pre-uplift `design-gap-loop.md` side-loop. Design gaps a
 
 Skip when ALL the following are true:
 - Wave is backend-only / infra-only / doc-only / pure bug-fix with no UI surface
-- Stage 1 reframing output has `design_gap_flag: false` (no UI gap identified)
-- Stage 2 plan output has `design_gap_flag: false`
+- Stage 1 reframing output has `design_gap_flag: false` (explicitly set, not absent — see absent-flag rule below)
+- Stage 2 plan output has `design_gap_flag: false` (explicitly set, not absent)
 
 Fire when ANY of the following:
 - Wave touches a new or modified UI route / component / visual surface
 - Stage 1 flagged `design_gap_flag: true`
 - Stage 2 flagged `design_gap_flag: true`
 - Plan references a page/component/icon/flow NOT present in `design/`
+
+### Absent-flag rule (load-bearing)
+
+If `design_gap_flag` is absent from either Stage 1 reframing OR Stage 2 plan output, treat it as `true` and fire Stage 3b. This is a deliberate fail-loud policy: a missing flag is a plan-authoring defect, and silently skipping Stage 3b could miss genuine UI surface.
+
+Alongside firing, log the missing-flag event as a Stage 1 or Stage 2 defect in `Planning/wave-<N>-closeout.md` § Plan-authoring defects. The next `/retro` surfaces these for pattern tracking — consistently missing flags signals instruction-file drift that should be fixed.
 
 ## Prerequisites
 - Stage 3 gate passed (Karen + Jenny APPROVE — plan is locked, scope is stable)

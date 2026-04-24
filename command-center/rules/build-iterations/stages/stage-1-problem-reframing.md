@@ -38,20 +38,26 @@ Orchestrator creates the sibling TaskMaster rows automatically with `metadata.so
 
 If even the first slice trips a threshold (unbreakable monolith), escalate to user — manual planning required.
 
-## Design-gap flag
+## Design-gap flag (MANDATORY — never absent)
 
-If `problem-framer` identifies scope needing UI/icons/pages NOT in `design/*.html`, set `design_gap_flag: true` in the reframing output with a list of the missing surfaces. Do NOT enter a design loop here — the consolidated resolution happens at **Stage 3b** after the plan is approved.
+Every reframing output MUST include `design_gap_flag: true|false`. This is load-bearing for Stage 3b's skip contract — an absent flag forces Stage 3b to fire defensively (~60-100K wasted) AND logs a plan-authoring defect. See `Sub-agent Instructions/problem-framer-instructions.md` § 5 for the full emission contract.
+
+Set `true` if the task scope requires UI/icons/pages/components/flows NOT present in `design/*.html`. List the missing surfaces.
+
+Set `false` if the task is backend-only, infra-only, doc-only, a pure bug-fix with no UI surface, OR if all touched UI surfaces already have mockups.
+
+Do NOT enter a design loop here — the consolidated resolution happens at **Stage 3b** after the plan is approved.
 
 Format inside `Planning/wave-<N>-reframing.md`:
 ```markdown
 ## Design gaps
-design_gap_flag: true
+design_gap_flag: true|false
 missing_surfaces:
-  - <route-or-component>: <one-line purpose>
-  - ...
+  - <route-or-component>: <one-line purpose>   # only when flag=true
+rationale: <one line: why true or why false>
 ```
 
-If no UI scope identified: `design_gap_flag: false` (default).
+If non-UI (most backend waves): emit `design_gap_flag: false` explicitly with `rationale: no UI surface touched`. Never rely on a default.
 
 ## Actions
 
