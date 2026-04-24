@@ -33,50 +33,27 @@ Why: one declarative sentence.
 
 ---
 
-## Priority Levels
+## 0. Agent Workflow
 
-This document uses RFC 2119 priority terms:
+Complete every step before writing a single line of test code. Do not proceed to the next step until the current one is done. If any step cannot be completed, stop and report why.
 
-- **MUST** — Non-negotiable. Violating this will cause CI failure, test invalidity, or architectural drift. Always enforce.
-- **SHOULD** — Strong default. Deviate only with a comment explaining why.
-- **MAY** — Discretionary. Use judgment.
+- [ ] 1. Read this entire file and `command-center/artifacts/user-journey-map.md`.
+- [ ] 2. Read the source file(s) you are testing. Identify: all exported functions/methods, parameter types, return types, thrown exceptions.
+- [ ] 3. Read all existing `*.spec.ts` / `*.test.tsx` files in the same module directory. Adopt their naming style, mock setup patterns, and import ordering exactly. If none exist, default to § 7 patterns.
+- [ ] 4. Identify the § 6 priority tier for the subject.
+- [ ] 5. List the test cases before writing code: at minimum one happy-path and one error-path per exported method.
+- [ ] 6. Confirm which mocks are needed per § 8.
+- [ ] 7. Write the tests using § 7 patterns.
+- [ ] 8. Run `pnpm test --filter=<package>` and confirm all pass.
+- [ ] 9. If you discover a new pattern, append to § 14 using the Contract template at the top of this file.
 
-These terms appear in **bold** throughout the document.
-
----
-
-## 0. Agent Pre-Flight Checklist
-
-**MUST** complete ALL steps before writing a single line of test code.
-Do not proceed to the next step until the current one is done.
-If any step cannot be completed, stop and report why.
-
-- [ ] 1. Read this entire file (test-writing-principles.md).
-- [ ] 2. Read the source file(s) you are testing. Identify: all exported functions/methods, their parameter types, return types, and thrown exceptions.
-- [ ] 3. Read ALL existing `*.spec.ts` / `*.test.tsx` files in the same module directory. Adopt their `describe`/`it` naming style, mock setup patterns, and import ordering exactly. If no tests exist, default to Section 7 patterns.
-- [ ] 4. Identify which Section 6 priority tier the subject falls under (Tier 1 = financial/auth, Tier 2 = pre-beta, Tier 3 = normal).
-- [ ] 5. List the test cases you plan to write before writing any code. Include: at minimum one happy-path and one error-path per exported method.
-- [ ] 6. Confirm which mocks are needed per Section 8.
-- [ ] 7. Write the tests using the patterns in Section 7 for your package.
-- [ ] 8. Run `pnpm test --filter=<package>` and confirm all tests pass.
-- [ ] 9. If you discovered a new pattern or rule, append it to Section 14 using the template exactly.
+Document-structure rules: do not rewrite, reorder, or summarize existing sections. Do not change section numbers. Append new rules only to § 14 or § Rules. If you believe an existing rule is wrong, flag it via a new § 14 entry — do not edit the original.
 
 ---
 
-## 1. Agent Instructions
+## 1. Non-negotiable rules
 
-When an agent or subagent is asked to write or review tests:
-
-1. **COMPLETE THE PRE-FLIGHT CHECKLIST** in Section 0 — every step, every time.
-2. **FOLLOW PATTERNS IN SECTION 7 EXACTLY** — do not deviate or invent new patterns.
-3. **CHECK EXISTING TESTS** in the same module for local conventions before creating new ones.
-4. **RUN TESTS LOCALLY** (`pnpm test`) and confirm they pass before committing.
-5. **UPDATE SECTION 14** if you discover a new pattern, rule, or gotcha that future agents should know.
-6. **PRESERVE DOCUMENT STRUCTURE.** **MUST NOT** rewrite, reorder, or summarize existing sections. **MUST NOT** change section numbers. Only append to Section 14. If you believe an existing rule is wrong, add a Note to Section 14 flagging the conflict — do not edit the original rule.
-
-### Non-negotiable rules
-
-See **§ Rules** at the bottom of this file for the master list (20 non-negotiable rules with rationale). Every rule is enforceable; deviation requires an inline comment naming why.
+See **§ Rules** at the bottom of this file for the master list. Every rule is enforceable; deviation requires an inline comment naming why.
 
 ---
 
@@ -107,18 +84,7 @@ Are you writing a test for...?
     └── Test happy-path + edge cases (empty, null, boundary values)
 ```
 
-### When to Use Mocks (Quick Lookup)
-
-| Scenario | Mock? | Example |
-|----------|-------|---------|
-| Prisma in unit test | YES | `const mockPrisma = { user: { findUnique: vi.fn() } }` |
-| Prisma in integration test | NO | Use real DB with transaction rollback |
-| Payment provider / S3 / external API | ALWAYS | `vi.mock('@/services/<vendor>.service')` |
-| Redis/Cache | YES | `const mockRedis = { get: vi.fn(), set: vi.fn() }` |
-| Auth/JWT (non-auth tests) | YES | Override guard: `{ canActivate: () => true }` |
-| Zod schemas | NEVER | Always use real schemas |
-| Internal service (same module) | NO | Use TestingModule provider |
-| Internal service (cross-module) | YES | `{ provide: UserService, useValue: mockUserService }` |
+For the mocking decision matrix, see **§ 8 Mocking Rules** (canonical).
 
 ---
 
@@ -149,7 +115,7 @@ pnpm lint              # Lint all packages
 
 ### Before Submitting a PR
 
-All of these **MUST** pass locally before pushing:
+All of these MUST pass locally before pushing:
 
 1. `pnpm lint` — No linting errors (Biome)
 2. `pnpm typecheck` — No TypeScript errors
@@ -162,12 +128,12 @@ CI runs the same checks. **Failure in any step blocks merge.**
 
 ## 5. Test File Conventions
 
-- **Location:** **MUST** co-locate test files at the exact same directory level as the file they test.
+- **Location:** MUST co-locate test files at the exact same directory level as the file they test.
   - Source: `packages/api/src/modules/users/users.service.ts`
   - Test: `packages/api/src/modules/users/users.service.spec.ts` (same folder, same depth)
   - Source: `packages/web/src/components/LoginForm.tsx`
   - Test: `packages/web/src/components/LoginForm.test.tsx` (same folder, same depth)
-- **Naming:** **MUST** use `.spec.ts` for API services/controllers, `.test.tsx` for Web components.
+- **Naming:** MUST use `.spec.ts` for API services/controllers, `.test.tsx` for Web components.
 - **Exception:** Only use `__tests__/` folder if one already exists in that module. Do not create `__tests__/` folders yourself.
 
 ---
@@ -210,7 +176,7 @@ Modules handling money, legal commitments, identity, or session security. Canoni
 
 ### 7.1 Test Structure — Arrange / Act / Assert
 
-**MUST** follow AAA in every test. **MUST** include comments.
+MUST follow AAA in every test. MUST include comments.
 
 ```typescript
 describe('UsersService', () => {
@@ -276,10 +242,10 @@ describe('UsersService', () => {
 });
 ```
 
-- **MUST** use `TestingModule` for isolated service tests.
-- **MUST** mock `PrismaService` for unit tests; use real DB only for integration tests.
-- **MUST NOT** import the full `AppModule` in a unit test.
-- **MUST** call `vi.clearAllMocks()` in `afterEach`.
+- MUST use `TestingModule` for isolated service tests.
+- MUST mock `PrismaService` for unit tests; use real DB only for integration tests.
+- MUST NOT import the full `AppModule` in a unit test.
+- MUST call `vi.clearAllMocks()` in `afterEach`.
 
 ### 7.3 API — NestJS Controller Integration Test
 
@@ -373,8 +339,8 @@ describe('LoginForm', () => {
 });
 ```
 
-- **MUST** query by role, label, or visible text. **MUST NOT** use `data-testid` unless the element has no semantic role, label, or text — and **MUST** leave a comment explaining why `data-testid` was used.
-- **SHOULD** use `userEvent` over `fireEvent` for realistic interactions.
+- MUST query by role, label, or visible text. MUST NOT use `data-testid` unless the element has no semantic role, label, or text — and MUST leave a comment explaining why `data-testid` was used.
+- SHOULD use `userEvent` over `fireEvent` for realistic interactions.
 
 ### 7.5 Shared — Schema Testing
 
@@ -453,11 +419,11 @@ Use `pnpm db:seed` to create test users in your database. Seed users cover every
 
 Consumer projects replace `<role-a>` / `<role-b>` with their actual role names (e.g. USER, EDITOR, AGENT, CUSTOMER). Always include at least one row per role; never test with fewer personas than the project defines.
 
-**MUST NOT** mutate seed data in tests. If a test needs to ban or alter a user, create a separate test user.
+MUST NOT mutate seed data in tests. If a test needs to ban or alter a user, create a separate test user.
 
 ### Unit Tests
 
-**MUST** create inline fixtures using factory functions. **MUST NOT** import seed data.
+MUST create inline fixtures using factory functions. MUST NOT import seed data.
 
 ```typescript
 import type { User } from '@prisma/client';
@@ -512,7 +478,7 @@ Any project handling real money, identity, or private user data treats security 
 
 ### 10.1 RBAC / Authorization
 
-**MUST** test that every role-guarded endpoint rejects unauthorized roles:
+MUST test that every role-guarded endpoint rejects unauthorized roles:
 
 ```typescript
 describe('Admin endpoints RBAC', () => {
@@ -540,7 +506,7 @@ describe('Admin endpoints RBAC', () => {
 
 ### 10.2 Ownership / IDOR Prevention
 
-**MUST** test that User A cannot access User B's resources:
+MUST test that User A cannot access User B's resources:
 
 ```typescript
 it('user A cannot view user B resource', async () => {
@@ -553,7 +519,7 @@ it('user A cannot view user B resource', async () => {
 
 ### 10.3 Webhook Signature Verification
 
-**MUST** test that unsigned or wrongly signed webhooks are rejected:
+MUST test that unsigned or wrongly signed webhooks are rejected:
 
 ```typescript
 it('rejects webhook with invalid signature', async () => {
@@ -569,7 +535,7 @@ Use the vendor's own signature header name (`stripe-signature`, `x-hub-signature
 
 ### 10.4 Rate Limiting
 
-**SHOULD** test that auth endpoints enforce rate limits:
+SHOULD test that auth endpoints enforce rate limits:
 
 ```typescript
 it('blocks after N failed login attempts', async () => {
@@ -587,16 +553,16 @@ it('blocks after N failed login attempts', async () => {
 
 ### 10.5 Auth Edge Cases
 
-- **MUST** test expired access token returns 401, not 500.
-- **MUST** test malformed JWT (`"alg": "none"`, truncated, wrong secret) is rejected.
-- **MUST** test refresh token rotation: old refresh token is invalidated after use.
-- **SHOULD** test guard stacking order: `AuthGuard` runs before `RolesGuard` (unauthenticated → 401, not 403).
+- MUST test expired access token returns 401, not 500.
+- MUST test malformed JWT (`"alg": "none"`, truncated, wrong secret) is rejected.
+- MUST test refresh token rotation: old refresh token is invalidated after use.
+- SHOULD test guard stacking order: `AuthGuard` runs before `RolesGuard` (unauthenticated → 401, not 403).
 
 ---
 
 ## 11. State Machine Testing
 
-For every state-machine entity in the project (orders, subscriptions, disputes, approval workflows, etc.), the tests below are **MUST** for Tier 1 modules.
+For every state-machine entity in the project (orders, subscriptions, disputes, approval workflows, etc.), the tests below are MUST for Tier 1 modules.
 
 ### 11.1 Legal and illegal transitions
 
@@ -626,7 +592,7 @@ it('rejects transition from <TERMINAL_STATE> to <NON_REACHABLE_STATE>', async ()
 
 ### 11.2 Actor authorization + idempotency
 
-For every state-machine entity, **MUST** test:
+For every state-machine entity, MUST test:
 
 - Only the authorized role can trigger each transition (e.g. only ADMIN can resolve, only owner can cancel).
 - A transition cannot be applied twice (idempotent or rejects on second attempt).
@@ -635,7 +601,7 @@ For every state-machine entity, **MUST** test:
 
 ### 11.3 Adversarial scenarios
 
-**SHOULD** test user-side abuse:
+SHOULD test user-side abuse:
 
 - Actor claims an action they have no permission for → blocked.
 - User purchases / acts on their own resource when disallowed → blocked.
@@ -747,63 +713,13 @@ _No entries yet. Append new rules below this line using the Entry Template above
 
 ## 15. Production E2E Testing — Principles
 
-Principles for live testing against deployed environments using Playwright MCP. Applies to ANY agent doing UI/UX or functional verification on production builds — `ui-comprehensive-tester`, `qa-expert`, `accessibility-tester`, `test-automator` running E2E suites, etc.
+Principles for live testing against deployed environments using Playwright MCP. Applies to any agent doing UI/UX or functional verification on production builds (`ui-comprehensive-tester`, `qa-expert`, `accessibility-tester`, `test-automator` running E2E).
 
-### 15.1 Test source of truth
+**Master rules** for production E2E are in § Rules (#11-22). Implementation patterns are in § 16 below.
 
-**MUST** read `command-center/artifacts/user-journey-map.md` at the project root before testing. It is the canonical inventory of every user flow, screen, route, API endpoint, and user story. Identify which flows are affected by the changes you are verifying and exercise those flows end-to-end. Test scenarios listed in command-center/artifacts/user-journey-map.md are the source of truth for what counts as "passing" a flow.
+### Prod fixture registry
 
-### 15.2 Test the content, not just the layout
-
-When verifying a fix that unblocks a previously-broken route, **MUST** exercise the actual CONTENT — not just whether the page renders.
-
-- For dashboards: read the actual stat values
-- For list pages: count rows and sample 1-2 entries
-- For detail pages: verify entity fields are populated
-- For forms: type into inputs, submit, verify the result
-- For admin: try a write action
-
-A "page renders" pass that hides a contract mismatch one layer deeper is the most expensive false positive class. Always go one layer deeper than the layout guard.
-
-### 15.3 Network-layer evidence > DOM observation
-
-For asynchronous behaviors (WebSocket, long-poll, refresh retries, event hooks), the network panel is the source of truth, not the DOM. **MUST** capture `browser_network_requests` after every meaningful action and look for the URL patterns that prove the underlying mechanism is working. DOM state is necessary but not sufficient evidence for async correctness.
-
-### 15.4 Instrument before navigation
-
-When testing async behaviors that fire on mount, **MUST** install instrumentation BEFORE navigating to the page. WebSocket constructor hooks, fetch interceptors, performance observers, and similar patches must be in place when the page first mounts — not after. Instrumentation installed after the fact misses the very events you're trying to capture.
-
-### 15.5 Edge cases are required
-
-For every fix verified, **MUST** test at least one edge case: invalid IDs, expired tokens, missing data, empty lists, unauthorized personas, broken permissions. Happy-path verification is necessary but not sufficient. A fix that passes the happy path but crashes on the empty case has not been verified.
-
-### 15.6 Persona discipline
-
-When verifying authorization logic, **MUST** test with EVERY relevant persona in the project's role enum: at minimum `unauthenticated visitor` + every authenticated role. A "redirects to login when unauthenticated" test is incomplete without the corresponding "renders content when authenticated as the right role" test, and vice versa.
-
-### 15.7 Cross-client real-time verification
-
-To verify real-time delivery (WebSocket events, broadcast notifications, presence indicators), **SHOULD** use TWO clients: one to trigger the event, another to receive it. A single-client test cannot distinguish "the sender sees their own message via REST" from "the receiver got the event via socket". When two clients aren't feasible, network-layer evidence (socket.io polling fetches, websocket frames) is the next-best signal — never DOM-only.
-
-### 15.8 MCP partition discipline
-
-When running multiple testers in parallel via Playwright MCP, each tester **MUST** use ONE dedicated MCP instance (`playwright`, `playwright-2`, `playwright-3`, `playwright-4`, `playwright-5`) and **MUST NOT** call any other instance even on error. Cross-contamination between parallel testers corrupts results.
-
-### 15.9 Always write the deliverable file
-
-When the orchestrator asks for a markdown report at a specific path, **MUST** write that file using the Write tool. The "no other files" instruction in test prompts refers to source code modifications — it does NOT exclude the report deliverable. The orchestrator needs the file artifact for synthesis across the tester swarm.
-
-### 15.10 Prod fixture source of truth
-
-For live production E2E testing, the canonical test-account registry lives at `Planning/test-accounts.md` (gitignored — contains passwords, identity-provider user ids, database row ids, and any auth rituals required to provision/refresh the accounts). Testers must use prod fixtures documented there, not local-dev `*@example.test` emails.
-
-Per-role prod fixtures declared in `Planning/test-accounts.md`:
-
-- **Prod `<ROLE_A>`** — provisioned
-- **Prod `<ROLE_B>`** — provisioned
-- **Prod `ADMIN`** — typically unprovisioned; provision only when a wave is actually blocked on that persona (follow the identity-provider CLI + DB ritual documented in `Planning/test-accounts.md`)
-
-`*@example.test` credentials only exist in the local dev seed (see CLAUDE.md §Test Users §Local dev). Using them against prod auth will produce silent auth failures and a false BLOCKED outcome. If a tester prompt passes a `*@example.test` email for prod testing, flag it as a prompt bug and ask the orchestrator to reference `Planning/test-accounts.md` instead.
+`Planning/test-accounts.md` is the canonical, gitignored test-account registry — contains passwords, identity-provider user ids, database row ids, and any auth rituals required to provision/refresh accounts. `*@example.test` credentials exist only in the local dev seed (see CLAUDE.md §Test Users §Local dev); using them against prod auth produces silent auth failures and false BLOCKED outcomes. If a tester prompt passes a `*@example.test` email for prod testing, flag it as a prompt bug.
 
 ---
 
@@ -841,15 +757,15 @@ After navigation, check BOTH signals:
 1. `window.__wsCount > 0` (WebSocket upgrade happened)
 2. `window.__sioFetches.length > 0` OR `browser_network_requests` contains URLs matching `socket.io|EIO=|polling|websocket`
 
-Either signal proves engine.io is active. **socket.io polling-only mode never calls `new WebSocket()`** — long-polling uses XHR — so `window.__wsCount === 0` alone does NOT prove the socket is broken. You **MUST** check the network panel too.
+Either signal proves engine.io is active. **socket.io polling-only mode never calls `new WebSocket()`** — long-polling uses XHR — so `window.__wsCount === 0` alone does NOT prove the socket is broken. You MUST check the network panel too.
 
 ### 16.2 React synthetic event handler verification
 
-**MUST NOT** check `el.onclick` or similar DOM event attributes to verify a button's onClick is wired — React synthetic handlers never appear as DOM properties. To verify a button's handler, click it via Playwright's click action and observe the resulting effect (network call, navigation, state change).
+MUST NOT check `el.onclick` or similar DOM event attributes to verify a button's onClick is wired — React synthetic handlers never appear as DOM properties. To verify a button's handler, click it via Playwright's click action and observe the resulting effect (network call, navigation, state change).
 
 ### 16.3 ES module imports vs window globals
 
-`io` from `socket.io-client` (and similar ES module exports) is NOT a window global. `window.io === undefined` proves nothing about whether socket.io is loaded or working. **MUST** verify via the bundle (decompile chunks if needed), the network panel, or instrumented constructors — never via window globals for ES modules.
+`io` from `socket.io-client` (and similar ES module exports) is NOT a window global. `window.io === undefined` proves nothing about whether socket.io is loaded or working. MUST verify via the bundle (decompile chunks if needed), the network panel, or instrumented constructors — never via window globals for ES modules.
 
 ### 16.4 Status taxonomy for production audits
 
@@ -871,7 +787,7 @@ For wave verification, use a **5-tester swarm**: 5 parallel `ui-comprehensive-te
 
 ### 16.6 Deliverable format for prod testing
 
-Test reports **MUST** include:
+Test reports MUST include:
 - Per-fix verdict: PASS / PARTIAL / FAIL with concrete evidence
 - Network panel evidence for any WebSocket/API/async behavior tested
 - Console error capture (filter level: error)
@@ -1005,3 +921,9 @@ Why: React synthetic event handlers never appear as DOM properties; the check is
 
 ### 20. Use cross-client verification for real-time behaviors when feasible; otherwise rely on network-layer evidence.
 Why: single-client tests can't distinguish socket delivery from REST refetch.
+
+### 21. Test every relevant persona in the project's role enum: unauthenticated visitor + every authenticated role.
+Why: "redirects to login when unauthenticated" is incomplete without the "renders content when authenticated as the right role" counterpart.
+
+### 22. Use prod fixtures from `Planning/test-accounts.md` for live E2E; never use `*@example.test` credentials against prod auth.
+Why: `*@example.test` accounts exist only in the local dev seed and produce silent auth failures + false BLOCKED outcomes against prod.

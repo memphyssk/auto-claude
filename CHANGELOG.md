@@ -34,6 +34,27 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.19.0 — 2026-04-24
+
+Phase 3 of `test-writing-principles.md` cleanup: four structural optimizations that remove redundancy and tighten the rulebook. File shrinks 1007 → 929 lines (-78). No rule lost; rule count grows 20 → 22 (two promoted from deleted prose subsections).
+
+### Changed
+- **Priority Levels section deleted + RFC 2119 bolding unbolded across the file.** `**MUST**`, `**MUST NOT**`, `**SHOULD**`, `**MAY**` → plain uppercase. The formal RFC 2119 scaffolding is gone; terms remain in body prose as uppercase emphasis. The master § Rules at the bottom already uses plain imperatives (no bolding).
+- **§ 2 "When to Use Mocks (Quick Lookup)" table deleted.** Was a duplicate of § 8 Mocking Rules. Replaced with a one-line pointer to § 8 as canonical. Removes the "which table is authoritative?" ambiguity.
+- **§ 0 Pre-Flight Checklist + § 1 Agent Instructions collapsed.** § 0 renamed "Agent Workflow", absorbs the single novel directive from the old § 1 (document-structure rules: don't rewrite existing sections, don't renumber, append-only to § 14). § 1 becomes a 2-line pointer to § Rules at the bottom.
+- **§§ 15.1-15.10 prose subsections deleted.** All 10 principles had Rule counterparts (#11-#20) at the bottom except 15.6 (Persona discipline) and 15.10 (Prod fixture source of truth), which are now promoted to Rules #21 and #22. § 15 becomes a 3-line intro + a "Prod fixture registry" subsection retained for the `Planning/test-accounts.md` reference. Implementation patterns are still in § 16.
+
+### Added
+- **Rule #21**: "Test every relevant persona in the project's role enum: unauthenticated visitor + every authenticated role." (promoted from deleted § 15.6)
+- **Rule #22**: "Use prod fixtures from `Planning/test-accounts.md` for live E2E; never use `*@example.test` credentials against prod auth." (promoted from deleted § 15.10)
+
+### Consumer sync
+- **Breaking:** no. Section numbers (§ 0-§ 16 + § Rules) preserved. Rule numbers 1-20 preserved; rules 21-22 are additive.
+- **Changed files (review recommended):** `command-center/test-writing-principles.md`.
+- **Migration action:** consumers that cited `§ 15.1-15.10` should migrate to the equivalent Rule numbers (11-20) or to § 16 for implementation detail.
+
+---
+
 ## v0.18.0 — 2026-04-24
 
 Phase 2 of the `test-writing-principles.md` cleanup: aligns the file's rule-accumulating portions with the Contract format used across the rest of the principles files. Tutorial/reference sections (§§ 2-13, 15-16 methodology, Priority Levels) stay untouched — they're not rulebook material.
