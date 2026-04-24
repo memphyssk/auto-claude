@@ -116,6 +116,12 @@ These apply in every turn regardless of which trigger fires.
 
     The corresponding procedural checklist (catalog → instruction file → alternatives) lives at `command-center/rules/sub-agent-workflow.md` § "Before every sub-agent spawn".
 
+13. **Before appending to any `*-principles.md` file, read its "Contract for new rules" block at the top and match the format exactly.** The Contract governs rule shape (one-line imperative + one-line `Why:`), sequential numbering, H2 placement, prohibited content (war stories, wave refs, `Context:`/`Cross-ref:` fields, project names), and per-file spillover (stack-specific → § Code conventions / plan-template mechanics / placeholder tokens / compact inline, depending on file). If the rule you want to add can't satisfy the Contract — stop and reformulate, don't write.
+
+    Applies to every write path: `/retro` output routing, Stage 8/10 orchestrator promotions, manual edits. The in-file Contract is authoritative; this rule just forces you to read it before writing.
+
+    Self-review gate: before committing the change, re-read the Contract and confirm the new rule matches. One sentence of rule, one sentence of why — no trailing explanatory paragraphs, no "Discovered by", no "Context:" field.
+
 ---
 
 # Directory Structure

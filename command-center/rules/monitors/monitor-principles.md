@@ -2,6 +2,8 @@
 
 Master doctrine for monitoring external events (deploys, CI runs, DNS propagation, tier activations, third-party provisioning). READ before creating any `MONITOR` task.
 
+New rules enter via the Contract below — `/retro`, Stage 8/10 promotions, and manual edits all follow it (see CLAUDE.md always-on rule #13).
+
 ## Contract for new rules
 
 Template:

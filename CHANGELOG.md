@@ -34,6 +34,29 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.20.0 — 2026-04-24
+
+Enforces Contract compliance on every write to `*-principles.md` files. Two-layer approach: an always-on rule in CLAUDE.md (catches all write paths) + per-file pointers that cite the rule. No new infrastructure, no validation scripts — just systematic reminders at every plausible write site.
+
+### Added
+- **Always-on rule #13 in `CLAUDE.md`** — "Before appending to any `*-principles.md` file, read its 'Contract for new rules' block at the top and match the format exactly." Calls out the Contract's governance surface (rule shape, numbering, H2 placement, prohibited content, per-file spillover) and applies the rule to all three write paths: `/retro` routing, Stage 8/10 promotions, manual edits. Includes a self-review gate: re-read the Contract before committing.
+
+### Changed
+- **`command-center/rules/dev-principles.md`, `planning-principles.md`, `testing-principles.md`, `monitors/monitor-principles.md`, `test-writing-principles.md`** — each gets one-line pointer right below the intro: "New rules enter via the Contract below — `/retro`, Stage 8/10 promotions, and manual edits all follow it (see CLAUDE.md always-on rule #13)." Makes the Contract's authority explicit regardless of where the writer arrived from.
+- **`command-center/rules/housekeeping.md`** — Stage 8 closeout section gets a new paragraph: when a closeout surfaces a cross-wave pattern, route to the matching principles file following that file's in-file Contract. Targets the known Stage 8 write path.
+
+### Not done (deferred)
+- **Validation script / pre-commit hook** — regex over markdown would be brittle; not worth the maintenance surface at current volume.
+- **`/append-principle` wrapper skill** — strongest enforcement, but replaces `/retro` flow and builds a new skill. Overkill unless Layer 1+2 fails to hold.
+- **Agent-instruction updates for karen / technical-writer / knowledge-synthesizer** — those agents don't currently write to principles files at Stage 10. Would only matter if we later route principles promotions through them.
+
+### Consumer sync
+- **Breaking:** no. Additive across six files; no rule renamed or removed.
+- **Changed files (safe-overwrite):** `CLAUDE.md`, 5 principles files (intro lines), `command-center/rules/housekeeping.md`.
+- **Migration action:** none. Enforcement activates automatically on next session — the always-on rule is self-applying.
+
+---
+
 ## v0.19.0 — 2026-04-24
 
 Phase 3 of `test-writing-principles.md` cleanup: four structural optimizations that remove redundancy and tighten the rulebook. File shrinks 1007 → 929 lines (-78). No rule lost; rule count grows 20 → 22 (two promoted from deleted prose subsections).

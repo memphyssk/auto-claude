@@ -27,6 +27,8 @@ At the close of every wave, update:
 
 Sub-agent Observations and Instructions are NOT updated at Stage 8 — they are produced at Stages 9 (observations retro, knowledge-synthesizer) and 10 (instruction distillation, karen).
 
+When a closeout surfaces a cross-wave pattern (execution lesson, plan-authoring defect, testing-discipline gap, monitor failure mode, etc.), route it to the matching `*-principles.md` file following that file's in-file Contract — see CLAUDE.md always-on rule #13. The Contract governs format, numbering, and prohibited content; drive-by writes that carry wave-specific war stories are rejected at self-review.
+
 ## Wave closeout document structure
 
 ```

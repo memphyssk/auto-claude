@@ -13,6 +13,8 @@ Single source of truth for how testing is approached across the project. Read by
 
 Project-specific placeholders in this file (`<your-project>`, `<tier-1-module>`, `<role-a>`, `<state-machine>`, `<payment-vendor>`, etc.) should be replaced per consumer project. The framework — tiers, patterns, anti-patterns, RFC 2119 discipline — is project-agnostic.
 
+New rules enter via the Contract below — `/retro`, Stage 8/10 promotions, and manual edits all follow it (see CLAUDE.md always-on rule #13).
+
 ---
 
 ## Contract for new rules
