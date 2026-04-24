@@ -24,16 +24,8 @@ _One-paragraph product description goes here. What you're building, who for, wha
 | _(project build/lint/test/typecheck commands)_ | _(descriptions)_ |
 
 ## Task Management (TaskMaster)
-| Command | Description |
-|---------|-------------|
-| `npx task-master list` | List all tasks with dashboard |
-| `npx task-master show <id>` | Show task details |
-| `npx task-master next` | Get next recommended task |
-| `npx task-master set-status --id=<id> --status=<status>` | Update task status |
-| `npx task-master add-task --prompt="<description>"` | Create new task |
-| `npx task-master expand --id=<id>` | Break task into subtasks |
 
-TaskMaster is the canonical task tracking system. All features, bugs, and backlog items live here.
+Canonical task source for all features, bugs, and backlog items. Run `npx task-master --help` for the full command list; `next` / `list` / `show <id>` / `set-status --id=<id> --status=<status>` / `add-task --prompt="<desc>"` / `expand --id=<id>` are the common ones.
 
 ## Test Users (fill in)
 _(local dev + prod canonical test accounts — never commit passwords)_
@@ -76,8 +68,7 @@ _(local dev + prod canonical test accounts — never commit passwords)_
 - `command-center/test-writing-principles.md` — master testing guide (§15-16 for live E2E)
 - `command-center/product/ROADMAP.md` — canonical theme-based milestone roadmap (refreshed via refresh ritual, never hand-edited outside it)
 
-**Skills** (installed at `~/.claude/skills/`, invokable as slash commands — see `command-center/rules/skill-use.md` for wave-loop integration):
-`/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/plan-devex-review`, `/autoplan`, `/review`, `/qa`, `/design-review`, `/cso`, `/investigate`, `/retro`, `/learn`, `/ship`, `/land-and-deploy`, `/document-release`, `/health`, `/careful`, `/simplify`, `/search-first`, `/browse`, `/freeze`, `/guard`, `/canary`, `/benchmark`, `/checkpoint`.
+**Skills** are installed at `~/.claude/skills/` and injected into every session as slash commands — see `command-center/rules/skill-use.md` for wave-loop integration.
 
 ---
 
@@ -100,27 +91,11 @@ These apply in every turn regardless of which trigger fires.
 
 10. **Respect the mode flag.** Before routing any would-be user-ask, check `Planning/.autonomous-session` per `command-center/management/mode-switching.md`. Four modes: **founder-review** (no flag — every user-ask to founder); **semi-assisted** (skip nice-to-haves, strategic + hard-stops to founder); **full-autonomy** (BOARD resolves 4+/7 default / 6+/7 Tier 3 strict; splits + hard-stops to founder); **danger-builder** (BOARD resolves same thresholds; BOARD splits + HARD-STOP vetoes + all former-founder-asks route to **ceo-agent** within `ceo-bound.md` charter; founder reached only via kill-switch / session message / daily Resend digest). Hard-stops (destructive actions, money commitments, BOARD member veto) route to founder under the first three modes, and to ceo-agent under `danger-builder` — ceo-agent weighs them, respects any charter restriction, and records engagement in the digest. Founder charter amendments are the only founder-involvement path under danger-builder beyond the kill-switch.
 
-11. **Before deferring to founder on any operational task, enumerate available tools.** Whenever you're about to ask the founder to do something operational — edit a file outside the project scope, run a CLI, modify DNS, send email, create an account, edit config files, paste values into a dashboard — you MUST first confirm the task can't be done autonomously using installed tooling.
+11. **Before deferring to founder on any operational task, enumerate available tools via `Planning/.capability-sheet.md`.** If the sheet names a tool that can perform the task, use it. Generate the sheet at session start via `auto-claude capabilities > Planning/.capability-sheet.md`; regenerate after >1h or `/update-tools`. Consent gates (destructive actions, money commitments, charter restrictions) still apply.
 
-    **At session start** (first turn in a new session), generate the capability sheet and save it to `Planning/.capability-sheet.md`:
-    ```bash
-    mkdir -p Planning && /path/to/auto-claude/bin/auto-claude capabilities > Planning/.capability-sheet.md
-    ```
-    The sheet lists what CLIs, skills, agents, and MCP servers are callable on this machine right now. It's authoritative; `setup-tools/install.md` is documentation of what SHOULD be installed, not what IS. Regenerate the sheet if the session spans >1 hour OR after `/update-tools` runs.
+12. **Before spawning any sub-agent, verify it exists in `Planning/.capability-sheet.md`.** If absent, install it per `setup-tools/install.md` or substitute the closest catalog match and note the swap. Procedure: `command-center/rules/sub-agent-workflow.md` § "Before every sub-agent spawn".
 
-    **Before every deferral**, consult the sheet. If it names a tool that can perform the task, use it. Example: "I need to add a CNAME record" + sheet shows `domain-mcp` registered → invoke `mcp__domain-mcp__dns` rather than asking the founder to edit Dynadot. Example: "I need to send an email" + sheet shows `agentmail` on PATH → run the CLI rather than asking the founder to send it.
-
-    **This rule does NOT override consent gates.** If the action is destructive, crosses a charter restriction, commits money beyond a declared cap, or is otherwise something the founder would reasonably want a say in — ask. The rule prevents needless deferral on things where the founder's answer would just be "yes, do it." Hard-stops, always-on rules, and charter bindings all still apply.
-
-12. **Before spawning any sub-agent, verify it exists in the catalog.** Every spawn MUST be preceded by a check against `Planning/.capability-sheet.md` (section "Agents at ~/.claude/agents/"). If the named agent is absent from the catalog, either (a) install it per `setup-tools/install.md` or (b) pick the closest substitute from the catalog and note the swap in the spawn context. Spawning by name without verification risks silent-fail or mis-routing. The catalog is authoritative; agent names that came to mind first are not.
-
-    The corresponding procedural checklist (catalog → instruction file → alternatives) lives at `command-center/rules/sub-agent-workflow.md` § "Before every sub-agent spawn".
-
-13. **Before appending to any `*-principles.md` file, read its "Contract for new rules" block at the top and match the format exactly.** The Contract governs rule shape (one-line imperative + one-line `Why:`), sequential numbering, H2 placement, prohibited content (war stories, wave refs, `Context:`/`Cross-ref:` fields, project names), and per-file spillover (stack-specific → § Code conventions / plan-template mechanics / placeholder tokens / compact inline, depending on file). If the rule you want to add can't satisfy the Contract — stop and reformulate, don't write.
-
-    Applies to every write path: `/retro` output routing, Stage 8/10 orchestrator promotions, manual edits. The in-file Contract is authoritative; this rule just forces you to read it before writing.
-
-    Self-review gate: before committing the change, re-read the Contract and confirm the new rule matches. One sentence of rule, one sentence of why — no trailing explanatory paragraphs, no "Discovered by", no "Context:" field.
+13. **Before appending to any `*-principles.md` file, read its "Contract for new rules" block and match the format exactly.** One-line rule + one-line `Why:`, sequential numbering, no war stories, no wave refs, no `Context:`/`Cross-ref:` fields. Applies to `/retro` routing, Stage 8/10 promotions, manual edits. Self-review gate: re-read the Contract before committing.
 
 ---
 

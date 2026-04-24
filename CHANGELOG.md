@@ -34,6 +34,29 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.21.0 — 2026-04-24
+
+First token-optimizer-informed release. Trims `CLAUDE.md` based on audit findings: inline skills list (runtime-injected, pure duplicate), TaskMaster command table (duplicates `--help`), and always-on rules 11-13 (4-11 line prose blocks compressed to 1-2 line directives).
+
+### Changed
+- **`CLAUDE.md`** — 158 → 133 lines:
+  - **Skills list** → one-line pointer to `skill-use.md`. The runtime system-reminder injects all skills with their descriptions every turn; duplicating 26 skill names in CLAUDE.md was pure overhead.
+  - **TaskMaster command table** (6 rows) → single sentence pointing at `npx task-master --help` for full command list plus the 6 common commands inline.
+  - **Rule #11 (capability sheet)** — 4 paragraphs → 1 sentence. Session-start generation command kept; example deferrals and "does NOT override consent gates" footnote deleted (covered by other always-on rules).
+  - **Rule #12 (agent catalog check)** — 2 paragraphs → 1 sentence. Procedural checklist pointer preserved.
+  - **Rule #13 (principles Contract)** — 3 paragraphs → 1 sentence. Format spec pointer preserved.
+
+### Measured savings
+- Per-message overhead: ~4,422 tokens (auto-claude CLAUDE.md) → ~3,679 tokens (-743 tokens, -17%).
+- Global context overhead (measured by token-optimizer): 26,779 → 25,627 tokens (-1,152 tokens, -4.3% overall).
+
+### Consumer sync
+- **Breaking:** no. Content preserved; only the verbose prose around rules was trimmed. Rule numbers, trigger table, and section structure unchanged.
+- **Changed files (review recommended):** `CLAUDE.md`.
+- **Migration action:** none.
+
+---
+
 ## v0.20.1 — 2026-04-24
 
 Removes the per-file redundant pointer lines added in v0.20.0. The always-on rule #13 in CLAUDE.md + housekeeping.md paragraph already cover every write path; the five "New rules enter via the Contract below..." lines in each principles file were noise.
