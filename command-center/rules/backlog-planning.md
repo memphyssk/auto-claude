@@ -4,25 +4,15 @@
 
 ---
 
-## Scope — NOT a substitute for the refresh ritual
+## Scope
 
-**This ritual replenishes atomic wave-sized tasks** under the existing milestone pipeline in `command-center/product/ROADMAP.md`. It produces 3-5 next waves of concrete TaskMaster tasks.
+**Tactical, task-level.** Replenishes atomic wave-sized TaskMaster tasks under the existing milestone pipeline in `product/ROADMAP.md`. Produces 3-5 next waves of concrete tasks.
 
-**This ritual is NOT a strategic roadmap refresh.** If the roadmap itself needs re-evaluation (new milestones, killed milestones, changed horizons, <3 `planned` milestones left), run `command-center/rules/roadmap-refresh-ritual.md` FIRST — then invoke this ritual to populate atomic tasks under the refreshed milestones.
+**NOT a strategic roadmap refresh.** If the roadmap itself needs re-evaluation (new/killed milestones, changed horizons, <3 `planned` milestones left) → run `rules/roadmap-refresh-ritual.md` FIRST, then this ritual to populate tasks under refreshed milestones.
 
-Sequence when both are needed:
+Sequence: `roadmap-refresh-ritual` (strategic) → `backlog-planning` (tactical, this file) → Stage 0b (per-wave assignment).
 
-```
-roadmap-refresh-ritual        (strategic, milestone-level)
-      │
-      ▼
-backlog-planning              (tactical, task-level — this file)
-      │
-      ▼
-Stage 0b per wave             (per-wave assignment)
-```
-
-**Pre-check at invocation:** count `planned` milestones in ROADMAP.md. If `<3`, STOP and propose the refresh ritual to the founder before proceeding here.
+**Pre-check:** count `planned` milestones. If <3 → STOP and propose the refresh ritual before proceeding.
 
 ---
 
@@ -110,6 +100,11 @@ Shall I proceed?
 
 ## Anti-patterns
 
-- **Do not skip Step 2 (`/plan-ceo-review`).** Without the strategic challenge, you will blindly copy competitors and ship features with no differentiation.
-- **Do not present the backlog without differentiation levels.** If the user can't tell at a glance which items are us-only vs table-stakes, they can't make informed prioritization decisions.
-- **Do not spawn implementers from the backlog file directly.** The backlog is a menu; the wave plan is the recipe. Always go through Stage 1 (Plan) of the wave loop after backlog approval.
+### 1. Never skip Step 2 (`/plan-ceo-review`).
+Why: without the strategic challenge you blindly copy competitors and ship features with no differentiation.
+
+### 2. Never present the backlog without differentiation levels per item.
+Why: if the user can't tell at a glance which items are us-only vs table-stakes, they can't prioritize informedly.
+
+### 3. Never spawn implementers from the backlog file directly.
+Why: the backlog is a menu; the wave plan is the recipe. Always route approved backlog items through Stage 1 (Plan) of the wave loop.

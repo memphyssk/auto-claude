@@ -1,6 +1,6 @@
 # Skill Use
 
-Claude Code skills live in `~/.claude/skills/`. **gstack** is one collection (`~/.claude/skills/gstack/`) but not the only one — other collections are installed alongside it. When reaching for a skill, scan `~/.claude/skills/` broadly, not just the gstack subfolder. This file maps the load-bearing skills to where in the wave loop they fire. Skills NOT listed here are either unused or edge cases — don't invent integration points without discussion.
+Skills live at `~/.claude/skills/` — gstack is one collection, others install alongside it. Scan the full directory, not just `gstack/`. This file maps load-bearing skills to their wave-loop fire points. Skills not listed are unused or edge cases — don't invent integration points without discussion.
 
 ---
 
@@ -79,14 +79,14 @@ These are **plan-quality gates** — they catch architectural/UX problems Karen 
 
 ## ⚠️ Critical rules
 
-### `/qa` supplements Playwright but NEVER replaces it
-The Playwright swarm (Stage 5) is the authoritative test mechanism with persona discipline, network-tab scanning, and regression coverage. `/qa` is a fast pre-merge smoke test at Stage 4b that catches obvious crashes before the full swarm runs.
+### 1. `/qa` supplements Playwright; never replaces it.
+Why: the Stage 5 Playwright swarm is authoritative (persona discipline, network scanning, regression coverage) — `/qa` is a fast Stage 4b smoke test that catches obvious crashes before the full swarm.
 
-### Plan-review skills supplement Karen+Jenny but NEVER replace them
-`/plan-eng-review`, `/plan-design-review`, `/plan-devex-review`, and `/autoplan` catch different failure modes (architecture, UX, DX). Karen (hallucination) and Jenny (spec-match) remain the non-negotiable Stage 2 baseline. Plan-review skills fire BEFORE Stage 2, not instead of it.
+### 2. Plan-review skills supplement Karen + Jenny; never replace them.
+Why: `/plan-eng-review`, `/plan-design-review`, `/plan-devex-review`, `/autoplan` catch architecture / UX / DX failure modes that Karen (hallucination) and Jenny (spec-match) don't. Plan-review fires BEFORE Stage 2, not instead.
 
-### `/ship` and `/land-and-deploy` are optional — manual workflow still works
-Our current `git commit` + `gh pr create` + manual CI watching is explicitly supported. `/ship` adds version bump + CHANGELOG for formal-release waves but isn't mandatory.
+### 3. `/ship` and `/land-and-deploy` are optional; manual workflow still works.
+Why: `git commit` + `gh pr create` + manual CI watching is explicitly supported. `/ship` adds version bump + CHANGELOG for formal-release waves; not mandatory.
 
 ---
 

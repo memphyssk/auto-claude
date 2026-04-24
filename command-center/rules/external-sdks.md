@@ -6,44 +6,19 @@ Pre-build checklist + SDK registry for tasks touching external SDKs, APIs, or th
 
 ## Section 1: General Rules
 
-### When this fires
-
-This process triggers at **Stage 2 (Plan)** whenever a task involves integrating, upgrading, or significantly interacting with an external SDK or third-party service. The orchestrator checks the task description for SDK/tool names and triggers the research process before the plan is written.
+Fires at **Stage 2 (Plan)** whenever a task integrates, upgrades, or significantly interacts with an external SDK or third-party service. Orchestrator scans the task description for SDK/tool names and runs the research process before the plan.
 
 ### The research process
 
-**Step 1: Check the SDK registry (Section 3 below)**
-Does `SDK-Docs/<SDK-Name>/` already exist? If yes, read it. If the "Last verified" date is recent and the installed version matches, skip to Step 4. If stale or missing, proceed to Step 2.
+1. **Check the SDK registry (§3).** If `SDK-Docs/<SDK-Name>/` exists with recent "Last verified" date and matching installed version → skip to Step 4. Otherwise continue.
+2. **Spawn `research-analyst`** to read the SDK's official docs + GitHub (README, CHANGELOG, issues tagged with our stack: Next.js / NestJS / Netlify / Railway) + migration guides for the target version + platform-specific gotchas. External research from the SDK author's world — never blog posts or Stack Overflow.
+3. **Write the SDK doc** to `SDK-Docs/<SDK-Name>/<sdk-name>.md` using the template in §2.
+4. **Link to the task.** Add `SDK Reference: SDK-Docs/<SDK-Name>/<sdk-name>.md` to TaskMaster task details. Implementers read it at Stage 4.
+5. **Enrich after implementation (Stage 8).** Add an "Integration-Specific Findings" section with platform quirks, adapter patterns, env var gotchas, what differed from official docs, bugs we hit + fixes. These findings compound across waves.
 
-**Step 2: Spawn a research agent**
-Spawn a `research-analyst` agent with the following instructions:
-- Go to the SDK's official website and documentation (use WebFetch / WebSearch)
-- Read the official getting-started guide, API reference, and migration guides for the target version
-- Explore the SDK's GitHub repository: README, CHANGELOG, open issues tagged with our stack (Next.js, NestJS, Netlify, Railway)
-- Search for known issues, community solutions, and platform-specific gotchas
-- Read example implementations from the official docs — not blog posts, not Stack Overflow
-- This is EXTERNAL research from the SDK author's world, not from our codebase
+### Auto-linking
 
-**Step 3: Write the SDK doc**
-Output to `SDK-Docs/<SDK-Name>/<sdk-name>.md` using the template in Section 2. This file captures the SDK's official API surface, patterns, and constraints from the author's perspective.
-
-**Step 4: Link to the task**
-Add `SDK Reference: SDK-Docs/<SDK-Name>/<sdk-name>.md` to the TaskMaster task details. Implementer agents will read this file before writing code at Stage 4.
-
-**Step 5: Enrich after implementation (Stage 8)**
-At wave closeout, implementers ADD an "Integration-Specific Findings" section to the SDK doc with:
-- What we learned during our integration (platform quirks, adapter patterns, env var gotchas)
-- What differed from the official docs
-- What broke and how we fixed it
-These findings accumulate over time, making the SDK doc increasingly valuable for future tasks.
-
-### Auto-linking at planning time
-
-When writing or describing ANY task in TaskMaster (Stage 2 or Stage 11), scan the task description for SDK/tool names. If a matching `SDK-Docs/<Name>/` file exists, attach it to the task details:
-```
-SDK Reference: SDK-Docs/<SDK-Name>/<sdk-name>.md
-```
-This ensures every developer working on the task has the research at hand without re-discovering known gotchas.
+When writing ANY task in TaskMaster (Stage 2 or 11), scan the description for SDK/tool names. If a matching `SDK-Docs/<Name>/` file exists, attach `SDK Reference: SDK-Docs/<SDK-Name>/<sdk-name>.md` to the task details. Ensures implementers have research at hand without re-discovering known gotchas.
 
 ---
 

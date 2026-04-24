@@ -34,6 +34,27 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.23.0 — 2026-04-24
+
+md-optimise Group A1 batch 2: 4 files — `skill-use.md`, `backlog-planning.md`, `external-sdks.md`, `security-waves.md`. 428 → 357 lines (-71 lines, -17%).
+
+### Changed
+
+- **`rules/skill-use.md`** (95 lines, unchanged net): intro trimmed; 3 "Critical rules" converted to Contract format (rule + Why).
+- **`rules/backlog-planning.md`** (115 → 110 lines): "Scope" intro compressed from 3 paragraphs to 4 lines; Anti-patterns section 3 bullets → 3 Contract-format rules.
+- **`rules/external-sdks.md`** (121 → 96 lines, -25): "The research process" 5 steps converted from labeled prose blocks to numbered one-liners; "When this fires" paragraph trimmed. Template and SDK registry unchanged.
+- **`rules/security-waves.md`** (97 → 56 lines, -42): full rewrite. Stripped wave-ref war stories ("Wave g26 lesson", "Wave g41 passed Karen + Jenny gates...", "Wave g45 lesson") per Contract rule forbidding wave refs. Converted 6 distinct principles into 8 Contract-format rules with Why lines. Removed duplicate M2M rule (previously appeared as #4 and #7). Mandatory Stage 6 scenarios + "baseline security" + "related rules" preserved as reference sub-sections.
+
+### Group A1 remaining
+
+v0.24.0 scope: `daily-checkpoint.md`, `roadmap-lifecycle.md`, `roadmap-refresh-ritual.md`, `product-mega-testing/product-mega-testing.md` (~850 lines total).
+
+### Consumer sync
+- **Breaking:** no. Security-waves content preserved; wave-specific war stories removed per the Contract. Rule numbering is file-local so external references by heading should be updated to new heading names.
+- **Changed files (review recommended):** `rules/skill-use.md`, `rules/backlog-planning.md`, `rules/external-sdks.md`, `rules/security-waves.md`.
+
+---
+
 ## v0.22.0 — 2026-04-24
 
 Start of md-optimise Group A1 (rules/*.md flat-rules rollout). Pilot trio: `sub-agent-workflow.md`, `triage-routing-table.md`, `housekeeping.md`. Applies the rule+why discipline proven across principles files in v0.14.0-v0.20.1.
