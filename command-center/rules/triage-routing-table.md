@@ -16,6 +16,7 @@ Referenced by Stage 7b and CLAUDE.md rule #4. When the orchestrator encounters a
 | **Database** | Slow query, migration failure, constraint violation, deadlock, connection pool exhaustion | `database-administrator` or `sql-pro` | If query plan analysis is needed |
 | **Performance** | Slow page load, high TTFB, large bundle, memory leak, N+1 query, rate limit hit | `performance-engineer` or `database-optimizer` | **Always** — perf issues need measurement before fixes |
 | **WebSocket / Real-time** | Events not received, presence stale, chat messages lost, reconnection failure | `websocket-engineer` | **Always** — real-time bugs are timing-dependent |
+| **Infra-gap** | Missing env var, unset API key, tool unavailable, credential not provisioned | Orchestrator self-handles: create `TRIAGE` TaskMaster row + spec file | Never — not a CEO decision |
 | **Unknown / Complex** | Error doesn't fit above categories, multiple symptoms, root cause unclear, intermittent failure | **`/investigate` mandatory** | **Always** — this is the whole point |
 
 ## Decision flow

@@ -31,6 +31,7 @@ All must be true. If any fails, abort and surface to founder:
 - [ ] `command-center/Sub-agent Instructions/ceo-agent-instructions.md` exists
 - [ ] BOARD composition intact (all 7 member agent files present — see `board-members.md`)
 - [ ] Kill-switch mechanism tested: `touch /tmp/ceo-mode-stop-test && rm /tmp/ceo-mode-stop-test` succeeds
+- [ ] ceo-agent spawn probe succeeds: `Agent(subagent_type=ceo-agent)` with `--probe` directive returns within 60s and writes a probe entry to `Planning/ceo-digest-YYYY-MM-DD.md`
 
 Print verification results in one table. Fail fast if any prereq fails.
 
@@ -71,7 +72,7 @@ Invoke `/loop` skill via Skill tool with the autonomous-dynamic sentinel.
 
 Step ordering is authoritative. Steps 1-11:
 
-0. **ceo-agent stall check.** Invoke ceo-agent with the `stall-monitor` directive. Reads `STATUS-meta.yaml`; gates on: STATUS unchanged since last check AND `(now - last_modified_at) >= 600s`. If either condition false → update STATUS-meta, pass through. If both true → classify stall + act + write audit entry + send email + update STATUS.
+0. **ceo-agent stall check.** Spawn `Agent(subagent_type=ceo-agent)` with the `stall-monitor` directive. Orchestrator role-play is forbidden. Audit entry MUST record the agent run ID. Spawned ceo-agent reads `STATUS-meta.yaml`; gates on: STATUS unchanged since last check AND `(now - last_modified_at) >= 600s`. If either condition false → update STATUS-meta, pass through. If both true → classify stall + act + write audit entry + send email + update STATUS.
 1. **Kill-switch check.** If `/tmp/ceo-mode-stop` exists: set STATUS=BLOCKED, send halt email, exit loop. Supersedes all subsequent steps.
 2. **Founder-message check.** If any founder message arrived since last tick: halt loop, send halt email, set STATUS=BLOCKED.
 3. **STATUS mode check.** If STATUS=`STOP`: halt per step 1.
@@ -167,6 +168,8 @@ These apply regardless of `ceo-bound.md` contents:
 - ceo-agent cannot halt the loop.
 - ceo-agent cannot run during onboarding (v0-v11).
 - ceo-agent cannot write to project state for tools not in § Tool allowlist.
+- ceo-agent cannot run the wave loop. Orchestrator owns Stages 0-11.
+- ceo-agent writes to STATUS or `handoff.md` only via stall-nudge.
 
 ## Exit conditions
 

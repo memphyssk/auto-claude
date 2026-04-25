@@ -34,6 +34,42 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.26.0 — 2026-04-24
+
+**Orchestrator/CEO boundary.** Drawn from a danger-builder run on a downstream project where the orchestrator role-played ceo-agent inline across 6 ticks, authored the wave plan, ran the gate, shipped the PR, sent per-decision emails on routine actions, and then ran `git reset --hard` post-merge wiping uncommitted operational config. Root cause: ceo-agent was never spawned as a sub-agent, so the cognitive boundary, charter logic, 5-specialist budget, and act-first protocol all collapsed into orchestrator state.
+
+The boundary now lives in three places: architectural facts in `danger-builder-mode.md` § Hard invariants, charter restrictions in `ceo-bound.md` § 6, and positive enforcement of what CEO IS in `ceo-agent-instructions.md`.
+
+### `command-center/management/danger-builder-mode.md`
+
+- **§ Tick behavior step 0** — requires `Agent(subagent_type=ceo-agent)` spawn for stall-monitor; orchestrator role-play forbidden; audit entry must record agent run ID.
+- **§ Entry conditions § 1 Verify prerequisites** — added ceo-agent spawn-probe check (`--probe` directive, 60s, writes probe entry to digest).
+- **§ Hard invariants** — added two architectural facts: ceo-agent cannot run the wave loop (orchestrator owns Stages 0-11); ceo-agent writes to STATUS or `handoff.md` only via stall-nudge.
+
+### `command-center/management/ceo-bound.md`
+
+- **New § 6 — Disallowed wave-process actions** — two charter entries in existing dry style: CEO must NOT run the wave loop or any stage 0-11 action; CEO must NOT write STATUS or `handoff.md` outside a stall-nudge.
+
+### `command-center/Sub-agent Instructions/ceo-agent-instructions.md`
+
+- **§ Role** — added positive trigger list: CEO fires on BOARD splits, HARD-STOP vetoes, Tier 3 product decisions when BOARD splits, charter-amendment proposals, stall-nudges, inbox-reply handling. Routine wave actions (stage advance, plan write, gate runs, PR ship) are orchestrator work.
+- **§ Prime directives** — grew from 8 to 12. Promoted four items from the deleted NEVER list as positive directives: read FOUNDER-BETS + last 5 product-decisions before every decision; decide one outcome (email reports the decision, not options); when overriding HARD-STOP veto, weigh by name + prefix `⚠ HARD-STOP OVERRIDDEN`; apply proxy skepticism to own past decisions before citing them.
+- **§ Decision procedure Step 5a** — rewritten. CEO emits the directive into `handoff.md` or a TaskMaster row; orchestrator runs it. CEO does not flip STATUS, advance stages, or call specialists directly. Stall-nudges are the one exception.
+- **§ Tier 3 — execution** — rewritten as "you decide; orchestrator picks up." Output is audit entry + email + directive line. Orchestrator routes execution to specialists.
+- **§ Stall-monitor procedure** — added one-line affirmation that stall-nudges are the ONE decision class where CEO writes STATUS and `handoff.md` directly.
+- **§ What you will NEVER do** — deleted entirely (10 items). 4 already lived in the boundary docs as Hard invariants; 6 were inversions of existing positive directives. Replaced with single pointer to `danger-builder-mode.md` § Hard invariants and `ceo-bound.md`.
+
+### `command-center/rules/triage-routing-table.md`
+
+- New row **Infra-gap** — missing env var, unset API key, tool unavailable, credential not provisioned → orchestrator self-handles via TRIAGE TaskMaster row + spec file. Never a CEO decision. Closes the gap that made the downstream run fire a CEO email about a missing `ANTHROPIC_API_KEY`.
+
+### Consumer sync
+
+- **Breaking:** no. Boundary entries are additive in `ceo-bound.md` § 6 and `danger-builder-mode.md` § Hard invariants. Existing waves and existing CEO behavior under the previous ruleset are still valid; the new entries make architectural assumptions that were already implicit explicit and enforceable.
+- **Migration action:** consumer projects pulling this release inherit the boundary automatically. Active on next danger-builder mode entry.
+
+---
+
 ## v0.25.0 — 2026-04-24
 
 **Megawave release.** Four groups executed in parallel (4 background agents) as one wave per founder request:

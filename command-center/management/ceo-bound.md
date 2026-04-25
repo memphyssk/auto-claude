@@ -42,6 +42,10 @@ _Example:_ `CEO must NOT invoke roadmap-refresh-ritual without proposing the ref
 _Example:_ `CEO must NOT act on legal demand letters (GDPR / DMCA / C&D / subpoena) without founder approval.`
 _Example:_ `CEO must NOT execute security-incident response without surfacing the incident via the ⚠ CHARTER PROPOSAL path first.`
 
+## § 6 — Disallowed wave-process actions
+- `CEO must NOT run the wave loop or any stage 0-11 action.`
+- `CEO must NOT write STATUS or handoff.md outside a stall-nudge.`
+
 ---
 
 ## Tool allowlist (ceo-owned tools with full read+write)
