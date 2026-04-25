@@ -29,7 +29,7 @@
 | 8 | `stages/stage-8-closeout.md` | Update docs + produce closeout |
 | 9 | `stages/stage-9-observations.md` | Behavioral retrospective |
 | 10 | `stages/stage-10-distillation.md` | Promote observations to instructions |
-| 11 | `stages/stage-11-next.md` | Pick next task, return to Stage 0 |
+| 11 | `stages/stage-11-next.md` | Pick next wave (seed task + scope), return to Stage 0 |
 
 ## How to use this loop
 
@@ -71,7 +71,7 @@
 - **Stage 2**: `npx task-master next` to identify what to work on (after reframing at Stage 1)
 - **Stage 4**: `npx task-master set-status --id=N --status=in-progress` when starting execution
 - **Stage 8**: `npx task-master set-status --id=N --status=done` when shipping
-- **Stage 11**: `npx task-master next` to pick the next wave
+- **Stage 11**: `npx task-master next` returns the seed task; Stage 11 decides the next wave's scope (seed alone vs seed + bundled siblings)
 
 ## Operational rules
 

@@ -140,7 +140,7 @@ Each stage file lives at `command-center/rules/onboarding/stages/stage-vN-<name>
 8   Closeout + doc updates
 9   Observations retro (knowledge-synthesizer writes)
 10  Distillation (karen promotes obs → instructions)
-11  Next task
+11  Next wave (seed task + scope; bundle siblings only when size rubric permits)
 ```
 
 Each stage file lives at `command-center/rules/build-iterations/stages/stage-<N>-<name>.md`.

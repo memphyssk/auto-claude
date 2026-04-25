@@ -34,6 +34,81 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.36.0 — 2026-04-25
+
+**Loop-continuity bug: orchestrator killed the /loop while "awaiting founder" under danger-builder.** Surfaced by an actual incident: orchestrator hit a Stage 1 framer-vs-ceo-reviewer conflict mid-wave, manufactured an exception to the routing table citing a retro Obs ("small splits don't justify BOARD overhead"), surfaced options to the founder, ended the turn without `ScheduleWakeup`. Loop went dead silently — no further ticks, ceo-agent's 600s stall threshold never reached because no tick spawned ceo-agent in the first place.
+
+Two failures stacked:
+1. **Routing bypass** — orchestrator treated a retro Obs as license to skip BOARD → ceo-agent routing under danger-builder. Obs files are behavioral notes for distillation, never routing-table overrides.
+2. **Halt overload** — Tick step 10 read "unless STATUS=DONE or halted" as permissive ("awaiting founder = halt"). Under danger-builder, "awaiting founder" isn't a routing class — former-founder-asks go to ceo-agent — so it was never a valid pause condition. The orchestrator hadn't been told that explicitly enough.
+
+### `command-center/management/danger-builder-mode.md`
+
+- **§ Tick behavior step 10** — rewritten. "unless STATUS=DONE or halted" replaced with explicit halt-signal enumeration tied to § Exit conditions (kill-switch / founder message / STATUS=STOP / mode flag change / charter destroyed). Adds: *"Awaiting founder is NOT a halt under danger-builder — that routing class does not exist; former-founder-asks route to ceo-agent. Skipping ScheduleWakeup for any other reason kills the loop silently."*
+- **§ Tick prompt bullet 3** — `BLOCKED-awaiting-founder` removed from the natural-pause list. Replaced with note: that state isn't reachable under danger-builder; BLOCKED-awaiting-ceo-agent is rare since CEO acts first.
+- **§ Escalation routing table** — appended one-line invariant: *"This table is not Obs-editable. A retro observation about cost/cycle-time is not grounds to bypass routing; the table is the contract."*
+
+### Why this matters
+
+The orchestrator violated routing in plain sight and killed the loop, with the founder unaware until they entered the session 6+ minutes later and found the chat sitting idle. Three structural gaps allowed it: (1) "awaiting founder" was named in the tick prompt as a valid pause; (2) step 10's halt definition was open-set instead of closed; (3) the routing table didn't say "this is the contract, not a suggestion." v0.36.0 closes all three.
+
+### What it doesn't change
+
+- Mode flag is still the only routing input; founder presence in the session does not toggle modes (this was already true; orchestrator violated it).
+- Routing table behavior unchanged — only the editability assertion is added.
+- CEO-agent stall-monitor unchanged. The bug was upstream of CEO-agent: ticks weren't firing, so CEO-agent never got a chance to detect the stall.
+
+### Consumer sync
+
+- **Breaking:** no behavioral schema change. All edits clarify pre-existing intent.
+- **Changed files (review recommended):** `command-center/management/danger-builder-mode.md`, `command-center/VERSION`.
+- **Migration action:** none beyond `auto-claude sync --to=v0.36.0`. Active on next danger-builder tick.
+
+---
+
+## v0.35.0 — 2026-04-25
+
+**Stage 11 reframe: picks the next *wave*, not the next *task*.** Surfaced during a doc walkthrough: Stage 11 was titled "Next Task" and step 2 read *"Query TaskMaster for the next task … if a specific task is recommended, that becomes the next wave scope."* That collapsed the wave/task distinction at the loop's transition point — confusing in plain reading and structurally wrong, because Stage 0 (prior-work query) and Stage 0b (roadmap-alignment + product-decision routing) both presume the wave is already picked. With Stage 11 only "picking a task," scope-bundling decisions had nowhere to live.
+
+Reframe: Stage 11 picks the **wave** (seed task + any bundled siblings/sub-tasks/dependent successors that share the same surface), bounded by Stage 1's RESCOPE-AUTO-SPLIT size rubric (>30 files / >30 primitives / >5K LOC / >250K Stage 4 context). Default scope = seed task alone — single-task waves remain the norm. Bundling is the exception, not the rule, and never trips the size rubric.
+
+Stage 0 then runs prior-work query against the picked wave's topic; Stage 0b walks the unassigned queue + resolves product decisions for the picked wave's tasks. Each stage owns its own slice of the wave-pickup → wave-execution chain.
+
+### `command-center/rules/build-iterations/stages/stage-11-next.md`
+
+- **Title** — `Stage 11 — Next Task` → `Stage 11 — Next Wave`.
+- **Purpose** — rewritten to name Stage 11's wave-picking responsibility and clarify the boundary with Stage 0 / Stage 0b.
+- **Step 2** — rewritten as "Pick the next wave." Seed task = `task-master next` output. Wave scope decision rules added: default seed alone, bundle only when surface-coupled AND under size-rubric limits.
+- **Step 3** — "no actionable tasks" → "no actionable wave can be picked"; daily-checkpoint resolution loops back to Step 2 (re-pick the wave).
+- **Step 6** — "If a task is identified" → "If a wave is picked"; roadmap health check unchanged; proceed text now references "picked wave scope (seed task ID + any bundled task IDs)."
+- **STATUS branch table** — every "Task found / Task" cell rewritten as "Wave picked / Wave." HANDOFF case writes seed task ID + bundled task IDs + scope notes (was: task ID, title, pre-work notes).
+- **Exit criteria + Next** — reflect wave-picking, not task-picking.
+
+### `command-center/rules/build-iterations/wave-loop.md`
+
+- Stage 11 index row: "Pick next task, return to Stage 0" → "Pick next wave (seed task + scope), return to Stage 0."
+- Task-management section: clarified that `npx task-master next` returns the seed task; Stage 11 decides scope.
+
+### `README.md`
+
+- Wave-loop ASCII diagram: `11  Next task` → `11  Next wave (seed task + scope; bundle siblings only when size rubric permits)`.
+
+### Why this matters
+
+Pre-v0.35.0, Stage 11 named a task; Stage 0/0b presumed a wave. Concept-collision at the loop hinge. Bundling decisions (when does a single TaskMaster row deserve a wave vs when does it ride along with siblings?) had no formal home — they were either ignored (every wave = one task, even when 3 tightly-coupled tasks would naturally ship together) or done implicitly with no rubric. v0.35.0 gives wave scoping a named owner (Stage 11), an explicit rubric (Stage 1 size thresholds, reused), and a default (seed alone, bundle is exception). The wave/task distinction is now consistent across stage files.
+
+### Alignment with v0.34.0 CEO doctrine
+
+v0.34.0 said CEO-agent's stall-nudge directives must point at *process*, never name specific tasks. That's CEO's boundary — CEO sits outside the wave loop. The orchestrator (which runs Stages 0-11) DOES need to know which task/wave to work on; that's exactly what Stage 11 is for. v0.35.0 sharpens Stage 11's role without conflicting with v0.34.0 — different agents, different jobs.
+
+### Consumer sync
+
+- **Breaking:** no behavioral schema change. The wave loop still runs 0 → 11; STATUS branches still resolve to RUNNING / HANDOFF / IDLE / DONE / BLOCKED; `task-master next` is still the data source. The change is naming + explicit scope-decision rules at Stage 11.
+- **Changed files (safe-overwrite):** `command-center/rules/build-iterations/stages/stage-11-next.md`, `command-center/rules/build-iterations/wave-loop.md`, `README.md`, `command-center/VERSION`.
+- **Migration action:** none beyond `auto-claude sync --to=v0.35.0`. Active on next Stage 11 entry.
+
+---
+
 ## v0.34.0 — 2026-04-25
 
 **CEO stall-nudge: unblock, don't operate.** Surfaced during a dry-run walkthrough of the IDLE-with-work case: the v0.32.0+ Hard invariant says *"ceo-agent cannot run the wave loop or any stage 0-11 action,"* but the stall classification table in `ceo-agent-instructions.md` was unmodified from earlier — it said *"Pick the task. Write handoff.md pointing at it."* Picking a specific task IS Stage 11 work. The instruction file contradicted the boundary doc.

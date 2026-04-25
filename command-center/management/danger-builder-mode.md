@@ -82,7 +82,7 @@ Step ordering is authoritative. Steps 1-11:
 7. **Execute routed action** until natural pause or 75% context budget. **Natural pause** = STATUS becomes IDLE / BLOCKED / DONE, OR you're blocked on a human or external timeline >10 min (founder reply, code review, slow-deploy queue). Programmatic checks that resolve in <10 min (CI run, fast-deploy probe, monitor poll) are NOT pauses — poll inside the turn via `Bash(run_in_background=true)` + Monitor + `until` loop. Chunking active orchestrator work into multiple ticks is forbidden.
 8. **75% context rule:** write handoff.md, set STATUS=HANDOFF, end turn.
 9. **Update STATUS before ending turn.** If STATUS changed this tick, also update `STATUS-meta.yaml`.
-10. **Call ScheduleWakeup** with delay per STATUS table, unless STATUS=DONE or halted.
+10. **Call ScheduleWakeup** with delay per STATUS table, unless STATUS=DONE OR one of the five halt signals from § Exit conditions has fired (kill-switch file / founder message in session / STATUS=STOP / mode flag changed / `ceo-bound.md` deleted or empty). **"Awaiting founder" is NOT a halt under danger-builder** — that routing class does not exist; former-founder-asks route to ceo-agent. Skipping ScheduleWakeup for any other reason kills the loop silently.
 11. **Per-decision notification.** After every ceo-agent decision, send a fresh email (new thread) via AgentMail. One email per decision. Capture `thread_id` into the audit entry. See `notifications/agentmail.md` for templates.
 
 Reply-handling (step 4) runs before routing (step 6) so founder replies take precedence over new escalations.
@@ -96,7 +96,7 @@ Tick under danger-builder. STATUS=<value>, wave=<N>.
 
 1. First tool call MUST be Agent(subagent_type=ceo-agent) with directive "stall-monitor". Orchestrator role-play forbidden.
 2. After ceo-agent returns, route per command-center/management/danger-builder-mode.md § Tick behavior steps 1-9.
-3. Continue working in this turn until: IDLE, BLOCKED-awaiting-founder, 75% context, or DONE.
+3. Continue working in this turn until: IDLE, 75% context, or DONE. (BLOCKED-awaiting-founder is NOT valid under danger-builder — former-founder-asks route to ceo-agent. BLOCKED-awaiting-ceo-agent is rare since CEO acts first.)
    Programmatic waits <10 min (CI, fast-deploy probe, monitor poll) → poll inside the turn via Bash(run_in_background=true) + Monitor + until-loop. Do NOT ScheduleWakeup.
    Human / external waits >10 min (founder reply, code review, queued deploy) → write handoff.md, then ScheduleWakeup at STATUS-appropriate delay.
 ```
@@ -134,6 +134,8 @@ All states tick at 60s. The CEO stall-detection threshold remains 600s — gatin
 | backlog-planning founder-ask triggers | founder | **ceo-agent** |
 | Stage 11 hard-stop branch (destructive / money / veto) | founder | **ceo-agent (unless ceo-bound.md restricts)** |
 | Stage 4 execution errors beyond triage | founder | BOARD → **ceo-agent if split** |
+
+**This table is not Obs-editable. A retro observation about cost/cycle-time is not grounds to bypass routing; the table is the contract.**
 
 ## Charter semantics
 
