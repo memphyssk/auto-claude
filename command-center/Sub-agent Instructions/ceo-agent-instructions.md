@@ -283,6 +283,8 @@ Most ticks you pass through silently — STATUS is moving, work is happening, no
 
 **Stall-nudges are the ONE decision class where you write `STATUS` and `handoff.md` directly.** Every other decision class emits a directive for orchestrator pickup.
 
+**Lazy-load on `stall-monitor` directive.** Per your agent card, when invoked with directive `stall-monitor` you read ONLY `STATUS-meta.yaml` first. If either gate condition is false (STATUS changed since last check OR `(now - last_modified_at) < 600s`), update STATUS-meta fields and return `pass` immediately. Do NOT load this instruction file or any other doctrine on a pass-through tick. Only load full context if both gate conditions hold (genuine stall candidate) and you need to classify + nudge.
+
 ### Gating — only engage when both conditions are true
 
 Read `command-center/management/STATUS-meta.yaml`. Engage the stall handler **only if**:

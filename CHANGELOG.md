@@ -34,6 +34,49 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.33.0 — 2026-04-25
+
+**CEO-agent lazy-load + 60s flat tick cadence.** Real measurement showed each ceo-agent spawn cost ~55K tokens — far above the spec's "20-30K" estimate. Cause: agent card mandated reading 5 doctrine files on every spawn, regardless of directive. ~95% of spawns are stall-monitor pass-throughs that don't need any of those files; they only need to read `STATUS-meta.yaml` and check timestamps.
+
+Fix: directive-conditional reads. On `stall-monitor` directive, ceo-agent reads ONLY `STATUS-meta.yaml`, applies gating, returns `pass` if either gate condition fails (~10K token spawn). On all other directives or when gating triggers a real stall, it loads the full 5-file context as before (~75K). Watchdog property preserved — ceo-agent still spawned at every tick from a fresh subagent context, still serves as externalized stuck-orchestrator detection.
+
+With lazy-load in place, tick cadence flattens to 60s across all states (was 60s active / 600s idle). Trade-off: ~10× faster wave-pickup latency (next task picked up within ~60s of becoming available) at ~$130/day extra during idle. The cost would have been ~10× higher without lazy-load.
+
+### `command-center/setup-tools/agent-cards/ceo-agent.md`
+
+- Body rewritten with directive-conditional read list. `stall-monitor` reads only STATUS-meta. Other directives load full 5-file doctrine.
+- Returns one-line `pass | <status> | last_mod=<seconds>s` on pass-through.
+
+### `command-center/management/danger-builder-mode.md`
+
+- **§ Tick behavior step 0** — describes lazy-load behavior explicitly. Pass-through spawn ~10K, full spawn ~75K.
+- **§ STATUS routing table** — flattened to 60s across RUNNING / HANDOFF / IDLE / BLOCKED. DONE remains no-wake. Header line corrected (was misleading "ticks at 600s cadence"). Footnote updated to explain the lazy-load + cadence trade-off.
+
+### `command-center/Sub-agent Instructions/ceo-agent-instructions.md`
+
+- **§ Stall-monitor procedure** — added paragraph reinforcing the lazy-load: on `stall-monitor` directive, read only STATUS-meta; if pass-through, do NOT load this instruction file or any other doctrine.
+
+### Cost shape comparison
+
+At 60s flat ticks, 1440 ticks/day:
+
+| Spec version | Per-spawn (pass-through) | Per-day idle | $/day idle |
+|---|---|---|---|
+| Pre-v0.33.0 | 55K | 79M | ~$700-1100 |
+| v0.33.0 (lazy-load) | ~10K | 14M | ~$130-220 |
+
+Decision spawns (~5% of ticks, real BOARD/charter/inbox events) cost the same as before (~75K) — those are bounded by real events, not tick rate.
+
+### Consumer sync
+
+- **Breaking:** no spec change; lazy-load is additive behavior.
+- **Migration action:** consumers must re-copy the updated `ceo-agent.md` card to `~/.claude/agents/` after `auto-claude sync --to=v0.33.0` — the card body changed. Re-run the install.md cp step:
+  ```bash
+  cp /path/to/auto-claude/command-center/setup-tools/agent-cards/*.md ~/.claude/agents/
+  ```
+
+---
+
 ## v0.32.0 — 2026-04-25
 
 **FOUNDER-BETS.md amendable by CEO under explicit founder approval.** Closes the gap surfaced in a downstream danger-builder run: founders are busy, bets go stale, and CEO operates without grounding when § Live is empty/thin (CEO's own Prime Directive #9 requires reading FOUNDER-BETS before every decision). The previous Hard invariant *"agents never edit FOUNDER-BETS"* was too strict — produced a stale-anchor failure mode.

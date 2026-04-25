@@ -72,7 +72,7 @@ Invoke `/loop` skill via Skill tool with the autonomous-dynamic sentinel.
 
 Step ordering is authoritative. Steps 1-11:
 
-0. **ceo-agent stall check.** Spawn `Agent(subagent_type=ceo-agent)` with the `stall-monitor` directive. Orchestrator role-play is forbidden. Audit entry MUST record the agent run ID. Spawned ceo-agent reads `STATUS-meta.yaml`; gates on: STATUS unchanged since last check AND `(now - last_modified_at) >= 600s`. If either condition false → update STATUS-meta, pass through. If both true → classify stall + act + write audit entry + send email + update STATUS.
+0. **ceo-agent stall check.** Spawn `Agent(subagent_type=ceo-agent)` with the `stall-monitor` directive. Orchestrator role-play is forbidden. Audit entry MUST record the agent run ID. The spawned ceo-agent uses **directive-conditional lazy-load** per its card: on `stall-monitor`, it reads ONLY `STATUS-meta.yaml` first. Gates on: STATUS unchanged since `last_ceo_check_saw_status` AND `(now - last_modified_at) >= 600s`. Either condition false → ceo-agent updates STATUS-meta fields, returns `pass`, exits without loading the full doctrine (~10K token spawn). Both conditions true → ceo-agent escalates: reads full 5-file context and executes stall-nudge (~75K token spawn).
 1. **Kill-switch check.** If `/tmp/ceo-mode-stop` exists: set STATUS=BLOCKED, send halt email, exit loop. Supersedes all subsequent steps.
 2. **Founder-message check.** If any founder message arrived since last tick: halt loop, send halt email, set STATUS=BLOCKED.
 3. **STATUS mode check.** If STATUS=`STOP`: halt per step 1.
@@ -105,17 +105,17 @@ This prompt fires every tick. The orchestrator reads it BEFORE picking visible w
 
 ## Routing thresholds
 
-### STATUS routing table (ceo-agent ticks at 600s cadence)
+### STATUS routing table
 
 | STATUS value | What you MUST do | Next tick delay |
 |---|---|---|
 | `RUNNING` | Recover from last commit SHA + `handoff.md`. | 60s |
 | `HANDOFF` | Read `handoff.md`. Resume. Set STATUS=RUNNING as first write. | 60s |
-| `IDLE` | Step 0 (stall monitor) + step 4 (inbox check) first. Then `npx task-master next`. Begin if executable work exists; otherwise re-sleep. | 600s |
-| `BLOCKED` | Stall monitor + inbox check still fire. If stall resolvable, nudge. Otherwise end turn, await founder. | 600s |
+| `IDLE` | Step 0 (stall monitor) + step 4 (inbox check) first. Then `npx task-master next`. Begin if executable work exists; otherwise re-sleep. | 60s |
+| `BLOCKED` | Stall monitor + inbox check still fire. If stall resolvable, nudge. Otherwise end turn, await founder. | 60s |
 | `DONE` | End loop. No wakeup. | — |
 
-IDLE + BLOCKED delay is 600s: aligns tick cadence with the 600s stall threshold so monitor gets one fresh check per stall window. RUNNING/HANDOFF still use 60s.
+All states tick at 60s. The CEO stall-detection threshold remains 600s — gating is independent of tick frequency. Faster ticks buy faster wave-pickup latency (next task picked up within ~60s of becoming available) at modest cost since pass-through spawns are lazy-loaded (~10K tokens) rather than full-doctrine spawns (~75K).
 
 ### Escalation routing table
 
