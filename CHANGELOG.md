@@ -34,6 +34,32 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.30.0 — 2026-04-25
+
+**Full-autonomy: drop the tick model.** Logical extension of v0.29.0. Under full-autonomy there's no ceo-agent, so no stall-monitor heartbeat, so no reason for ceremonial tick steps. The 4-step "tick behavior" was imported from danger-builder framing and described what the routing table already implied. Walking through every full-autonomy scenario (active wave, wave-complete-with-work, wave-complete-no-work, IDLE, BLOCKED, HANDOFF, DONE) showed that none required ceremonial wake-behavior — the orchestrator just runs continuously and ends the turn when a real condition fires.
+
+STATUS file becomes a write-only mirror for founder visibility under this mode. Routing decisions come from concrete artifacts (handoff.md presence, `task-master next` result, blocker files), not from reading STATUS.
+
+### `command-center/management/full-autonomy-mode.md`
+
+- **§ Tick behavior → § Wave execution.** Replaces the 4-step list with a condition-detection table (75% context / IDLE / BLOCKED / DONE — what triggers each, what the orchestrator writes, what delay to schedule). Adds the explicit rule: "There are no 'ticks' under full-autonomy — no ceremonial steps fire on a cadence."
+- **New § Chunking rule.** Same threshold rule as danger-builder: programmatic waits <10 min poll inside via `Bash(run_in_background=true)` + Monitor + `until`-loop; human / external waits >10 min ScheduleWakeup. Chunking active wave work into multiple wakes is forbidden.
+- **§ Waiting on external events — deleted.** Folded into the new chunking rule. The pre-existing line ("ScheduleWakeup for <5 min waits, end the turn") was the OLD doctrine that contradicted v0.29.0's danger-builder fix; both modes now agree.
+- **§ Context budget — mid-tick handoff → § Context budget — handoff.** Drops the tick metaphor.
+- **§ STATUS routing table → § STATUS values — wake routing.** Reframed: STATUS is a write-only mirror, the orchestrator detects what to do from artifacts, the table describes what STATUS would say at each transition (not what the orchestrator must do when reading it).
+- "mid-tick" → "mid-turn" in hard-stops section.
+
+### Why both modes still keep STATUS
+
+Cross-mode consistency. Danger-builder's ceo-agent stall-monitor reads STATUS-meta.yaml as gating input. Keeping STATUS in both modes (write-only under full-autonomy, gating under danger-builder) means rule files referencing STATUS work the same way regardless of mode. Different read-vs-write semantics, same artifact.
+
+### Consumer sync
+
+- **Breaking:** no behaviorally. The condition-detection table covers every state the old 4-step list described. Existing waves continue to work.
+- **Migration action:** none beyond `auto-claude sync --to=v0.30.0`. Orchestrator picks up the new wave-execution + chunking-rule sections on next full-autonomy mode entry.
+
+---
+
 ## v0.29.0 — 2026-04-25
 
 **Tick-prompt template + chunking discipline.** Surfaced in a downstream danger-builder run where the orchestrator skipped Step 0 (ceo-agent spawn) AND chunked active wave work across multiple ticks (open PR → end turn → wakeup → merge → end turn → wakeup → probe → end turn). Both failures traced to the same root: the wakeup prompt was descriptive ("run a tick per § Tick behavior") rather than enforcing. Orchestrators read the verbose prompt, picked the visible work, skipped the ceremonial spawn, and treated wait-on-CI as a "natural pause."

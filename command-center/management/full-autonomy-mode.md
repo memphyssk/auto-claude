@@ -28,12 +28,27 @@ On activation, in a single turn and in order:
 
 ## Behavior
 
-### Tick behavior — every /loop tick
+### Wave execution
 
-1. **Read `command-center/management/STATUS`.** Never skip. Route by value per table below.
-2. **Execute the routed action** until natural pause or context-budget rule fires.
-3. **Update STATUS before ending the turn** — never leave it stale.
-4. **Call `ScheduleWakeup`** with delay from table, unless STATUS=DONE.
+Run continuously within a turn. End the turn only when a real condition fires:
+
+| Condition | Detection | Action |
+|---|---|---|
+| 75% context | Token usage check during work | Write `handoff.md`, set STATUS=HANDOFF (mirror), ScheduleWakeup 60s, end turn |
+| IDLE (no work right now) | `task-master next` empty + checkpoint buckets empty | Set STATUS=IDLE (mirror), ScheduleWakeup ~1800s, end turn |
+| BLOCKED (hard-stop fired) | Hard-stop class detected during execution | Write blocker file with reason, set STATUS=BLOCKED (mirror), ScheduleWakeup ~3600s, end turn |
+| DONE (backlog truly empty) | `task-master next` empty + checkpoints empty + no MONITOR pending | Set STATUS=DONE (mirror), end without ScheduleWakeup |
+
+There are no "ticks" under full-autonomy — no ceremonial steps fire on a cadence. The orchestrator chains stages 0-11 inside one turn until a condition above fires. STATUS is a write-only mirror for founder visibility, not a gating input.
+
+### Chunking rule — when to ScheduleWakeup vs poll inside the turn
+
+| Wait class | Action |
+|---|---|
+| Programmatic check resolvable in <10 min (CI run, fast-deploy probe, monitor poll, health endpoint) | Poll inside the turn via `Bash(run_in_background=true)` + Monitor + `until`-loop. Do NOT ScheduleWakeup. |
+| Human or external timeline >10 min (founder reply, code review, queued deploy, slow upstream) | Write handoff.md or blocker file, ScheduleWakeup at appropriate delay, end turn. |
+
+Chunking active orchestrator work into multiple wakes is forbidden — that's a discipline failure, not a natural pause.
 
 ### Self-management decisions — never asked
 
@@ -44,16 +59,7 @@ On activation, in a single turn and in order:
 
 If you write "My preference: X" in any checkpoint, X is the decision — execute it. Do NOT emit the "but if you want Y" alternative tail.
 
-### Waiting on external events
-
-Do NOT end a turn because an external event is pending (deploy, CI, DNS, tier activation, etc.). Phrases like "remaining stages need the deploy to land first" or "best run in a fresh session" are protocol violations.
-
-When blocked on a wall-clock wait:
-
-1. **Spawn-and-Block (preferred, any wait >5 min).** Create a `MONITOR:` task in TaskMaster with `success_condition` + `failure_condition` + `timeout_budget` per `command-center/rules/monitors/monitor-principles.md`. Set STATUS=BLOCKED with a blocker entry referencing the MONITOR task ID. End the turn.
-2. **Short-wait in-loop (acceptable, waits <5 min with trivially-checkable condition).** Call `ScheduleWakeup` with appropriate delay, end the turn, and run the readiness check on next tick.
-
-### Context budget — mid-tick handoff
+### Context budget — handoff
 
 At every natural pause, re-check context budget. If context_used ≥ 75%:
 
@@ -80,15 +86,17 @@ This is the ONLY mechanism for continue-vs-fresh-session. Never ask the founder 
 
 Everything NOT in this table stays as-is (Tier 1 auto-decide, Tier 2 proceeds+logs, triage routing to specialists).
 
-### STATUS routing table
+### STATUS values — wake routing
 
-| STATUS value | What you MUST do | Next tick delay |
+STATUS is written as a one-way mirror; the orchestrator does not gate behavior on reading it. On wake, the orchestrator detects what to do from artifacts (handoff.md, task-master, blocker files), and STATUS values describe what the file would say at each transition.
+
+| STATUS value | When it's written | What the orchestrator does on wake |
 |---|---|---|
-| `RUNNING` | Prior session died mid-turn. Recover from last commit SHA + `handoff.md`. If no handoff, triage from git state + active wave plan. | 60s |
-| `HANDOFF` | Read `handoff.md`. Resume accordingly. Set STATUS=RUNNING as first write-side action. | 60s |
-| `IDLE` | Re-read roadmap + run `npx task-master next`. Begin if executable work exists; otherwise re-sleep. | 1800s |
-| `BLOCKED` | Hard-stop pending founder input. End turn, re-sleep. | 3600s |
-| `DONE` | End the loop. Do NOT call ScheduleWakeup. | — |
+| `RUNNING` | Active wave work in progress | (Should not see this on wake — RUNNING ends in HANDOFF, IDLE, BLOCKED, or DONE.) Triage from git + Planning/wave-* files. |
+| `HANDOFF` | 75% context fired mid-work | Read `handoff.md`. Resume. Write STATUS=RUNNING. |
+| `IDLE` | task-master + checkpoints empty, may fill later | Run `npx task-master next`. If work appears → start a wave. Else re-sleep. |
+| `BLOCKED` | Hard-stop pending founder input | Check if blocker resolved (founder modified state). If yes → resume. Else re-sleep. |
+| `DONE` | Truly nothing to do, no MONITOR pending | Loop already ended. No wake. |
 
 `WAVE_DONE` is NOT a valid STATUS value. Cross-wave transitions either stay `RUNNING` or write `HANDOFF` pointing at wave N+1 Stage 0. See `stage-11-next.md` § STATUS handling.
 
@@ -104,7 +112,7 @@ Even under full-autonomy, these always prompt:
 | **Money commitments** | new paid SaaS subscription, API tier upgrade with billing, domain purchase, anything with a credit-card hit |
 | **Hard-stop member veto** | any BOARD member flags `HARD-STOP: must be human` with concrete reason |
 
-When a hard-stop fires mid-tick:
+When a hard-stop fires mid-turn:
 1. Set STATUS=BLOCKED.
 2. Surface the escalation to the founder with all context needed to decide.
 3. ScheduleWakeup 3600s.
