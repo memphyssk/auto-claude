@@ -283,6 +283,8 @@ Most ticks you pass through silently — STATUS is moving, work is happening, no
 
 **Stall-nudges are the ONE decision class where you write `STATUS` and `handoff.md` directly.** Every other decision class emits a directive for orchestrator pickup.
 
+**You unblock; you do not operate.** Nudge directives point at process (`wave-loop.md`, the current stage file, `/investigate`); they never name specific tasks, files, or stages-of-work to perform. The orchestrator's wave-loop mechanics carry the operational detail.
+
 **Lazy-load on `stall-monitor` directive.** Per your agent card, when invoked with directive `stall-monitor` you read ONLY `STATUS-meta.yaml` first. If either gate condition is false (STATUS changed since last check OR `(now - last_modified_at) < 600s`), update STATUS-meta fields and return `pass` immediately. Do NOT load this instruction file or any other doctrine on a pass-through tick. Only load full context if both gate conditions hold (genuine stall candidate) and you need to classify + nudge.
 
 ### Gating — only engage when both conditions are true
@@ -305,14 +307,11 @@ When gating fires, classify the stall + act:
 
 | STATUS at stall | Observable signal | Your action |
 |---|---|---|
-| `IDLE` + `task-master next` returns a task | Orchestrator has work but isn't picking it up | Pick the task. Write `handoff.md` pointing at it. Flip STATUS=HANDOFF. Note "ceo-nudge: picked wave N, stall duration Xm" in handoff. |
-| `IDLE` + `task-master next` empty + daily-checkpoint buckets non-empty | Orchestrator stuck waiting for checkpoint resolution | Spawn self on the daily-checkpoint via standard decision procedure. No gating exception needed — this IS your normal work. |
-| `IDLE` + backlog genuinely empty | Nothing to do; orchestrator correctly idle | No-op. Touch `last_ceo_check_at` and pass through. This is *not* a stall; it's expected. |
-| `BLOCKED` + blocker is a MONITOR that timed out (>timeout_budget elapsed) | Monitor stale | Spawn `/investigate` (counts against specialist budget) on the monitor; if no new information, clear the monitor task + create a TRIAGE task + keep parent BLOCKED awaiting triage. |
-| `BLOCKED` + blocker is a charter-amendment-pending | Founder hasn't responded to proposal | No-op. Respect founder sovereignty on charter. Log "awaiting founder on charter proposal X" in audit. |
-| `BLOCKED` + blocker is a hard-stop awaiting founder | Destructive action / money beyond charter | No-op. Respect hard-stop. |
-| `HANDOFF` + handoff.md points at a deleted task / stale state | Zombie handoff | Clear handoff.md, flip STATUS=IDLE, note reason in audit. |
-| `RUNNING` + context ≥75% + no commit in >10 min | Orchestrator stuck mid-work | Force the 75% rule: write handoff.md with "force-rescue: agent appeared stuck; resuming from last commit X", flip STATUS=HANDOFF. |
+| `IDLE` + executable work in queue | `task-master next` non-empty OR daily-checkpoint buckets non-empty | Write `handoff.md`: *"ceo-nudge: IDLE stalled `<X>m`. resume next wave per wave-loop.md process, autonomously."* Flip STATUS=HANDOFF. **Do NOT name a specific task.** Orchestrator runs Stage 11 task pickup itself. |
+| `IDLE` + backlog genuinely empty | `task-master next` empty AND checkpoint buckets empty | No-op. Touch `last_ceo_check_at` and pass through. This is *not* a stall; it's expected. |
+| `BLOCKED` (any reason) | STATUS=BLOCKED ≥600s | (1) Read recent context first: `Planning/handoff.md`, `git log -10`, latest `Planning/wave-*-*.md`, blocker file if present. (2) Classify cause from context. (3) Act per cause: charter / hard-stop / destructive / money awaiting founder → no-op + log "awaiting founder on `<reason>`"; specific decision you can make alone → write decision directive into `handoff.md` (e.g., clear stale monitor + create TRIAGE, route to specialist via triage-routing-table); genuinely needs root-cause analysis you can't determine from context → spawn `/investigate` (counts against specialist budget). **NEVER spawn `/investigate` without reading context first** — the orchestrator usually wrote the cause already. |
+| `HANDOFF` + zombie pointer | handoff.md references task #N that's gone OR commit SHA missing from `git log` | Clear `handoff.md`, flip STATUS=IDLE. Log zombie reason in digest (stale-task vs stale-commit). Orchestrator picks up fresh on next tick via Stage 11. |
+| `RUNNING` + context ≥75% + no commit in >10 min | Orchestrator stuck mid-work | Write `handoff.md`: *"ceo-nudge: force-rescue from `<X>m` mid-wave stall. resume from last commit SHA per current stage in wave-loop.md, autonomously."* Flip STATUS=HANDOFF. **Do NOT specify what work to do** — the stage file knows. |
 | `DONE` | Loop terminated | No-op; agent's work is over. |
 
 ### Intervention output — fire-and-notify, NEVER fire-and-wait

@@ -34,6 +34,37 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.34.0 — 2026-04-25
+
+**CEO stall-nudge: unblock, don't operate.** Surfaced during a dry-run walkthrough of the IDLE-with-work case: the v0.32.0+ Hard invariant says *"ceo-agent cannot run the wave loop or any stage 0-11 action,"* but the stall classification table in `ceo-agent-instructions.md` was unmodified from earlier — it said *"Pick the task. Write handoff.md pointing at it."* Picking a specific task IS Stage 11 work. The instruction file contradicted the boundary doc.
+
+Reframe: CEO points the orchestrator at *process*, never at *operational specifics*. CEO never names a specific task / file / stage-of-work to perform. The orchestrator's wave-loop mechanics carry that detail.
+
+### `command-center/Sub-agent Instructions/ceo-agent-instructions.md`
+
+- **§ Stall-monitor procedure top** — added one-line doctrine: *"You unblock; you do not operate. Nudge directives point at process (`wave-loop.md`, the current stage file, `/investigate`); they never name specific tasks, files, or stages-of-work to perform."*
+- **§ Stall classification table** — rewritten:
+  - **IDLE + executable work in queue** → write nudge *"resume next wave per wave-loop.md process, autonomously"* (empirical phrasing). **Do NOT name a specific task.** Orchestrator runs Stage 11 task pickup itself.
+  - **BLOCKED (any reason)** → read recent context first (handoff.md, `git log -10`, latest wave files, blocker file). Classify cause from context. Then act per cause: charter/hard-stop awaiting founder → no-op + log; specific decision CEO can make alone → write into handoff.md; genuinely needs RCA → spawn `/investigate`. **NEVER spawn `/investigate` without reading context first** — orchestrator usually already wrote the cause.
+  - **HANDOFF + zombie pointer** → clear handoff.md (cases: stale task ref, stale commit SHA), flip STATUS=IDLE, orchestrator picks up fresh next tick.
+  - **RUNNING + 75% context** → write force-rescue nudge with *"resume from last commit SHA per current stage in wave-loop.md, autonomously."* **Do NOT specify what work to do.**
+  - **IDLE + backlog empty** / **DONE** → no-op as before.
+
+### Why this matters
+
+Pre-v0.34.0, CEO could pick a specific task on stall — that's wave-loop Stage 11 work, which Hard invariants forbid. The boundary was correct in `danger-builder-mode.md` but the stall-monitor implementation table predated v0.26.0 and never got updated. v0.34.0 closes the gap: CEO's stall-nudge directives now consistently point at process, not at specific operations. Orchestrator runs all 0-11 stage mechanics including next-task pickup.
+
+### Empirical phrasing
+
+The exact directive text *"resume next wave per wave-loop.md process, autonomously"* is preserved verbatim from founder's empirical testing — found to produce reliable orchestrator pickup. Same `, autonomously` suffix on RUNNING/HANDOFF mid-wave rescue directive.
+
+### Consumer sync
+
+- **Breaking:** no behavioral schema change — the table reads differently but every cell still produces a defensible nudge action. The change pushes operational specificity OUT of CEO's directives and into the orchestrator's stage-file mechanics, which already exist.
+- **Migration action:** none beyond `auto-claude sync --to=v0.34.0`. Active on next danger-builder stall event.
+
+---
+
 ## v0.33.0 — 2026-04-25
 
 **CEO-agent lazy-load + 60s flat tick cadence.** Real measurement showed each ceo-agent spawn cost ~55K tokens — far above the spec's "20-30K" estimate. Cause: agent card mandated reading 5 doctrine files on every spawn, regardless of directive. ~95% of spawns are stall-monitor pass-throughs that don't need any of those files; they only need to read `STATUS-meta.yaml` and check timestamps.
