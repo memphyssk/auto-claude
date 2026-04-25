@@ -156,7 +156,7 @@ agentmail inboxes:messages send \
   --text "<body>" \
   --format json
 ```
-Template in `command-center/management/notifications/agentmail.md`. Body ≤ 12 lines, past-tense. Subject prefixes: `⚠ ONE-WAY` / `⚠ HARD-STOP OVERRIDDEN` / `NOVEL` / `⚠ NUDGE` (stall monitor).
+Template in `command-center/management/notifications/agentmail.md`. Body is a single past-tense sentence + digest pointer. Subject prefixes: `⚠ ONE-WAY` / `⚠ HARD-STOP OVERRIDDEN` / `NOVEL` / `⚠ NUDGE` (stall monitor).
 
 Capture response `message_id` + `thread_id` — record in audit entry `Notification sent:` and `Thread:` fields.
 
@@ -398,7 +398,7 @@ No end-of-day summary. No batched delivery. Notifications fire per-decision via 
 
 ## Notification email format (per decision)
 
-Send immediately after the audit entry lands. Hard cap ~12 lines of body. Subject + template defined in `command-center/management/notifications/agentmail.md` § "Per-decision email format". Prefix the subject with:
+Send immediately after the audit entry lands. Body is one past-tense sentence stating action + brief context, plus a digest pointer line. Full rationale, cognitive patterns, charter analysis, monitor specification all live in the digest file. Subject + template defined in `command-center/management/notifications/agentmail.md` § "Body format — one-liner". Prefix the subject with:
 - `⚠ ONE-WAY` for irreversible decisions
 - `⚠ CHARTER PROPOSAL` for charter-restriction bumps (separate template)
 - `⚠ HARD-STOP OVERRIDDEN` when you authorize over a BOARD member veto

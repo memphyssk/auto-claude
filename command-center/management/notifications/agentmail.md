@@ -86,30 +86,37 @@ Prefix variants:
 - `[ceo-agent] <project> — NOVEL — <decision-slug>` (no precedent)
 - `[ceo-agent] <project> — ⚠ LOOP HALTED — <cause>` (halt event)
 
-## Body format — unified act-first template (~12 line cap)
+## Body format — one-liner
 
-Every decision email uses past-tense phrasing. The action happened already; the email tells the founder what was done.
+Every decision email is a single past-tense sentence: what was decided + brief context. No headers, no formal fields, no per-email override hint (founder learned it from the activation email).
 
 ```
-ceo-agent acted. <ISO timestamp>
+<single sentence: action + context>.
 
-Context:       <one-line: what triggered this — BOARD split / stage / rule / stall>
-Action taken:  <past tense: "authorized Paddle switch", "picked up wave 42", "cleared stale monitor M7">
-Why:           <1-2 sentences; cognitive patterns cited>
-
-Charter:       <"no applicable restriction" OR "ceo-bound.md § X applied">
-Reversibility: <two-way | one-way | medium>
-Novelty:       <true | false>
-Monitor:       <what signal tells us this worked + who watches + by when>
-
-Full entry:    Planning/ceo-digest-<YYYY-MM-DD>.md
-
-Override (post-hoc — work is already in motion):
-  no reply                    → tacit acceptance
-  reject | undo               → roll back this action; agent reverts within ~10 min
-  modify: <instruction>       → change course; agent executes new instruction instead
-  why? | clarify              → agent replies in-thread with fuller rationale
+Digest: Planning/ceo-digest-<YYYY-MM-DD>.md
 ```
+
+Examples:
+
+```
+Decided 60-day data retention over 7 years; BOARD split 3-3-1 with founder-proxy as deciding lens.
+
+Digest: Planning/ceo-digest-2026-04-25.md
+```
+
+```
+Authorized Paddle switch from Stripe; risk-manager flagged HARD-STOP on chargeback policy, override recorded.
+
+Digest: Planning/ceo-digest-2026-04-25.md
+```
+
+```
+Cleared stale monitor M7 (Railway deploy timed out 18 min ago, no recovery signal); created TRIAGE task #142.
+
+Digest: Planning/ceo-digest-2026-04-25.md
+```
+
+Cognitive patterns, reversibility classification, charter analysis, monitor specification all live in the digest file. The email is the push.
 
 The approve/ack path is absent — approval is implicit in not-replying.
 
@@ -118,25 +125,13 @@ The approve/ack path is absent — approval is implicit in not-replying.
 When ceo-agent hits a `ceo-bound.md` §§ 1-5 restriction, the email reports a proposal, not an action. Subject prefix `⚠ CHARTER PROPOSAL`. Body:
 
 ```
-ceo-agent proposes a charter amendment. <ISO timestamp>
+Want to <action> but blocked by ceo-bound.md § X — "<short restriction quote>". Proposed amendment: <one-line text change>.
 
-Decision requested: <one-line: what ceo-agent would do if permitted>
-Blocked by:         ceo-bound.md § X — "<exact restriction text>"
-Proposed amendment: <specific text change to ceo-bound.md>
-Rationale:          <2-3 sentences: why the amendment is worth making>
-If amended, CEO would: <one-line outcome>
-
-Full proposal: Planning/ceo-charter-proposals.md (latest entry)
-
-Action required — decision does NOT execute until you respond:
-  1. Edit command-center/management/ceo-bound.md to apply the amendment
-     (takes effect on next mode entry; CEO retries on next relevant tick)
-  2. Reject: take no action — CEO continues respecting the restriction
-  3. Override one-off: reply "override: <instruction>"
-     (CEO executes the specific decision without amending charter)
+To unblock: edit ceo-bound.md, or reply "override: <X>" for one-off, or reply "reject" to keep the restriction.
+Proposal: Planning/ceo-charter-proposals.md (latest entry)
 ```
 
-This is the ONE email class that gates on founder response.
+This is the ONE email class that gates on founder response. Decision does NOT execute until founder replies or amends the charter.
 
 ---
 
@@ -176,21 +171,9 @@ Labels set via `agentmail inboxes:messages update --label ...`. Read-side filter
 Subject: `[ceo-agent] <project> — danger-builder ACTIVATED`
 
 ```
-ceo-agent is now resolving all BOARD splits, HARD-STOPs, and former-founder-asks
-within ceo-bound.md.
+ceo-agent active. Decisions arrive in new threads in this inbox. Reply "undo", "modify <X>", or "why?" to override; silence = ack. Charter has <N> active restrictions.
 
-Per-decision emails arrive in this thread. Reply in-thread to approve / reject /
-modify / ask for clarification. Agent reads your reply within 10 minutes.
-
-Charter last modified: <mtime>
-Restrictions active:   <count>
-Inbox:                 ceo@<your-domain>  (inbox ID: $CEO_INBOX_ID)
-Started:               <ISO timestamp>
-
-Controls:
-  Kill (immediate):    touch /tmp/ceo-mode-stop
-  Session halt:        send any message to the Claude Code session
-  Charter edit:        edit command-center/management/ceo-bound.md
+Kill: touch /tmp/ceo-mode-stop. Charter: command-center/management/ceo-bound.md.
 ```
 
 ## Deactivation email
@@ -198,17 +181,9 @@ Controls:
 Subject: `[ceo-agent] <project> — danger-builder DEACTIVATED`
 
 ```
-Session ended at <ISO timestamp>.
-Reason: <kill-switch | founder-message | explicit-exit | charter-destroyed | inbox-unreachable-cascade>
+ceo-agent off. <N> decisions, <M> rejections, <K> modifications, <J> clarifications, <P> charter proposals this session. Reason: <kill-switch | founder-message | explicit-exit | charter-destroyed | inbox-unreachable-cascade>.
 
-Decisions made this session: <count>
-Founder replies processed:   <count>  (approvals <N>, rejections <M>, modifications <K>, clarifications <J>)
-Charter proposals surfaced:  <count>
-Novel decisions:             <count>
-
-Next escalation routes via: <new mode's behavior>
-
-All decisions logged: Planning/ceo-digest-<YYYY-MM-DD>.md through <end date>.
+Digest: Planning/ceo-digest-<YYYY-MM-DD>.md through <end date>.
 ```
 
 ## Halt email
@@ -216,14 +191,7 @@ All decisions logged: Planning/ceo-digest-<YYYY-MM-DD>.md through <end date>.
 Subject: `[ceo-agent] <project> — ⚠ LOOP HALTED — <cause>`
 
 ```
-The danger-builder loop halted.
-
-Cause:  <kill-switch-file | charter-destroyed | inbox-unreachable-cascade | delivery-failure-cascade>
-Time:   <ISO timestamp>
-STATUS: <value at halt>
-
-To resume: fix the cause, then say "danger builder" again in Claude Code.
-If inbox-unreachable: run `agentmail inboxes:get --inbox-id $CEO_INBOX_ID` to diagnose.
+Loop halted: <cause>. STATUS=<value> at <ISO timestamp>. Resume: say "danger builder" in Claude Code after fixing the cause.
 ```
 
 ---

@@ -34,6 +34,35 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.31.0 — 2026-04-25
+
+**CEO email format: one-liner.** Founder feedback: per-decision emails were excessive — Context / Action / Why / Charter / Reversibility / Novelty / Monitor / Override fields landed as a 12-line block per decision and trained the founder to skim past them. The right shape is a single past-tense sentence stating what was decided and why; full rationale lives in the digest file for those who want detail.
+
+### `command-center/management/notifications/agentmail.md`
+
+- **§ Body format** — replaced the 8-field block with a one-line template: single past-tense sentence + `Digest:` pointer. Three concrete examples added (data-retention BOARD-split decision, payment-vendor switch with HARD-STOP override, stale-monitor cleared).
+- **§ Charter-proposal body** — compressed from 11-line block to 3-line: `Want to <action> but blocked by ceo-bound.md § X — "<quote>". Proposed amendment: <line>.` + how to unblock + proposal pointer.
+- **§ Activation email** — collapsed to 2-line confirmation (active, reply protocol, kill switch).
+- **§ Deactivation email** — collapsed to 2-line summary (counts + reason + digest pointer).
+- **§ Halt email** — collapsed to 1-line: cause, STATUS, resume instruction.
+
+### `command-center/Sub-agent Instructions/ceo-agent-instructions.md`
+
+- Two references to `Body ≤ 12 lines` / `Hard cap ~12 lines` updated to "single past-tense sentence + digest pointer."
+
+### Why
+
+- One-liner emails get read; 12-line blocks get skimmed. The signal is the action + the one-phrase context (the user's example: *"Decided 60-day data retention over 7 years; BOARD was undecided"*).
+- Founder learned reply protocol from the activation email; per-decision emails don't need to repeat it.
+- Cognitive patterns, reversibility classification, charter analysis, monitor specs all belong in the digest file. Email is the push, file is the log — that separation already exists, this release respects it.
+
+### Consumer sync
+
+- **Breaking:** no. Email-format change is text-only — no schema change, no agent contract change, no recipient infrastructure change. Founders who relied on the structured fields can read them in `Planning/ceo-digest-<date>.md` instead.
+- **Migration action:** none beyond `auto-claude sync --to=v0.31.0`. Next CEO decision under danger-builder uses the new format.
+
+---
+
 ## v0.30.0 — 2026-04-25
 
 **Full-autonomy: drop the tick model.** Logical extension of v0.29.0. Under full-autonomy there's no ceo-agent, so no stall-monitor heartbeat, so no reason for ceremonial tick steps. The 4-step "tick behavior" was imported from danger-builder framing and described what the routing table already implied. Walking through every full-autonomy scenario (active wave, wave-complete-with-work, wave-complete-no-work, IDLE, BLOCKED, HANDOFF, DONE) showed that none required ceremonial wake-behavior — the orchestrator just runs continuously and ends the turn when a real condition fires.
