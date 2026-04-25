@@ -1,0 +1,160 @@
+/* Claudomat — colors & type tokens
+ * Import this alongside `crt.css` (which provides the component layer).
+ * All values are pulled from the live Claudomat landing design.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=VT323&family=Major+Mono+Display&display=swap');
+
+:root {
+  /* ─── Color · base palette ─────────────────────────────────────────── */
+  --color-bg:           #0a0807;   /* canvas */
+  --color-bg-2:         #110d0a;   /* panel fill */
+  --color-bg-3:         #1a1410;   /* deeper recess */
+
+  --color-amber:        #ff7a2a;   /* primary accent — phosphor */
+  --color-amber-dim:    #c4521b;   /* secondary accent */
+  --color-amber-faint:  rgba(255, 122, 42, 0.18);
+  --color-amber-ghost:  rgba(255, 122, 42, 0.06);
+  --color-phosphor:     #ffb27a;   /* highlight bloom */
+
+  --color-text:         #e8c8a0;   /* body */
+  --color-text-dim:     #8a6a4a;   /* secondary text, captions, chrome */
+  --color-text-faint:   #5a4530;   /* tertiary, placeholder */
+
+  --color-warn:         #d44a1c;   /* alert / red LED */
+  --color-ok:           #b8d97a;   /* signal-good / green LED */
+
+  --color-line:         rgba(255, 122, 42, 0.22);  /* solid hairlines */
+  --color-line-faint:   rgba(255, 122, 42, 0.10);  /* dashed / dot-grid */
+
+  /* ─── Color · semantic ─────────────────────────────────────────────── */
+  --fg-1: var(--color-text);
+  --fg-2: var(--color-text-dim);
+  --fg-3: var(--color-text-faint);
+  --fg-accent: var(--color-amber);
+  --fg-link: var(--color-amber);
+  --fg-ok: var(--color-ok);
+  --fg-warn: var(--color-warn);
+
+  --bg-1: var(--color-bg);
+  --bg-2: var(--color-bg-2);
+  --bg-panel: rgba(255, 122, 42, 0.02);
+  --bg-panel-strong: rgba(255, 122, 42, 0.05);
+
+  --border-1: var(--color-line);
+  --border-2: var(--color-line-faint);
+  --border-accent: var(--color-amber);
+
+  /* ─── Type · families ──────────────────────────────────────────────── */
+  --font-mono:    'IBM Plex Mono', 'Berkeley Mono', ui-monospace, Menlo, monospace;
+  --font-display: 'VT323', 'IBM Plex Mono', monospace;
+  --font-decor:   'Major Mono Display', 'VT323', monospace;
+
+  /* ─── Type · scale ─────────────────────────────────────────────────── */
+  --text-tiny:  10px;
+  --text-sm:    11px;
+  --text-base:  12px;
+  --text-md:    13px;
+  --text-lg:    14px;
+  --text-xl:    18px;
+  --text-2xl:   22px;
+  --text-3xl:   36px;
+  --text-4xl:   56px;
+  --text-5xl:   80px;
+  --text-hero:  clamp(56px, 7vw, 88px);
+  --text-mega:  clamp(80px, 12vw, 180px);
+
+  --leading-tight:  0.85;
+  --leading-snug:   1.0;
+  --leading-normal: 1.5;
+
+  --tracking-tight:    0.01em;
+  --tracking-display:  0.02em;
+  --tracking-label:    0.10em;
+  --tracking-label-lg: 0.12em;
+
+  /* ─── Spacing scale ────────────────────────────────────────────────── */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 14px;
+  --space-6: 18px;
+  --space-7: 22px;
+  --space-8: 32px;
+  --space-9: 40px;
+  --space-10: 56px;
+  --space-11: 80px;
+
+  /* ─── Effects ──────────────────────────────────────────────────────── */
+  --glow-soft:   0 0 1px currentColor, 0 0 8px var(--color-amber-faint);
+  --glow-strong: 0 0 2px currentColor, 0 0 14px rgba(255,122,42,0.5), 0 0 28px rgba(255,80,20,0.3);
+  --glow-led:    0 0 4px currentColor;
+
+  --transition-fast:  150ms ease-out;
+  --transition-base:  300ms ease-out;
+  --transition-slow:  600ms ease-out;
+}
+
+/* ─── Semantic element styles ────────────────────────────────────────── */
+body {
+  background: var(--bg-1);
+  color: var(--fg-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-tight);
+}
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-hero);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-display);
+  color: var(--fg-accent);
+  text-shadow: var(--glow-strong);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+h2, .h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  line-height: var(--leading-snug);
+  color: var(--fg-accent);
+  text-shadow: var(--glow-soft);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+h3, .h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: 1.0;
+  color: var(--fg-accent);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+p, .p {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--fg-1);
+  margin: 0 0 var(--space-5);
+}
+
+.label, .caption {
+  font-family: var(--font-mono);
+  font-size: var(--text-tiny);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label-lg);
+  color: var(--fg-2);
+}
+
+code, pre, .mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  color: var(--fg-1);
+}

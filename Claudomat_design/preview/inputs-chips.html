@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<title>Inputs &amp; chips</title>
+<link rel="stylesheet" href="../crt.css"/>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+  .meta { font-size: 10px; color: var(--fg-2); text-transform: uppercase; letter-spacing: 0.12em; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+</style>
+</head><body>
+  <div class="meta">/// input · default</div>
+  <input class="crt-input" placeholder="ripley@nostromo.dev"/>
+  <div class="meta">/// input · focused (preview)</div>
+  <input class="crt-input" value="standby for transmission" style="border-color:var(--color-amber);box-shadow:0 0 0 1px var(--color-amber-faint);"/>
+  <div class="meta">/// chips · neutral &amp; accent</div>
+  <div class="row">
+    <span class="crt-chip">SCR-04</span>
+    <span class="crt-chip">UPTIME 437d</span>
+    <span class="crt-chip crt-chip-amber">◆ OPERATIONAL</span>
+    <span class="crt-chip crt-chip-amber">▸ NODE: CLAUDOMAT.DEV</span>
+  </div>
+</body></html>

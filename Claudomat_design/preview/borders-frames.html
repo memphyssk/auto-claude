@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<title>Borders &amp; Frames</title>
+<link rel="stylesheet" href="../crt.css"/>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { padding: 18px 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .demo { padding: 16px; min-height: 70px; display: flex; align-items: center; justify-content: center; }
+  .meta { position: absolute; top: 4px; left: 6px; font-size: 10px; color: var(--fg-2); text-transform: uppercase; letter-spacing: 0.12em; }
+  .wrap { position: relative; }
+</style>
+</head><body>
+  <div class="wrap"><div class="meta">/// solid · 1px</div>      <div class="demo" style="border: 1px solid var(--border-1);">FRAME</div></div>
+  <div class="wrap"><div class="meta">/// dashed · 1px</div>     <div class="demo" style="border: 1px dashed var(--border-1);">SOFT FRAME</div></div>
+  <div class="wrap"><div class="meta">/// accent · 1px</div>     <div class="demo" style="border: 1px solid var(--border-accent); color: var(--fg-accent);">ACCENT</div></div>
+  <div class="wrap"><div class="meta">/// double-rule</div>      <div class="demo" style="border-top:1px solid var(--border-1);border-bottom:1px solid var(--border-1);height:0;padding:2px 0;"></div></div>
+  <div class="wrap"><div class="meta">/// corners</div>          <div class="demo crt-frame crt-frame-corners">BLUEPRINT</div></div>
+  <div class="wrap"><div class="meta">/// dot-grid</div>         <div class="demo crt-dotgrid" style="border:1px solid var(--border-2);"></div></div>
+</body></html>
