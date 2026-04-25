@@ -57,7 +57,30 @@ Scope covers: (a) every active milestone's feature area, (b) candidate themes in
 
 **1b. Trend-forward scan (`trend-analyst`, single agent).** Scope: project's sector as inferred from `command-center/product/FOUNDER-BETS.md` + active ROADMAP.md milestone themes, ~60–90 day window. Surface emerging patterns, regulatory shifts, platform moves, technology changes, and category consolidation relevant to that sector. READ `command-center/Sub-agent Instructions/trend-analyst-instructions.md` before spawning — the file defines methodology, source-selection rules, and output format. Output: `Planning/trend-scan-<YYYY-MM-DD>.md`.
 
-**1c. Founder review of `FOUNDER-BETS.md`.** Founder updates the file with any new strategic bets they want on the table. This is the forward-thinking channel. Agents never edit this file — the orchestrator reads it and cites bets as milestone bet-source.
+**1c. Read FOUNDER-BETS + (optionally) propose new bets.**
+
+Read `command-center/product/FOUNDER-BETS.md § Live`. Cite live bets to Step 2 as milestone bet-source. Ritual proceeds with whatever bets currently exist — proposing new bets does not block.
+
+If § Live is empty/thin, OR strategic gaps surface during this ritual run that warrant new bets:
+- CEO-agent (under danger-builder) drafts proposed bets and emails founder with subject prefix `⚠ BET PROPOSAL`. Body includes draft text, rationale, and which strategic gap each bet addresses.
+- Under semi-assisted / full-autonomy / founder-review modes: orchestrator surfaces "consider authoring N bets — see suggested drafts" to founder via standard founder-ask channel, no autonomous email.
+- The proposal does not block the ritual. New bets (if approved later) feed the next ritual run.
+
+Direct edits to FOUNDER-BETS.md by agents other than CEO-agent (under danger-builder) remain forbidden. All agents may read.
+
+**1d. Apply approved bet edits (CEO-agent under danger-builder only).**
+
+Once per ritual run, BEFORE ritual completion, CEO-agent performs a one-shot inbox sweep filtered by subject prefix `⚠ BET PROPOSAL`. For each unread thread, classify the **most recent founder message** per `notifications/agentmail.md § Bet proposal reply classification`:
+- `APPROVE` → if reply contains inline edits, interpret and apply with edits + send confirmation in-thread quoting applied text. Else apply proposed text verbatim. Audit footer with `thread_id`. Close thread.
+- `REJECT` → log to `Planning/ceo-deferrals.md`. Close thread.
+- `DISCUSSION` → CEO replies in-thread with rationale or refined draft. Thread stays open. (24h cap timer resets on this CEO message.)
+- 24h since CEO's most recent message with no founder reply → original thread auto-classifies `DEFER` → log to `Planning/ceo-deferrals.md`, close thread, spawn new `⚠ BET PROPOSAL` thread with same content (refreshed if state has changed).
+
+Retirement proposals follow the same flow: proposal text begins `RETIRE: <bet slug>`. APPROVE moves the bet from § Live to § Retired with audit footer; APPROVE with edits allows founder to retire-with-replacement (one move, two operations).
+
+This sweep runs only at ritual Step 1d. It does NOT displace the per-tick inbox check at Step 4 of `danger-builder-mode.md § Tick behavior` — that check explicitly skips `⚠ BET PROPOSAL` threads.
+
+Edits applied at 1d are visible to the **next** ritual run; the current ritual already re-evaluated against pre-1d bets at Step 2.
 
 READ `command-center/Sub-agent Instructions/ui-comprehensive-tester-instructions.md` + `command-center/Sub-agent Instructions/competitive-analyst-instructions.md` + `command-center/Sub-agent Instructions/trend-analyst-instructions.md` before spawning.
 

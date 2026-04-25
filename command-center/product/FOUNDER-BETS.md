@@ -2,7 +2,7 @@
 
 Strategic forward-looking takes that agents cannot source. **This file is the founder's voice.**
 
-**Authoring:** only the founder writes to this file. Agents never edit it.
+**Authoring:** only the founder writes to this file directly. Under danger-builder, CEO-agent may edit only after explicit founder approval via email — see `command-center/management/notifications/agentmail.md` § Bet proposal flow. Each CEO-applied bet carries an audit footer citing the approving email thread_id. No other agent may edit. All agents may read.
 
 **Graduation path:** bets graduate to milestones in `command-center/product/ROADMAP.md` through the refresh ritual.
 

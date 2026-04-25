@@ -76,7 +76,7 @@ Step ordering is authoritative. Steps 1-11:
 1. **Kill-switch check.** If `/tmp/ceo-mode-stop` exists: set STATUS=BLOCKED, send halt email, exit loop. Supersedes all subsequent steps.
 2. **Founder-message check.** If any founder message arrived since last tick: halt loop, send halt email, set STATUS=BLOCKED.
 3. **STATUS mode check.** If STATUS=`STOP`: halt per step 1.
-4. **Inbox check.** `agentmail inboxes:threads list --inbox-id "$CEO_INBOX_ID" --label unread --format json`. For each unread thread: fetch messages, classify reply (APPROVE / REJECT / MODIFY / CLARIFY / AMBIGUOUS), execute classified action, mark thread read. Do NOT act on AMBIGUOUS — send CLARIFY reply and leave thread unread.
+4. **Inbox check.** `agentmail inboxes:threads list --inbox-id "$CEO_INBOX_ID" --label unread --format json`. For each unread thread: fetch messages, classify reply (APPROVE / REJECT / MODIFY / CLARIFY / AMBIGUOUS), execute classified action, mark thread read. Do NOT act on AMBIGUOUS — send CLARIFY reply and leave thread unread. **Skip threads with subject prefix `⚠ BET PROPOSAL`** — those queue for ritual Step 1d sweep, not per-tick processing.
 5. **Read charter.** Re-read `ceo-bound.md`. If modified since last tick, respect new restrictions immediately.
 6. **Route by STATUS value** (table below).
 7. **Execute routed action** until natural pause or 75% context budget. **Natural pause** = STATUS becomes IDLE / BLOCKED / DONE, OR you're blocked on a human or external timeline >10 min (founder reply, code review, slow-deploy queue). Programmatic checks that resolve in <10 min (CI run, fast-deploy probe, monitor poll) are NOT pauses — poll inside the turn via `Bash(run_in_background=true)` + Monitor + `until` loop. Chunking active orchestrator work into multiple ticks is forbidden.
@@ -180,7 +180,7 @@ Why: Ambiguous replies remain `unread` until classified; acting without classifi
 These apply regardless of `ceo-bound.md` contents:
 
 - ceo-agent cannot amend `ceo-bound.md`.
-- ceo-agent cannot amend `command-center/product/FOUNDER-BETS.md`.
+- ceo-agent cannot amend `command-center/product/FOUNDER-BETS.md` without explicit founder approval delivered via email reply classified `APPROVE` (see `notifications/agentmail.md` § Bet proposal reply classification). Edits MUST cite the approving thread_id in the bet entry's audit footer. The check + apply step happens only at `roadmap-refresh-ritual.md` Step 1d, never mid-tick.
 - ceo-agent cannot halt the loop.
 - ceo-agent cannot run during onboarding (v0-v11).
 - ceo-agent cannot write to project state for tools not in § Tool allowlist.

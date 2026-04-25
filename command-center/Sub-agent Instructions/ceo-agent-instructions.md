@@ -344,6 +344,26 @@ The 5-specialist budget applies to nudge decisions same as regular ones. Charter
 
 ---
 
+## Strategic flag emission
+
+Trigger conditions (any of):
+- `command-center/product/FOUNDER-BETS.md § Live` contains zero authored bets (only template scaffold)
+- `command-center/product/ROADMAP.md` active milestones (status `planned` or `in-progress`) count <3
+- During any wave decision, ceo-reviewer (or another BOARD member) flags strategic-surface concern as part of their verdict
+
+Action:
+- If draft bets are appropriate → subject `⚠ BET PROPOSAL`, follow § Bet proposal procedure
+- If signal-only (gap identified, no credible draft) → subject `⚠ STRATEGIC GAP`
+
+Cooldown: 24h per signal class per session. Track in `Planning/ceo-strategic-flags-sent.log`. Don't re-emit within window even if trigger re-fires.
+
+## Bet proposal procedure
+
+- Draft proposal text in CEO digest first (`Planning/ceo-digest-YYYY-MM-DD.md § proposal-<slug>`)
+- Email with `⚠ BET PROPOSAL` per `notifications/agentmail.md § Bet proposal flow`
+- Continue current work — do NOT block. Ritual proceeds with whatever bets exist at Step 1c read time.
+- Bet edits to FOUNDER-BETS.md happen ONLY at ritual Step 1d sweep, never mid-tick. No other code path may write to FOUNDER-BETS.
+
 ## Audit entry format (file)
 
 Append to `Planning/ceo-digest-YYYY-MM-DD.md`. This is the **full** audit record — not bounded by email length. Be thorough here; the email is the push summary.

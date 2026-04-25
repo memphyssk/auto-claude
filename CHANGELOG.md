@@ -34,6 +34,49 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.32.0 — 2026-04-25
+
+**FOUNDER-BETS.md amendable by CEO under explicit founder approval.** Closes the gap surfaced in a downstream danger-builder run: founders are busy, bets go stale, and CEO operates without grounding when § Live is empty/thin (CEO's own Prime Directive #9 requires reading FOUNDER-BETS before every decision). The previous Hard invariant *"agents never edit FOUNDER-BETS"* was too strict — produced a stale-anchor failure mode.
+
+The conditional path is tight: CEO-agent only, danger-builder only, email approval required, applied only at `roadmap-refresh-ritual.md` Step 1d (never mid-tick), every applied edit carries an audit footer citing the approving `thread_id`.
+
+### `command-center/management/danger-builder-mode.md`
+
+- **§ Hard invariants** — replaced the absolute FOUNDER-BETS bullet with a conditional: CEO can amend after explicit `APPROVE` reply on a `⚠ BET PROPOSAL` thread, with audit footer + ritual-only timing.
+- **§ Tick behavior step 4** — added skip rule: per-tick inbox check skips threads with subject prefix `⚠ BET PROPOSAL`. Those queue for ritual Step 1d sweep.
+
+### `command-center/product/FOUNDER-BETS.md`
+
+- **Header authoring note** — updated to reflect the conditional CEO-edit path. All other agents remain forbidden from editing.
+
+### `command-center/rules/roadmap-refresh-ritual.md`
+
+- **§ Step 1c → split into 1c + 1d.**
+  - **1c** — Read FOUNDER-BETS § Live + (optionally) propose new/retirement bets via `⚠ BET PROPOSAL` email. Ritual proceeds with current bets — proposing does not block.
+  - **1d** — One-shot inbox sweep filtered by `⚠ BET PROPOSAL`, runs once per ritual run before completion. Classifies the most recent founder message in each unread thread per the simplified 3-class system (APPROVE / REJECT / DISCUSSION). 24h cap (resets on each CEO message); silence past cap → original DEFER + spawn fresh thread. Retirement proposals use the same flow with proposal text starting `RETIRE: <bet slug>`.
+
+### `command-center/management/notifications/agentmail.md`
+
+- **§ Subject prefix taxonomy** — added `⚠ BET PROPOSAL` and `⚠ STRATEGIC GAP`.
+- **New § Bet proposal reply classification** — separate from per-decision replies. Three classes only (APPROVE / REJECT / DISCUSSION). 24h cap with reset-on-CEO-message semantics.
+- **New § Bet proposal flow** — short flow doc with literal audit-footer format and retirement-proposal note.
+
+### `command-center/Sub-agent Instructions/ceo-agent-instructions.md`
+
+- **New § Strategic flag emission** — trigger conditions (FOUNDER-BETS § Live empty, ROADMAP active milestones <3, BOARD member flags strategic concern), action by prefix, 24h-per-signal-class-per-session cooldown tracked in `Planning/ceo-strategic-flags-sent.log`.
+- **New § Bet proposal procedure** — draft in digest first, email per `⚠ BET PROPOSAL`, continue current work, bet edits apply ONLY at ritual Step 1d.
+
+### Why one terminal-action thread (no MODIFY / no CLARIFY for bet proposals)
+
+The bet-proposal reply system is intentionally simpler than the per-decision system. Three classes (APPROVE / REJECT / DISCUSSION), one terminal action closes the thread, no multi-action chains. Discussion accommodates founder questions and edit suggestions without spawning new states. Active back-and-forth is welcome; the 24h cap measures time since CEO's last message, not since the original proposal — so engaged threads never time out.
+
+### Consumer sync
+
+- **Breaking:** the Hard invariant change is a relaxation, not a tightening. Existing FOUNDER-BETS files (founder-authored, no audit footer) remain valid. New CEO-applied bets carry the footer; founders can identify provenance by footer presence.
+- **Migration action:** none beyond `auto-claude sync --to=v0.32.0`. Active on next `roadmap-refresh-ritual` run under danger-builder.
+
+---
+
 ## v0.31.0 — 2026-04-25
 
 **CEO email format: one-liner.** Founder feedback: per-decision emails were excessive — Context / Action / Why / Charter / Reversibility / Novelty / Monitor / Override fields landed as a 12-line block per decision and trained the founder to skim past them. The right shape is a single past-tense sentence stating what was decided and why; full rationale lives in the digest file for those who want detail.

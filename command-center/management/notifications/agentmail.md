@@ -85,6 +85,8 @@ Prefix variants:
 - `[ceo-agent] <project> — ⚠ HARD-STOP OVERRIDDEN — <decision-slug>` (BOARD veto authorized)
 - `[ceo-agent] <project> — NOVEL — <decision-slug>` (no precedent)
 - `[ceo-agent] <project> — ⚠ LOOP HALTED — <cause>` (halt event)
+- `[ceo-agent] <project> — ⚠ BET PROPOSAL — <bet-slug>` (CEO drafts bet candidate for FOUNDER-BETS § Live; replies handled at ritual Step 1d, NOT per-tick)
+- `[ceo-agent] <project> — ⚠ STRATEGIC GAP — <gap-slug>` (signal-only, no draft; founder action: schedule attention)
 
 ## Body format — one-liner
 
@@ -149,6 +151,36 @@ This is the ONE email class that gates on founder response. Decision does NOT ex
 **Silence = ACK** under act-first semantics. Ambiguous replies never default to ACK or REJECT.
 
 Agent must re-read the charter before executing a MODIFY reply. If MODIFY bumps a charter restriction, treat as a new charter proposal.
+
+---
+
+## Bet proposal reply classification
+
+Separate from per-decision replies. Applies to threads with subject prefix `⚠ BET PROPOSAL`. Three classes only.
+
+| Class | Trigger | CEO action | Closes thread? |
+|---|---|---|---|
+| `APPROVE` | reply contains "approve" / "yes" / "ok" / "apply" / 👍 — with or without inline edits | If edits in reply → interpret + apply with edits + confirm in-thread quoting applied text. Else apply verbatim. Audit footer with `thread_id`. | yes |
+| `REJECT` | reply contains "reject" / "no" / "don't apply" / "skip" / "not now" | Log to `Planning/ceo-deferrals.md` | yes |
+| `DISCUSSION` | anything else — questions, chatty replies, partial thoughts, refinements | CEO interprets as discussion, replies in-thread with rationale or refined draft, awaits next reply | no |
+
+**24h cap.** Timer resets on every CEO message in the thread (proposal or discussion follow-up). Founder must either terminal-reply (APPROVE/REJECT) or continue discussion within 24h. Silence past 24h after CEO's most recent message → original thread auto-classifies `DEFER`, closes, and a fresh `⚠ BET PROPOSAL` thread spawns with the same content (refreshed if state has changed).
+
+Every terminal class closes the thread. Subsequent founder messages on a closed thread are logged warnings, not acted on.
+
+---
+
+## Bet proposal flow
+
+- CEO-agent drafts → emails `⚠ BET PROPOSAL` → ritual proceeds with current bets
+- Founder reply lands in inbox at any time
+- Reply processed at next ritual Step 1d, NOT per-tick
+- Approved bet appears in `FOUNDER-BETS.md § Live` with audit footer
+- Audit footer format (literal):
+
+  > _Authored via email approval. Thread: `<thread_id>`. Approved: YYYY-MM-DD._
+
+- Retirement proposals use the same flow: proposal text begins `RETIRE: <bet slug>`. APPROVE moves bet from § Live to § Retired with audit footer; APPROVE with edits allows retire-with-replacement.
 
 ---
 
