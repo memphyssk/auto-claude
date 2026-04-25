@@ -52,10 +52,19 @@ Update the `**Last refresh:**` + `**Last refresh trigger:**` top matter to today
 
 ### 3. Populate TaskMaster — milestones + stages + tasks
 
-For each milestone, create a TaskMaster task hierarchy:
+**Use the CLI. Never hand-edit `.taskmaster/tasks/tasks.json` directly.** Direct JSON authoring produces subtask-id collisions (every child inherits the parent's id) — the CLI assigns ids correctly because it reads the parent's existing children.
 
-- **Top-level task** with the milestone slug as tag, `status: pending`, `priority: high` for H1 items
-- **Subtasks** broken down by stage — typically one subtask per page + one per architectural bootstrap step + one per external integration
+For each milestone:
+
+```bash
+# Top-level task (one per milestone)
+task-master add-task --prompt="<milestone title>" --priority=high --tag=<slug>
+
+# Subtasks (one per page / bootstrap step / external integration)
+task-master add-subtask --parent=<N> --title="<...>" --description="<...>"
+```
+
+Subtask breakdown — typically one subtask per page + one per architectural bootstrap step + one per external integration.
 
 For each TaskMaster task add metadata:
 ```json
@@ -94,6 +103,28 @@ Run a mandatory audit. For each item below, confirm TaskMaster has a task that c
 - Every architecture branch's Risk/open-item → has a triage task (even if just `priority: low`)
 
 If any item has zero coverage: create the missing TaskMaster task. Loop until coverage = 100% for MVP items.
+
+**Subtask-id integrity probe.** Run before stage exit. Fails if any parent's subtasks have non-sequential / non-unique ids (the hand-edit-JSON bug):
+
+```bash
+node -e '
+const data = require("./.taskmaster/tasks/tasks.json");
+let bad = [];
+for (const tag of Object.values(data)) {
+  for (const p of tag.tasks ?? []) {
+    if (!p.subtasks?.length) continue;
+    const ids = p.subtasks.map(s => s.id);
+    const expected = Array.from({length: ids.length}, (_, i) => i + 1);
+    if (JSON.stringify(ids) !== JSON.stringify(expected))
+      bad.push(`${p.id} (${p.title.slice(0,40)}): ${JSON.stringify(ids)}`);
+  }
+}
+if (bad.length) { console.error("FAIL — collisions:\n"+bad.join("\n")); process.exit(1); }
+console.log("OK — subtask ids clean");
+'
+```
+
+If the probe fires, the population path used direct JSON edits instead of `task-master add-subtask`. Run `command-center/setup-tools/scripts/taskmaster-fix-subtask-ids.js` to repair, then re-run the probe before exiting v10.
 
 ### 6. Tier 3 founder polling (if any)
 

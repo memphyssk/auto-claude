@@ -34,6 +34,31 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.28.0 — 2026-04-25
+
+**TaskMaster subtask-id collision fix.** Surfaced in a downstream project where every subtask in `tasks.json` carried its parent's `id` instead of a unique sequential id (M1 subtasks all `id=1`, M2 all `id=2`, etc.). Stayed invisible because `task-master next` and `task-master show <parent>` both work despite the collision; only `show 1.<N>` and `update-subtask --id=1.<N>` exposed it. Root cause: stage v10 step 3 showed JSON metadata format without mandating CLI use, so the orchestrator hand-authored `tasks.json` and copied the parent id into every child.
+
+### `command-center/rules/onboarding/stages/stage-v10-planning.md`
+
+- **Step 3 — Populate TaskMaster.** Lead with mandatory CLI commands (`task-master add-task` for top-level, `task-master add-subtask --parent=<N>` for children). Hand-editing `tasks.json` directly is now explicitly forbidden — that's the bug.
+- **Step 5 — Coverage check.** Added mandatory subtask-id integrity probe (Node one-liner, fails on non-sequential / non-unique ids). Stage v10 cannot exit until probe passes. Cites the repair script for remediation.
+
+### `command-center/setup-tools/scripts/taskmaster-fix-subtask-ids.js` (new)
+
+One-shot repair script for projects that already shipped with broken `tasks.json`. Renumbers each parent's subtasks 1..N in array order, rewrites any same-tag dependency refs of shape `<parent>.<oldId>` → `<parent>.<newId>`, writes a timestamped backup before saving. Idempotent, supports `--dry-run`.
+
+```bash
+node command-center/setup-tools/scripts/taskmaster-fix-subtask-ids.js --dry-run  # preview
+node command-center/setup-tools/scripts/taskmaster-fix-subtask-ids.js            # apply
+```
+
+### Consumer sync
+
+- **Breaking:** no. New v10 verification is mandatory only on new onboarding runs; existing projects keep their tasks.json as-is unless they run the repair script.
+- **Migration action for projects with broken tasks.json:** run the probe (step 5 snippet) → if it fails, run the repair script → commit. Verify with `task-master show <parent>.<N>` returning the right subtask.
+
+---
+
 ## v0.27.0 — 2026-04-24
 
 **Brain-defined agent cards.** Closes the gap surfaced after v0.26.0: `Agent(subagent_type=ceo-agent)` requires an installed agent card at `~/.claude/agents/ceo-agent.md`, and per `sub-agent-workflow.md` rule #1 spawning an unlisted agent is a defect. Same gap applied to `ceo-reviewer`, `problem-framer`, `founder-proxy` — all referenced in BOARD/wave docs, none had cards. (`karen` and `Jenny` were already shipped.)
