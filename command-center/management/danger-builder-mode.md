@@ -79,13 +79,29 @@ Step ordering is authoritative. Steps 1-11:
 4. **Inbox check.** `agentmail inboxes:threads list --inbox-id "$CEO_INBOX_ID" --label unread --format json`. For each unread thread: fetch messages, classify reply (APPROVE / REJECT / MODIFY / CLARIFY / AMBIGUOUS), execute classified action, mark thread read. Do NOT act on AMBIGUOUS — send CLARIFY reply and leave thread unread.
 5. **Read charter.** Re-read `ceo-bound.md`. If modified since last tick, respect new restrictions immediately.
 6. **Route by STATUS value** (table below).
-7. **Execute routed action** until natural pause or 75% context budget.
+7. **Execute routed action** until natural pause or 75% context budget. **Natural pause** = STATUS becomes IDLE / BLOCKED / DONE, OR you're blocked on a human or external timeline >10 min (founder reply, code review, slow-deploy queue). Programmatic checks that resolve in <10 min (CI run, fast-deploy probe, monitor poll) are NOT pauses — poll inside the turn via `Bash(run_in_background=true)` + Monitor + `until` loop. Chunking active orchestrator work into multiple ticks is forbidden.
 8. **75% context rule:** write handoff.md, set STATUS=HANDOFF, end turn.
 9. **Update STATUS before ending turn.** If STATUS changed this tick, also update `STATUS-meta.yaml`.
 10. **Call ScheduleWakeup** with delay per STATUS table, unless STATUS=DONE or halted.
 11. **Per-decision notification.** After every ceo-agent decision, send a fresh email (new thread) via AgentMail. One email per decision. Capture `thread_id` into the audit entry. See `notifications/agentmail.md` for templates.
 
 Reply-handling (step 4) runs before routing (step 6) so founder replies take precedence over new escalations.
+
+### Tick prompt — exact text
+
+When orchestrator calls `ScheduleWakeup` under `danger-builder`, pass this prompt verbatim. Substitute `<value>` and `<N>` from current state. Do NOT expand into a 500-token reference list — the brevity is the enforcement.
+
+```
+Tick under danger-builder. STATUS=<value>, wave=<N>.
+
+1. First tool call MUST be Agent(subagent_type=ceo-agent) with directive "stall-monitor". Orchestrator role-play forbidden.
+2. After ceo-agent returns, route per command-center/management/danger-builder-mode.md § Tick behavior steps 1-9.
+3. Continue working in this turn until: IDLE, BLOCKED-awaiting-founder, 75% context, or DONE.
+   Programmatic waits <10 min (CI, fast-deploy probe, monitor poll) → poll inside the turn via Bash(run_in_background=true) + Monitor + until-loop. Do NOT ScheduleWakeup.
+   Human / external waits >10 min (founder reply, code review, queued deploy) → write handoff.md, then ScheduleWakeup at STATUS-appropriate delay.
+```
+
+This prompt fires every tick. The orchestrator reads it BEFORE picking visible work, so Step 0 spawn + chunking-rule are structural, not advisory.
 
 ## Routing thresholds
 

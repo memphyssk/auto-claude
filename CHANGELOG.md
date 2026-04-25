@@ -34,6 +34,28 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.29.0 — 2026-04-25
+
+**Tick-prompt template + chunking discipline.** Surfaced in a downstream danger-builder run where the orchestrator skipped Step 0 (ceo-agent spawn) AND chunked active wave work across multiple ticks (open PR → end turn → wakeup → merge → end turn → wakeup → probe → end turn). Both failures traced to the same root: the wakeup prompt was descriptive ("run a tick per § Tick behavior") rather than enforcing. Orchestrators read the verbose prompt, picked the visible work, skipped the ceremonial spawn, and treated wait-on-CI as a "natural pause."
+
+The fix is structural — the brain now ships an exact tick-prompt template the orchestrator must pass verbatim to `ScheduleWakeup`. Brevity is the enforcement.
+
+### `command-center/management/danger-builder-mode.md`
+
+- **§ Tick behavior step 7** — "natural pause" now explicitly defined. Programmatic waits <10 min (CI, fast-deploy probe, monitor poll) → poll inside the turn via `Bash(run_in_background=true)` + Monitor + `until`-loop. Human / external waits >10 min (founder reply, code review, queued deploy) → write handoff.md + ScheduleWakeup. Chunking active orchestrator work into multiple ticks is forbidden.
+- **New § Tick prompt — exact text** — six-line template that the orchestrator passes verbatim to `ScheduleWakeup` under danger-builder. Spells out: (1) first tool call MUST be `Agent(subagent_type=ceo-agent)`, (2) route per Tick behavior steps 1-9, (3) the chunking rule. Substitutes `STATUS=<value>` and `wave=<N>` from current state. Replaces the 500-token improvised tick prompts that buried Step 0.
+
+### Why this is the right shape
+
+Hooks (UserPromptSubmit / PreToolUse) live on the dev's machine and don't ship via the brain repo — other consumer machines re-create the bug. The tick-prompt template ships in `danger-builder-mode.md`; consumer projects pick it up via `auto-claude sync --to=v0.29.0`. Hooks remain available as per-machine backstop but are not required.
+
+### Consumer sync
+
+- **Breaking:** no. Existing waves continue to work; the template applies only on next danger-builder mode entry.
+- **Migration action:** none beyond `auto-claude sync --to=v0.29.0`. Orchestrators read the new tick-prompt § on next danger-builder activation.
+
+---
+
 ## v0.28.0 — 2026-04-25
 
 **TaskMaster subtask-id collision fix.** Surfaced in a downstream project where every subtask in `tasks.json` carried its parent's `id` instead of a unique sequential id (M1 subtasks all `id=1`, M2 all `id=2`, etc.). Stayed invisible because `task-master next` and `task-master show <parent>` both work despite the collision; only `show 1.<N>` and `update-subtask --id=1.<N>` exposed it. Root cause: stage v10 step 3 showed JSON metadata format without mandating CLI use, so the orchestrator hand-authored `tasks.json` and copied the parent id into every child.
