@@ -309,6 +309,28 @@ ls ~/.claude/agents/ | wc -l       # expect 100+
 ls ~/.claude/agents/Jenny.md ~/.claude/agents/karen.md 2>&1   # reviewer agents
 ```
 
+### Brain-defined agents (required)
+
+Four agents are brain-defined and don't appear in the global catalogs above: `ceo-agent`, `ceo-reviewer`, `problem-framer`, `founder-proxy`. Without their cards, the brain's BOARD/Stage-1/danger-builder spawns will fail per `command-center/rules/sub-agent-workflow.md` rule #1.
+
+Install the cards (per-machine, user-scope):
+
+```bash
+cp /path/to/auto-claude/command-center/setup-tools/agent-cards/*.md ~/.claude/agents/
+```
+
+Each card is a thin pointer to the full directive at `command-center/Sub-agent Instructions/<name>-instructions.md`. Updates to the directive propagate without re-copying the card.
+
+Verify:
+```bash
+ls ~/.claude/agents/{ceo-agent,ceo-reviewer,problem-framer,founder-proxy}.md
+```
+
+Required because:
+- `ceo-agent` — danger-builder step 0 stall-monitor + BOARD-resolver spawns
+- `ceo-reviewer` + `problem-framer` — Stage 1 of every wave (parallel reviewers)
+- `founder-proxy` — BOARD voting member; simulates founder voice via claude-mem memory
+
 ---
 
 ## 2d. auto-claude bundled skills (install once from the repo)
@@ -409,6 +431,26 @@ Required because:
 - Provides the `mcp-search` MCP server (section 5c)
 - Powers `/mem-search` and related memory skills
 - The brain's founder-proxy BOARD member reads claude-mem memory to simulate founder voice — without it, founder-proxy always emits `HARD-STOP: no founder precedent in memory`
+
+### 4b. token-optimizer (recommended for long-running sessions)
+
+Source: <https://github.com/alexgreensh/token-optimizer>
+
+```bash
+claude plugin marketplace add github:alexgreensh/token-optimizer
+claude plugin install token-optimizer@alexgreensh-token-optimizer
+```
+
+Restart Claude Code. Verify: `ls ~/.claude/plugins/cache/alexgreensh-token-optimizer/`.
+
+Provides:
+- `/token-optimizer` — context-window audit, finds where 25-38% of tokens go
+- `/fleet-auditor` — token waste audit across multi-agent systems
+- `/token-coach` — proactive guidance for token-efficient project setup
+- `/token-dashboard` — session-data dashboard
+- `/health`, `/quick` — context health checks
+
+Recommended for danger-builder mode and any indefinite `/loop` run where context drift is a primary failure mode.
 
 ---
 

@@ -34,6 +34,30 @@ Every release entry follows this structure. `Consumer sync` tells downstream pro
 
 ---
 
+## v0.27.0 — 2026-04-24
+
+**Brain-defined agent cards.** Closes the gap surfaced after v0.26.0: `Agent(subagent_type=ceo-agent)` requires an installed agent card at `~/.claude/agents/ceo-agent.md`, and per `sub-agent-workflow.md` rule #1 spawning an unlisted agent is a defect. Same gap applied to `ceo-reviewer`, `problem-framer`, `founder-proxy` — all referenced in BOARD/wave docs, none had cards. (`karen` and `Jenny` were already shipped.)
+
+### `command-center/setup-tools/agent-cards/` (new directory, 4 files)
+
+Thin agent cards (frontmatter + ~10 line body) that point at the full directives in `command-center/Sub-agent Instructions/`. Updates to the directive propagate without re-copying the card.
+
+- **`ceo-agent.md`** — danger-builder mode tiebreaker, HARD-STOP resolver, founder-ask fallback, stall-monitor.
+- **`ceo-reviewer.md`** — Stage 1 strategic reviewer (parallel with problem-framer); BOARD voter.
+- **`problem-framer.md`** — Stage 1 fresh-context reframer; antipatterns-catalog enforcer.
+- **`founder-proxy.md`** — BOARD voting member; simulates founder voice via claude-mem memory; emits `HARD-STOP: no founder precedent in memory` when memory is empty.
+
+### `command-center/setup-tools/install.md`
+
+- New § 2 subsection **Brain-defined agents (required)** — `cp` instructions to land the four cards in `~/.claude/agents/`. Verify command included.
+
+### Consumer sync
+
+- **Breaking:** no. Additive — four new cards + one install.md subsection.
+- **Migration action:** consumer projects pulling this release must run the `cp` step from install.md § Brain-defined agents on each developer machine. One-shot per machine. Without it, danger-builder mode entry will fail the spawn-probe prereq added in v0.26.0.
+
+---
+
 ## v0.26.0 — 2026-04-24
 
 **Orchestrator/CEO boundary.** Drawn from a danger-builder run on a downstream project where the orchestrator role-played ceo-agent inline across 6 ticks, authored the wave plan, ran the gate, shipped the PR, sent per-decision emails on routine actions, and then ran `git reset --hard` post-merge wiping uncommitted operational config. Root cause: ceo-agent was never spawned as a sub-agent, so the cognitive boundary, charter logic, 5-specialist budget, and act-first protocol all collapsed into orchestrator state.
